@@ -3,6 +3,11 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+// Debug: log resolved values on startup so we can verify env vars are injected correctly.
+// These will appear in the browser console.
+console.log('[Regulated] SUPABASE_URL:', supabaseUrl || '(not set)')
+console.log('[Regulated] SUPABASE_ANON_KEY:', supabaseAnonKey ? supabaseAnonKey.slice(0, 20) + '…' : '(not set)')
+
 if (!supabaseUrl) {
   console.error(
     '[Regulated] SUPABASE_URL is not set. ' +

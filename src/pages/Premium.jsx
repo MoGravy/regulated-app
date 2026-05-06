@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { loadStripe } from '@stripe/stripe-js'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
 import { upsertUser } from '../lib/supabase'
+import { stripePromise, PRICE_MONTHLY, PRICE_ANNUAL } from '../lib/stripe'
 import CouponField from '../components/CouponField'
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
 
 const PLANS = [
   {
@@ -17,7 +15,7 @@ const PLANS = [
     perMonth: '$8.25/mo',
     badge: 'BEST VALUE',
     badgeColor: 'var(--accent)',
-    priceEnvKey: 'VITE_STRIPE_PRICE_ANNUAL',
+    priceId: PRICE_ANNUAL,
   },
   {
     id: 'monthly',
@@ -26,7 +24,7 @@ const PLANS = [
     period: '/month',
     perMonth: null,
     badge: null,
-    priceEnvKey: 'VITE_STRIPE_PRICE_MONTHLY',
+    priceId: PRICE_MONTHLY,
   },
 ]
 
@@ -74,9 +72,7 @@ export default function Premium() {
       await upsertUser(email)
 
       const plan = PLANS.find(p => p.id === selectedPlan)
-      const priceId = selectedPlan === 'annual'
-        ? import.meta.env.VITE_STRIPE_PRICE_ANNUAL
-        : import.meta.env.VITE_STRIPE_PRICE_MONTHLY
+      const priceId = plan.priceId
 
       const res = await fetch('/api/create-checkout', {
         method: 'POST',

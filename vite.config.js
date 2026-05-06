@@ -1,10 +1,33 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Vercel sets env vars without the VITE_ prefix.
-// These `define` entries inject them at build time so the frontend
-// can read them via import.meta.env.VITE_* as normal.
-// Only explicitly listed vars are exposed — no secrets leak.
+// Vercel sets env vars WITHOUT the VITE_ prefix (SUPABASE_URL, STRIPE_PUBLIC_KEY, etc.)
+// but Vite's env plugin only exposes VITE_-prefixed vars to the browser via import.meta.env.
+//
+// Fix: Before Vite's env plugin runs, copy the Vercel-style names into VITE_-prefixed
+// process.env entries. Vite then picks them up natively. No `define` hacks needed.
+//
+// This runs at build time in Node.js context — secrets stay server-side.
+
+if (!process.env.VITE_SUPABASE_URL && process.env.SUPABASE_URL) {
+  process.env.VITE_SUPABASE_URL = process.env.SUPABASE_URL
+}
+if (!process.env.VITE_SUPABASE_ANON_KEY && process.env.SUPABASE_ANON_KEY) {
+  process.env.VITE_SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY
+}
+if (!process.env.VITE_STRIPE_PUBLISHABLE_KEY && process.env.STRIPE_PUBLIC_KEY) {
+  process.env.VITE_STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLIC_KEY
+}
+if (!process.env.VITE_STRIPE_PRICE_MONTHLY && process.env.STRIPE_PRICE_MONTHLY) {
+  process.env.VITE_STRIPE_PRICE_MONTHLY = process.env.STRIPE_PRICE_MONTHLY
+}
+if (!process.env.VITE_STRIPE_PRICE_ANNUAL && process.env.STRIPE_PRICE_ANNUAL) {
+  process.env.VITE_STRIPE_PRICE_ANNUAL = process.env.STRIPE_PRICE_ANNUAL
+}
+if (!process.env.VITE_APP_URL && process.env.APP_URL) {
+  process.env.VITE_APP_URL = process.env.APP_URL
+}
+
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -13,29 +36,5 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-  },
-  define: {
-    // Supabase — try Vercel name first, fall back to VITE_ prefix (local dev)
-    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(
-      process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || ''
-    ),
-    'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(
-      process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''
-    ),
-    // Stripe publishable key (safe to expose to client)
-    'import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY': JSON.stringify(
-      process.env.STRIPE_PUBLIC_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || ''
-    ),
-    // Stripe price IDs
-    'import.meta.env.VITE_STRIPE_PRICE_MONTHLY': JSON.stringify(
-      process.env.STRIPE_PRICE_MONTHLY || process.env.VITE_STRIPE_PRICE_MONTHLY || ''
-    ),
-    'import.meta.env.VITE_STRIPE_PRICE_ANNUAL': JSON.stringify(
-      process.env.STRIPE_PRICE_ANNUAL || process.env.VITE_STRIPE_PRICE_ANNUAL || ''
-    ),
-    // App URL
-    'import.meta.env.VITE_APP_URL': JSON.stringify(
-      process.env.APP_URL || process.env.VITE_APP_URL || 'https://regulatedapp.co'
-    ),
   },
 })

@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { loadStripe } from '@stripe/stripe-js'
 import { createCustomOrder } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import { useApp } from '../hooks/useApp'
+import { stripePromise } from '../lib/stripe'
 import CouponField from '../components/CouponField'
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '')
 
 const PRICE = 75
 
