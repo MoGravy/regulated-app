@@ -9,14 +9,14 @@ import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const FROM_EMAIL = process.env.VITE_FROM_EMAIL || 'hello@regulatedapp.co'
+const FROM_EMAIL = process.env.FROM_EMAIL || process.env.VITE_FROM_EMAIL || 'hello@regulatedapp.co'
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'change-this-secret'
-const APP_URL = process.env.VITE_APP_URL || 'https://regulatedapp.co'
+const APP_URL = process.env.APP_URL || process.env.VITE_APP_URL || 'https://regulatedapp.co'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()

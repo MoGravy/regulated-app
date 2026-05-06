@@ -1,7 +1,7 @@
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-const APP_URL = process.env.VITE_APP_URL || 'https://regulatedapp.co'
+const APP_URL = process.env.APP_URL || process.env.VITE_APP_URL || 'https://regulatedapp.co'
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {

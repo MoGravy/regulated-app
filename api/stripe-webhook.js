@@ -6,12 +6,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const FROM_EMAIL = process.env.VITE_FROM_EMAIL || 'hello@regulatedapp.co'
+const FROM_EMAIL = process.env.FROM_EMAIL || process.env.VITE_FROM_EMAIL || 'hello@regulatedapp.co'
 
 export const config = { api: { bodyParser: false } }
 

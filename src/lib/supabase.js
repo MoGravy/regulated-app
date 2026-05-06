@@ -3,13 +3,24 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase env vars not set — running in demo mode')
+if (!supabaseUrl) {
+  console.error(
+    '[Regulated] SUPABASE_URL is not set. ' +
+    'Add SUPABASE_URL (or VITE_SUPABASE_URL) to your Vercel environment variables.'
+  )
+}
+if (!supabaseAnonKey) {
+  console.error(
+    '[Regulated] SUPABASE_ANON_KEY is not set. ' +
+    'Add SUPABASE_ANON_KEY (or VITE_SUPABASE_ANON_KEY) to your Vercel environment variables.'
+  )
 }
 
+// createClient requires non-empty strings — guard so the app loads even if
+// env vars are missing (all DB calls will fail gracefully and fall back to demo data)
 export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder',
+  supabaseUrl || 'https://missing-supabase-url.supabase.co',
+  supabaseAnonKey || 'missing-anon-key',
   {
     auth: {
       persistSession: true,
