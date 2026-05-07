@@ -2,14 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { getSessions } from '../lib/supabase'
+import { HARDCODED_SESSIONS } from '../lib/hardcodedSessions'
 import SessionCard from '../components/SessionCard'
-
-const DEMO_SESSIONS = [
-  { id: '1', title: 'Deep Sleep Reset', category: 'Sleep', duration: 22, free: true, description: 'Gentle somatic unwinding to guide your nervous system into deep, restorative sleep.', audio_url: null },
-  { id: '2', title: 'Stress Off Switch', category: 'Stress', duration: 18, free: true, description: 'Rapid deactivation of the stress response. Reset your baseline in under 20 minutes.', audio_url: null },
-  { id: '3', title: 'Gut Brain Reset', category: 'IBS', duration: 25, free: true, description: 'Direct dialogue with the gut-brain axis to calm inflammation and reduce IBS symptoms.', audio_url: null },
-  { id: '4', title: 'Daily Regulation', category: 'Reset', duration: 12, free: true, description: 'Morning or evening reset. Build a regulated nervous system baseline one day at a time.', audio_url: null },
-]
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -21,7 +15,7 @@ function getGreeting() {
 export default function Home() {
   const navigate = useNavigate()
   const { completedSessions, isPremium, onboardingDone } = useApp()
-  const [sessions, setSessions] = useState(DEMO_SESSIONS)
+  const [sessions, setSessions] = useState(HARDCODED_SESSIONS)
   const [loading, setLoading] = useState(true)
   const hasRedirected = useRef(false)
 

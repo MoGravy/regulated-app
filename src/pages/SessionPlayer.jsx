@@ -6,23 +6,8 @@ import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import MoodTracker from '../components/MoodTracker'
 
-const DEMO_SESSIONS = {
-  '1':  { id: '1',  title: 'Deep Sleep Reset',                            category: 'Sleep',        duration: 22, free: true,  description: 'Gentle somatic unwinding to guide your nervous system into deep, restorative sleep.', audio_url: null },
-  '2':  { id: '2',  title: 'Stress Off Switch',                           category: 'Stress',       duration: 18, free: true,  description: 'Rapid deactivation of the stress response. Reset your baseline in under 20 minutes.', audio_url: null },
-  '3':  { id: '3',  title: 'Gut Brain Reset',                             category: 'IBS',          duration: 25, free: true,  description: 'Direct dialogue with the gut-brain axis to calm inflammation and reduce IBS symptoms.', audio_url: null },
-  '4':  { id: '4',  title: 'Daily Regulation',                            category: 'Reset',        duration: 12, free: true,  description: 'Morning or evening reset. Build a regulated nervous system baseline one day at a time.', audio_url: null },
-  '5':  { id: '5',  title: 'Anxiety Release',                             category: 'Anxiety',      duration: 20, free: false, description: 'Dissolve the root patterns driving chronic anxiety and hypervigilance.', audio_url: null },
-  '6':  { id: '6',  title: 'Deep Focus',                                  category: 'Focus',        duration: 15, free: false, description: 'Neurological priming for peak mental performance and sustained focus.', audio_url: null },
-  '7':  { id: '7',  title: 'Unshakeable Confidence',                      category: 'Confidence',   duration: 24, free: false, description: 'Reprogram limiting beliefs around your worth, capability, and identity.', audio_url: null },
-  '8':  { id: '8',  title: 'Grief Processing',                            category: 'Grief',        duration: 28, free: false, description: 'A safe, guided space to process loss and begin moving through grief.', audio_url: null },
-  '9':  { id: '9',  title: 'Panic Attack Protocol',                       category: 'Anxiety',      duration: 10, free: false, description: 'Rapid response for acute panic. Brings you back to baseline fast.', audio_url: null },
-  '10': { id: '10', title: 'Morning Activation',                          category: 'Reset',        duration: 14, free: false, description: 'Start each day from a place of groundedness and regulated energy.', audio_url: null },
-  '11': { id: '11', title: 'Relationship Patterns',                       category: 'Confidence',   duration: 26, free: false, description: 'Identify and dissolve the nervous system patterns driving relationship struggles.', audio_url: null },
-  '12': { id: '12', title: 'Night Terror Relief',                         category: 'Sleep',        duration: 18, free: false, description: 'Gentle processing of the subconscious patterns behind night terrors and nightmares.', audio_url: null },
-  '13': { id: '13', title: 'VGB 1: The Surgery',            category: 'Weight Loss', duration: 12, free: false, description: 'The core hypnotic gastric band installation session. Your subconscious undergoes the full virtual surgical procedure.', audio_url: null },
-  '14': { id: '14', title: 'VGB 2: Surgery Backup Session', category: 'Weight Loss', duration: 15, free: false, description: 'Reinforcement and deep anchoring of the virtual gastric band. Strengthens the installation for lasting results.', audio_url: null },
-  '15': { id: '15', title: 'VGB 3: Emotional Eating Reset', category: 'Weight Loss', duration: 16, free: false, description: 'Targets the emotional triggers behind overeating at the root — dissolving the patterns that drive eating for comfort.', audio_url: null },
-}
+// Numeric-keyed stubs removed — HARDCODED_SESSIONS_BY_ID is the fallback now
+const DEMO_SESSIONS = {}
 
 // Mood step states
 const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', POST_MOOD: 'post_mood', DONE: 'done' }
