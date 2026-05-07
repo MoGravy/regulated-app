@@ -1,19 +1,14 @@
 import { loadStripe } from '@stripe/stripe-js'
 
-const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+// TEMPORARY: hardcoded publishable key while env var baking issue is debugged.
+// Publishable key is safe to expose — it's designed to be public.
+// TODO: revert to import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY once env vars are confirmed working.
+const publishableKey = 'pk_test_29N1UHLhLHe7eum9rt2WvYKj'
 
-// Debug: log resolved value on startup so we can verify env var injection.
-// The key is safe to log (it's the publishable key, not the secret key).
-console.log('[Regulated] STRIPE_PUBLIC_KEY:', publishableKey || '(not set)')
+console.log('[Regulated] Stripe publishable key:', publishableKey.slice(0, 12) + '…')
 
-if (!publishableKey) {
-  console.error(
-    '[Regulated] STRIPE_PUBLIC_KEY is not set. ' +
-    'Add STRIPE_PUBLIC_KEY (or VITE_STRIPE_PUBLISHABLE_KEY) to your Vercel environment variables.'
-  )
-}
+export const stripePromise = loadStripe(publishableKey)
 
-export const stripePromise = loadStripe(publishableKey || '')
-
+// Price IDs — still from env vars (set in Vercel, used only at checkout time via API)
 export const PRICE_MONTHLY = import.meta.env.VITE_STRIPE_PRICE_MONTHLY || ''
 export const PRICE_ANNUAL  = import.meta.env.VITE_STRIPE_PRICE_ANNUAL  || ''

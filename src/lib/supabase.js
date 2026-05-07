@@ -23,46 +23,33 @@ function inspectSupabaseKey(key) {
 }
 
 // ---------------------------------------------------------------------------
-// Read env vars (injected at build time by vite.config.js)
+// TEMPORARY: hardcoded credentials while env var baking issue is debugged.
+// Both values are safe to expose — the anon key is the public key, designed
+// for browser use. The service role key is NOT here and must stay server-only.
+// TODO: revert to import.meta.env once env var pipeline is confirmed working.
 // ---------------------------------------------------------------------------
-const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl     = 'https://aynyvirtzioyeshauith.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'REPLACE_WITH_ANON_KEY'
 
-// ---------------------------------------------------------------------------
-// Comprehensive startup logging
-// ---------------------------------------------------------------------------
-console.log('=== [Supabase] Init diagnostics ===')
-console.log('Supabase URL:',            supabaseUrl    || '(not set)')
-console.log('Supabase Anon Key exists:', !!supabaseAnonKey)
-console.log('Supabase Anon Key prefix:', supabaseAnonKey ? supabaseAnonKey.slice(0, 30) + '…' : '(not set)')
+console.log('=== [Supabase] Init ===')
+console.log('Supabase URL:', supabaseUrl)
+console.log('Supabase Anon Key:', supabaseAnonKey === 'REPLACE_WITH_ANON_KEY' ? '⚠️ PLACEHOLDER — paste real anon key' : `set (${supabaseAnonKey.length} chars)`)
 
 const keyInfo = inspectSupabaseKey(supabaseAnonKey)
-console.log('Supabase key role (JWT):', keyInfo.role || keyInfo.error)
-
+console.log('Key role:', keyInfo.role || keyInfo.error)
 if (keyInfo.role === 'service_role') {
-  console.error(
-    '🚨 [Supabase] WRONG KEY: SUPABASE_ANON_KEY is set to the SERVICE ROLE KEY.\n' +
-    'This is why you see "Forbidden use of secret API key in browser".\n' +
-    'Fix: In your Vercel dashboard, set SUPABASE_ANON_KEY to the ANON/PUBLIC key\n' +
-    '(found in Supabase → Project Settings → API → "anon public").\n' +
-    'The service role key must NEVER be sent to the browser.'
-  )
+  console.error('🚨 WRONG KEY: this is the service role key — use the anon/public key instead')
 } else if (keyInfo.role === 'anon') {
-  console.log('[Supabase] ✓ Key role is "anon" — correct key in use')
-} else if (!supabaseAnonKey) {
-  console.error('[Supabase] SUPABASE_ANON_KEY is not set in Vercel env vars')
-} else {
-  console.warn('[Supabase] Key role:', keyInfo.role, '— expected "anon"', keyInfo)
+  console.log('✓ Correct anon key in use')
 }
-
-console.log('=== [Supabase] End diagnostics ===')
+console.log('=== [Supabase] End ===')
 
 // ---------------------------------------------------------------------------
-// Create client — guard against empty strings (createClient requires non-empty)
+// Create client
 // ---------------------------------------------------------------------------
 export const supabase = createClient(
-  supabaseUrl    || 'https://missing-supabase-url.supabase.co',
-  supabaseAnonKey || 'missing-anon-key',
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       persistSession: true,
