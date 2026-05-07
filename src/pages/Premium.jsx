@@ -10,21 +10,23 @@ const PLANS = [
   {
     id: 'annual',
     label: 'Annual',
-    price: 99,
+    price: 199,
     period: '/year',
-    perMonth: '$8.25/mo',
+    perMonth: '$16.58/mo',
     badge: 'BEST VALUE',
     badgeColor: 'var(--accent)',
     priceId: PRICE_ANNUAL,
+    note: 'Includes 1 free custom audio — use code ANNUALFREE',
   },
   {
     id: 'monthly',
     label: 'Monthly',
-    price: 14.99,
+    price: 19,
     period: '/month',
     perMonth: null,
     badge: null,
     priceId: PRICE_MONTHLY,
+    note: null,
   },
 ]
 
@@ -208,6 +210,11 @@ export default function Premium() {
                   {plan.perMonth}
                 </div>
               )}
+              {plan.note && (
+                <div style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600, marginTop: 6, lineHeight: 1.4 }}>
+                  {plan.note}
+                </div>
+              )}
             </button>
           ))}
         </div>
@@ -281,7 +288,8 @@ export default function Premium() {
         </button>
 
         <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 28, lineHeight: 1.6 }}>
-          Secure payment via Stripe. Cancel anytime. Annual plan billed once per year.
+          Secure payment via Stripe. Cancel anytime. Annual plan billed once per year.{' '}
+          Annual members get 1 free custom audio — use code <strong style={{ color: 'var(--accent)' }}>ANNUALFREE</strong> at checkout.
         </p>
 
         {/* Features */}
