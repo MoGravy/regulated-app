@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
-import { trackSessionCompletion } from '../lib/supabase'
+import { supabase, trackSessionCompletion } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import MoodTracker from '../components/MoodTracker'
 
@@ -45,15 +45,71 @@ export default function SessionPlayer() {
   const intervalRef = useRef(null)
   const startTimeRef = useRef(null)
 
+  // Load session — Supabase first, fall back to demo data
   useEffect(() => {
-    setSession(DEMO_SESSIONS[id] || null)
+    async function loadSession() {
+      console.log('[SessionPlayer] Loading session', id)
+      try {
+        const { data, error } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        if (data && !error) {
+          console.log('[SessionPlayer] Loaded from Supabase:', data.title, '| audio_url:', data.audio_url || '(none)')
+          setSession(data)
+          return
+        }
+        console.warn('[SessionPlayer] Supabase returned no data, error:', error?.message)
+      } catch (e) {
+        console.error('[SessionPlayer] Supabase fetch failed:', e)
+      }
+      // Fall back to demo
+      const demo = DEMO_SESSIONS[id] || null
+      console.log('[SessionPlayer] Using demo data for session', id, '| audio_url:', demo?.audio_url || '(none)')
+      setSession(demo)
+    }
+
+    loadSession()
     trackEvent(Events.SESSION_STARTED, { session_id: id })
     return () => clearInterval(intervalRef.current)
   }, [id])
 
+  // Start audio playback when the playing step begins (after pre-mood)
+  useEffect(() => {
+    if (step !== STEP.PLAYING) return
+    if (!session?.audio_url) return
+
+    const audio = audioRef.current
+    if (!audio) {
+      console.warn('[Audio] audioRef not ready when step became PLAYING')
+      return
+    }
+
+    console.log('[Audio] src set to:', audio.src)
+    console.log('[Audio] Calling play()…')
+    audio.volume = 1
+    audio.muted = false
+
+    const playPromise = audio.play()
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log('[Audio] play() resolved — audio is playing')
+          setIsPlaying(true)
+        })
+        .catch(err => {
+          console.error('[Audio] play() rejected:', err.name, '—', err.message)
+          // Autoplay blocked — leave isPlaying false so user sees the Play button
+          setIsPlaying(false)
+        })
+    }
+  }, [step, session?.audio_url])
+
   // Simulate progress when no audio file (demo mode)
   useEffect(() => {
-    if (step === STEP.PLAYING && !session?.audio_url) {
+    if (step === STEP.PLAYING && !session?.audio_url && isPlaying) {
       const totalMs = (session?.duration || 15) * 60 * 1000
       startTimeRef.current = Date.now() - currentTime * 1000
 
@@ -70,12 +126,14 @@ export default function SessionPlayer() {
 
       return () => clearInterval(intervalRef.current)
     }
-  }, [step, isPlaying])
+  }, [step, isPlaying, session?.audio_url])
 
   function handlePreMood(mood) {
     setMoodBefore(mood)
     setStep(STEP.PLAYING)
-    setIsPlaying(true)
+    // Note: isPlaying starts false — the useEffect above will call play() and set it true
+    // For demo sessions (no audio_url), start the simulated timer
+    if (!session?.audio_url) setIsPlaying(true)
     setDuration((session?.duration || 15) * 60)
     trackEvent(Events.MOOD_TRACKED, { type: 'before', value: mood, session_id: id })
   }
@@ -91,21 +149,43 @@ export default function SessionPlayer() {
     await trackSessionCompletion(id, userEmail, moodBefore, mood)
     trackEvent(Events.MOOD_TRACKED, { type: 'after', value: mood, session_id: id })
     setStep(STEP.DONE)
-
-    // Show custom audio prompt after first completion
     setTimeout(() => setShowCustomPrompt(true), 800)
   }
 
   function togglePlay() {
-    if (audioRef.current) {
+    const audio = audioRef.current
+
+    if (audio) {
       if (isPlaying) {
-        audioRef.current.pause()
+        console.log('[Audio] Pausing')
+        audio.pause()
+        setIsPlaying(false)
         clearInterval(intervalRef.current)
       } else {
-        audioRef.current.play()
+        console.log('[Audio] Resuming — calling play()…')
+        audio.volume = 1
+        audio.muted = false
+        const playPromise = audio.play()
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('[Audio] Resume play() resolved')
+              setIsPlaying(true)
+            })
+            .catch(err => {
+              console.error('[Audio] Resume play() rejected:', err.name, '—', err.message)
+            })
+        } else {
+          setIsPlaying(true)
+        }
       }
+    } else {
+      // Demo mode — no audio element
+      if (isPlaying) {
+        clearInterval(intervalRef.current)
+      }
+      setIsPlaying(prev => !prev)
     }
-    setIsPlaying(!isPlaying)
   }
 
   function seek(e) {
@@ -153,6 +233,7 @@ export default function SessionPlayer() {
       <button
         onClick={() => {
           trackEvent(Events.SESSION_ABANDONED, { session_id: id, time: currentTime })
+          if (audioRef.current) audioRef.current.pause()
           navigate(-1)
         }}
         style={{
@@ -206,15 +287,37 @@ export default function SessionPlayer() {
       {step === STEP.PLAYING && (
         <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 40 }}>
 
-          {/* Audio element (hidden) */}
+          {/* Audio element — always rendered when there's a URL, so ref is available */}
           {session.audio_url && (
             <audio
               ref={audioRef}
               src={session.audio_url}
+              preload="auto"
+              onPlay={() => {
+                console.log('[Audio] onPlay event fired')
+                setIsPlaying(true)
+              }}
+              onPause={() => {
+                console.log('[Audio] onPause event fired')
+                setIsPlaying(false)
+              }}
               onTimeUpdate={e => setCurrentTime(e.target.currentTime)}
-              onLoadedMetadata={e => setDuration(e.target.duration)}
-              onEnded={handleSessionComplete}
-              onError={() => setAudioError(true)}
+              onLoadedMetadata={e => {
+                console.log('[Audio] onLoadedMetadata — duration:', e.target.duration)
+                setDuration(e.target.duration)
+              }}
+              onCanPlay={() => console.log('[Audio] onCanPlay — ready to play')}
+              onEnded={() => {
+                console.log('[Audio] onEnded')
+                setIsPlaying(false)
+                handleSessionComplete()
+              }}
+              onError={e => {
+                const err = e.target.error
+                console.error('[Audio] onError — code:', err?.code, 'message:', err?.message, 'src:', e.target.src)
+                setAudioError(true)
+                setIsPlaying(false)
+              }}
             />
           )}
 
@@ -234,7 +337,6 @@ export default function SessionPlayer() {
               position: 'relative',
               overflow: 'hidden',
             }}>
-              {/* Animated glow when playing */}
               {isPlaying && (
                 <div style={{
                   position: 'absolute',
@@ -245,7 +347,6 @@ export default function SessionPlayer() {
               )}
               <div style={{ fontSize: 72 }}>🎧</div>
 
-              {/* Waveform bars */}
               {isPlaying && (
                 <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 28, marginTop: 12 }}>
                   {[0.4, 0.7, 1, 0.8, 0.5, 0.9, 0.6, 1, 0.7, 0.4].map((h, i) => (
@@ -425,7 +526,6 @@ export default function SessionPlayer() {
       {step === STEP.DONE && (
         <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 20, textAlign: 'center' }}>
 
-          {/* Mood comparison */}
           {moodBefore !== null && moodAfter !== null && (
             <div className="card" style={{ width: '100%', marginBottom: 8 }}>
               <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>Your regulation shift</div>
