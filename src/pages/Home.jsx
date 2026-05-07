@@ -225,9 +225,9 @@ export default function Home() {
                   fontWeight: 700,
                   color: 'var(--bg-deep)',
                 }}>
-                  Unlock — $99/year
+                  Unlock — $199/year
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>or $14.99/mo</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>or $19/mo</div>
               </div>
             </div>
           </div>
