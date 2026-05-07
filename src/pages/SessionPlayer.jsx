@@ -48,26 +48,32 @@ export default function SessionPlayer() {
   // Load session — Supabase first, fall back to demo data
   useEffect(() => {
     async function loadSession() {
-      console.log('[SessionPlayer] Loading session', id)
+      console.log('[SessionPlayer] Loading session id:', id)
       try {
+        console.log('[SessionPlayer] Fetching from Supabase...')
         const { data, error } = await supabase
           .from('sessions')
           .select('*')
           .eq('id', id)
           .single()
 
+        console.log('[SessionPlayer] Supabase response — data:', data, '| error:', error)
+
         if (data && !error) {
-          console.log('[SessionPlayer] Loaded from Supabase:', data.title, '| audio_url:', data.audio_url || '(none)')
+          console.log('[SessionPlayer] ✓ Loaded from Supabase:', data.title)
+          console.log('[SessionPlayer] audio_url:', data.audio_url || '(none — no audio file uploaded yet)')
           setSession(data)
           return
         }
-        console.warn('[SessionPlayer] Supabase returned no data, error:', error?.message)
+
+        console.warn('[SessionPlayer] Supabase returned no data. Full error:', JSON.stringify(error))
       } catch (e) {
-        console.error('[SessionPlayer] Supabase fetch failed:', e)
+        console.error('[SessionPlayer] Supabase fetch threw an exception:', e)
       }
+
       // Fall back to demo
       const demo = DEMO_SESSIONS[id] || null
-      console.log('[SessionPlayer] Using demo data for session', id, '| audio_url:', demo?.audio_url || '(none)')
+      console.log('[SessionPlayer] Falling back to demo data for session', id, '| audio_url:', demo?.audio_url || '(none)')
       setSession(demo)
     }
 
@@ -87,10 +93,12 @@ export default function SessionPlayer() {
       return
     }
 
-    console.log('[Audio] src set to:', audio.src)
-    console.log('[Audio] Calling play()…')
+    console.log('[Audio] Element src attribute:', session.audio_url)
+    console.log('[Audio] Element .src (resolved):', audio.src)
+    console.log('[Audio] volume:', audio.volume, '| muted:', audio.muted, '| readyState:', audio.readyState)
     audio.volume = 1
     audio.muted = false
+    console.log('[Audio] Calling play()…')
 
     const playPromise = audio.play()
     if (playPromise !== undefined) {
@@ -293,28 +301,38 @@ export default function SessionPlayer() {
               ref={audioRef}
               src={session.audio_url}
               preload="auto"
-              onPlay={() => {
-                console.log('[Audio] onPlay event fired')
+              onPlay={e => {
+                console.log('[Audio] onPlay event — src:', e.target.src)
                 setIsPlaying(true)
               }}
-              onPause={() => {
-                console.log('[Audio] onPause event fired')
+              onPause={e => {
+                console.log('[Audio] onPause event — currentTime:', e.target.currentTime)
                 setIsPlaying(false)
               }}
               onTimeUpdate={e => setCurrentTime(e.target.currentTime)}
               onLoadedMetadata={e => {
-                console.log('[Audio] onLoadedMetadata — duration:', e.target.duration)
+                console.log('[Audio] onLoadedMetadata — duration:', e.target.duration, 'src:', e.target.src)
                 setDuration(e.target.duration)
               }}
-              onCanPlay={() => console.log('[Audio] onCanPlay — ready to play')}
+              onCanPlay={e => console.log('[Audio] onCanPlay — browser can play, src:', e.target.src)}
+              onStalled={e => console.warn('[Audio] onStalled — network stalled loading audio, src:', e.target.src)}
+              onWaiting={e => console.warn('[Audio] onWaiting — buffering, src:', e.target.src)}
               onEnded={() => {
-                console.log('[Audio] onEnded')
+                console.log('[Audio] onEnded — session finished')
                 setIsPlaying(false)
                 handleSessionComplete()
               }}
               onError={e => {
                 const err = e.target.error
-                console.error('[Audio] onError — code:', err?.code, 'message:', err?.message, 'src:', e.target.src)
+                const codes = { 1: 'ABORTED', 2: 'NETWORK', 3: 'DECODE', 4: 'SRC_NOT_SUPPORTED' }
+                console.error('[Audio] onerror event:', {
+                  code: err?.code,
+                  codeLabel: codes[err?.code] || 'UNKNOWN',
+                  message: err?.message,
+                  src: e.target.src,
+                  networkState: e.target.networkState,
+                  readyState: e.target.readyState,
+                })
                 setAudioError(true)
                 setIsPlaying(false)
               }}

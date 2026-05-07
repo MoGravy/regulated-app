@@ -1,30 +1,66 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+// ---------------------------------------------------------------------------
+// Key inspection helper
+// Supabase JWTs are base64url-encoded. Decoding the payload reveals the `role`
+// claim. If it says "service_role" the wrong key is in use.
+// ---------------------------------------------------------------------------
+function inspectSupabaseKey(key) {
+  if (!key) return { role: null, error: 'key is empty' }
+  try {
+    const parts = key.split('.')
+    if (parts.length !== 3) return { role: null, error: 'not a JWT' }
+    // base64url → base64 → JSON
+    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/').padEnd(
+      parts[1].length + (4 - parts[1].length % 4) % 4, '='
+    )
+    const payload = JSON.parse(atob(padded))
+    return { role: payload.role, iss: payload.iss, payload }
+  } catch (e) {
+    return { role: null, error: e.message }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Read env vars (injected at build time by vite.config.js)
+// ---------------------------------------------------------------------------
+const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Debug: log resolved values on startup so we can verify env vars are injected correctly.
-// These will appear in the browser console.
-console.log('[Regulated] SUPABASE_URL:', supabaseUrl || '(not set)')
-console.log('[Regulated] SUPABASE_ANON_KEY:', supabaseAnonKey ? supabaseAnonKey.slice(0, 20) + '…' : '(not set)')
+// ---------------------------------------------------------------------------
+// Comprehensive startup logging
+// ---------------------------------------------------------------------------
+console.log('=== [Supabase] Init diagnostics ===')
+console.log('Supabase URL:',            supabaseUrl    || '(not set)')
+console.log('Supabase Anon Key exists:', !!supabaseAnonKey)
+console.log('Supabase Anon Key prefix:', supabaseAnonKey ? supabaseAnonKey.slice(0, 30) + '…' : '(not set)')
 
-if (!supabaseUrl) {
+const keyInfo = inspectSupabaseKey(supabaseAnonKey)
+console.log('Supabase key role (JWT):', keyInfo.role || keyInfo.error)
+
+if (keyInfo.role === 'service_role') {
   console.error(
-    '[Regulated] SUPABASE_URL is not set. ' +
-    'Add SUPABASE_URL (or VITE_SUPABASE_URL) to your Vercel environment variables.'
+    '🚨 [Supabase] WRONG KEY: SUPABASE_ANON_KEY is set to the SERVICE ROLE KEY.\n' +
+    'This is why you see "Forbidden use of secret API key in browser".\n' +
+    'Fix: In your Vercel dashboard, set SUPABASE_ANON_KEY to the ANON/PUBLIC key\n' +
+    '(found in Supabase → Project Settings → API → "anon public").\n' +
+    'The service role key must NEVER be sent to the browser.'
   )
-}
-if (!supabaseAnonKey) {
-  console.error(
-    '[Regulated] SUPABASE_ANON_KEY is not set. ' +
-    'Add SUPABASE_ANON_KEY (or VITE_SUPABASE_ANON_KEY) to your Vercel environment variables.'
-  )
+} else if (keyInfo.role === 'anon') {
+  console.log('[Supabase] ✓ Key role is "anon" — correct key in use')
+} else if (!supabaseAnonKey) {
+  console.error('[Supabase] SUPABASE_ANON_KEY is not set in Vercel env vars')
+} else {
+  console.warn('[Supabase] Key role:', keyInfo.role, '— expected "anon"', keyInfo)
 }
 
-// createClient requires non-empty strings — guard so the app loads even if
-// env vars are missing (all DB calls will fail gracefully and fall back to demo data)
+console.log('=== [Supabase] End diagnostics ===')
+
+// ---------------------------------------------------------------------------
+// Create client — guard against empty strings (createClient requires non-empty)
+// ---------------------------------------------------------------------------
 export const supabase = createClient(
-  supabaseUrl || 'https://missing-supabase-url.supabase.co',
+  supabaseUrl    || 'https://missing-supabase-url.supabase.co',
   supabaseAnonKey || 'missing-anon-key',
   {
     auth: {
@@ -34,7 +70,11 @@ export const supabase = createClient(
   }
 )
 
-// --- Session helpers ---
+console.log('[Supabase] Client initialized:', !!supabase)
+
+// ---------------------------------------------------------------------------
+// Session helpers
+// ---------------------------------------------------------------------------
 
 export async function trackSessionCompletion(sessionId, userEmail, moodBefore, moodAfter) {
   const payload = {
@@ -46,9 +86,8 @@ export async function trackSessionCompletion(sessionId, userEmail, moodBefore, m
   }
 
   const { error } = await supabase.from('session_completions').insert(payload)
-  if (error) console.error('trackSessionCompletion error:', error)
+  if (error) console.error('[Supabase] trackSessionCompletion error:', error)
 
-  // Update user's completed_sessions count if email known
   if (userEmail) {
     await supabase.rpc('increment_completed_sessions', { p_email: userEmail })
   }
@@ -65,7 +104,7 @@ export async function getSessions(includeAllForPremium = false) {
   }
 
   const { data, error } = await query
-  if (error) console.error('getSessions error:', error)
+  if (error) console.error('[Supabase] getSessions error:', error)
   return data || []
 }
 
@@ -74,11 +113,13 @@ export async function getAllSessions() {
     .from('sessions')
     .select('*')
     .order('created_at', { ascending: true })
-  if (error) console.error('getAllSessions error:', error)
+  if (error) console.error('[Supabase] getAllSessions error:', error)
   return data || []
 }
 
-// --- Custom order helpers ---
+// ---------------------------------------------------------------------------
+// Custom order helpers
+// ---------------------------------------------------------------------------
 
 export async function createCustomOrder(orderData) {
   const dueDate = new Date()
@@ -110,7 +151,9 @@ export async function getCustomOrder(orderId) {
   return data
 }
 
-// --- Subscription helpers ---
+// ---------------------------------------------------------------------------
+// Subscription helpers
+// ---------------------------------------------------------------------------
 
 export async function checkSubscription(email) {
   if (!email) return false
@@ -127,20 +170,22 @@ export async function checkSubscription(email) {
   return !!data
 }
 
-// --- User helpers ---
+// ---------------------------------------------------------------------------
+// User helpers
+// ---------------------------------------------------------------------------
 
 export async function upsertUser(email) {
   if (!email) return
   const { error } = await supabase
     .from('users')
     .upsert({ email, updated_at: new Date().toISOString() }, { onConflict: 'email' })
-  if (error) console.error('upsertUser error:', error)
+  if (error) console.error('[Supabase] upsertUser error:', error)
 }
 
 export async function getAudioSignedUrl(path) {
   const { data, error } = await supabase.storage
     .from('audio')
-    .createSignedUrl(path, 3600) // 1 hour
+    .createSignedUrl(path, 3600)
   if (error) throw error
   return data.signedUrl
 }
