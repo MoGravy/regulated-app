@@ -36,11 +36,22 @@ export default function Sessions() {
   }, [])
 
   async function loadSessions() {
+    console.log('[Sessions] loadSessions — starting')
     try {
       const data = await getAllSessions()
-      if (data.length) setSessions(data)
-    } catch {
-      // Use demo data
+      if (data.length) {
+        console.log('[Sessions] ✓ Using Supabase sessions —', data.length, 'rows')
+        console.log('[Sessions] Session IDs from Supabase:', data.map(s => s.id))
+        setSessions(data)
+      } else {
+        console.warn('[Sessions] Supabase returned 0 rows — falling back to DEMO_SESSIONS (numeric ids, no audio)')
+        // sessions state keeps its initial value (DEMO_SESSIONS)
+      }
+    } catch (err) {
+      console.error('[Sessions] getAllSessions threw — falling back to DEMO_SESSIONS. Error:', err?.message || err)
+      console.error('[Sessions] This is why session ids are "2" instead of UUIDs.')
+      console.error('[Sessions] Fix: ensure Supabase anon key is correct in Vercel env vars.')
+      // sessions state keeps its initial value (DEMO_SESSIONS)
     } finally {
       setLoading(false)
     }
