@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { HARDCODED_SESSIONS } from './hardcodedSessions'
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/credentials'
 
 // ---------------------------------------------------------------------------
 // Key inspection helper
@@ -22,34 +23,16 @@ function inspectSupabaseKey(key) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// TEMPORARY: hardcoded credentials while env var baking issue is debugged.
-// Both values are safe to expose — the anon key is the public key, designed
-// for browser use. The service role key is NOT here and must stay server-only.
-// TODO: revert to import.meta.env once env var pipeline is confirmed working.
-// ---------------------------------------------------------------------------
-const supabaseUrl     = 'https://aynyvirtzioyeshauith.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5bnl2aXJ0emlveWVzaGF1aXRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjEzODcsImV4cCI6MjA5MzMzNzM4N30.q1hfzEtVylk2_1a3hdc1gRZ9jZNLB4YKdK77A9mqHBM'
-
-console.log('=== [Supabase] Init ===')
-console.log('Supabase URL:', supabaseUrl)
-console.log('Supabase Anon Key:', supabaseAnonKey === 'REPLACE_WITH_ANON_KEY' ? '⚠️ PLACEHOLDER — paste real anon key' : `set (${supabaseAnonKey.length} chars)`)
-
-const keyInfo = inspectSupabaseKey(supabaseAnonKey)
-console.log('Key role:', keyInfo.role || keyInfo.error)
-if (keyInfo.role === 'service_role') {
-  console.error('🚨 WRONG KEY: this is the service role key — use the anon/public key instead')
-} else if (keyInfo.role === 'anon') {
-  console.log('✓ Correct anon key in use')
-}
-console.log('=== [Supabase] End ===')
+// Credentials imported from src/config/credentials.js (hardcoded, no env vars)
+console.log('[supabase.js] URL:', SUPABASE_URL)
+console.log('[supabase.js] Anon key role:', inspectSupabaseKey(SUPABASE_ANON_KEY).role)
 
 // ---------------------------------------------------------------------------
 // Create client
 // ---------------------------------------------------------------------------
 export const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey,
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
   {
     auth: {
       persistSession: true,
