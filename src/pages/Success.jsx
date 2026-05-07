@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
@@ -6,55 +6,37 @@ import { trackEvent, Events } from '../lib/analytics'
 export default function Success() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const { setIsPremium, addToast } = useApp()
+  const { setIsPremium } = useApp()
 
   const type = params.get('type') // 'subscription' | 'custom_audio'
   const sessionId = params.get('session_id')
 
-  const [verified, setVerified] = useState(false)
-  const [loading, setLoading] = useState(true)
-
+  // Fire analytics in the background — never block rendering on this
   useEffect(() => {
-    if (sessionId) {
-      verifySession()
-    } else {
-      setLoading(false)
-    }
-  }, [sessionId])
-
-  async function verifySession() {
-    try {
-      const res = await fetch(`/api/verify-session?session_id=${sessionId}`)
-      if (res.ok) {
-        const data = await res.json()
-        if (data.status === 'paid' || data.status === 'complete') {
-          setVerified(true)
-          if (type === 'subscription') {
-            setIsPremium(true)
-            trackEvent(Events.PREMIUM_UPGRADE_COMPLETED)
-          } else {
-            trackEvent(Events.CUSTOM_AUDIO_ORDER_COMPLETED)
+    if (!sessionId) return
+    async function verifyInBackground() {
+      try {
+        const res = await fetch(`/api/verify-session?session_id=${sessionId}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.status === 'paid' || data.status === 'complete') {
+            if (type === 'subscription') {
+              setIsPremium(true)
+              trackEvent(Events.PREMIUM_UPGRADE_COMPLETED)
+            } else {
+              trackEvent(Events.CUSTOM_AUDIO_ORDER_COMPLETED)
+            }
           }
         }
+      } catch {
+        // Ignore — webhook already handled the order
       }
-    } catch {
-      // Treat as success even if verification fails (webhook handles it)
-      setVerified(true)
-    } finally {
-      setLoading(false)
     }
-  }
+    verifyInBackground()
+  }, [sessionId, type])
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-deep)' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner" style={{ margin: '0 auto 16px', width: 32, height: 32, color: 'var(--accent)' }} />
-          <div style={{ color: 'var(--text-secondary)' }}>Confirming your order…</div>
-        </div>
-      </div>
-    )
-  }
+  // Render immediately — no loading gate. Payment already confirmed by Stripe
+  // redirecting here with a session_id.
 
   if (type === 'custom_audio') {
     return (

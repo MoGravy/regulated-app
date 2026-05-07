@@ -1,7 +1,12 @@
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-const APP_URL = process.env.APP_URL || process.env.VITE_APP_URL || 'https://regulatedapp.co'
+// APP_URL must match the actual deployed URL so Stripe redirects land correctly.
+// Set APP_URL in Vercel env vars. Falls back to the current Vercel preview URL.
+const APP_URL =
+  process.env.APP_URL ||
+  process.env.VITE_APP_URL ||
+  'https://regulated-41wm9xok4-mogravys-projects.vercel.app'
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
