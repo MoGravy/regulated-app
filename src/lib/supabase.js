@@ -29,7 +29,7 @@ function inspectSupabaseKey(key) {
 // TODO: revert to import.meta.env once env var pipeline is confirmed working.
 // ---------------------------------------------------------------------------
 const supabaseUrl     = 'https://aynyvirtzioyeshauith.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'REPLACE_WITH_ANON_KEY'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5bnl2aXJ0emlveWVzaGF1aXRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3NjEzODcsImV4cCI6MjA5MzMzNzM4N30.q1hfzEtVylk2_1a3hdc1gRZ9jZNLB4YKdK77A9mqHBM'
 
 console.log('=== [Supabase] Init ===')
 console.log('Supabase URL:', supabaseUrl)
