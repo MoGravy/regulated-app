@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createCustomOrder } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import { useApp } from '../hooks/useApp'
 import { stripePromise } from '../lib/stripe'
@@ -71,23 +70,21 @@ export default function CustomAudio() {
   async function handleCheckout() {
     setLoading(true)
     try {
-      const order = await createCustomOrder({
-        user_email: form.email,
-        pattern: form.pattern,
-        trigger: form.trigger,
-        desired_state: form.desiredState,
-        affirmations: form.affirmations,
-      })
-
       setUserEmail(form.email)
 
+      // Send all order details to the backend — no Supabase call needed here.
+      // The serverless function embeds the fields in Stripe metadata, and the
+      // webhook creates the confirmed order in the database after payment.
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'custom_audio',
-          orderId: order.id,
           email: form.email,
+          pattern: form.pattern,
+          trigger: form.trigger,
+          desiredState: form.desiredState,
+          affirmations: form.affirmations,
           amount: Math.round(finalPrice * 100),
           couponCode: appliedCoupon?.code || null,
           discountType: appliedCoupon?.discount_type || null,

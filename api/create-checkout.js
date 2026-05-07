@@ -11,7 +11,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { type, email, orderId, amount, plan, priceId, couponCode, discountType, discountAmount } = req.body
+  const {
+    type, email, amount, plan, priceId,
+    couponCode, discountType, discountAmount,
+    // Custom audio order fields (stored in metadata; webhook creates DB row after payment)
+    pattern, trigger, desiredState, affirmations,
+  } = req.body
+
+  // Stripe metadata values are capped at 500 chars — truncate long free-text fields
+  const trunc = (str, max = 490) =>
+    str && str.length > max ? str.slice(0, max) + '…' : (str || '')
 
   try {
     // Build Stripe discount object from coupon if provided
@@ -53,9 +62,13 @@ export default async function handler(req, res) {
         ...(discounts ? {} : { allow_promotion_codes: true }),
         metadata: {
           type: 'custom_audio',
-          order_id: orderId,
           user_email: email,
-          coupon_code: couponCode || '',
+          // Full order details — webhook reads these to create the DB row
+          pattern:       trunc(pattern),
+          trigger:       trunc(trigger),
+          desired_state: trunc(desiredState),
+          affirmations:  trunc(affirmations),
+          coupon_code:   couponCode || '',
           discount_applied: discountAmount ? String(discountAmount) : '0',
         },
         success_url: `${APP_URL}/success?type=custom_audio&session_id={CHECKOUT_SESSION_ID}`,

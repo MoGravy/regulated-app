@@ -47,7 +47,7 @@ export default async function handler(req, res) {
         const { type, order_id, user_email, plan, coupon_code, discount_applied } = session.metadata || {}
 
         if (type === 'custom_audio') {
-          await handleCustomAudioPayment(session, order_id, user_email, coupon_code, discount_applied)
+          await handleCustomAudioPayment(session, user_email, coupon_code, discount_applied)
         } else if (type === 'subscription') {
           await handleSubscriptionPayment(session, user_email, plan, coupon_code, discount_applied)
         }
@@ -98,27 +98,42 @@ export default async function handler(req, res) {
   }
 }
 
-async function handleCustomAudioPayment(session, orderId, userEmail, couponCode, discountApplied) {
-  await supabase
+async function handleCustomAudioPayment(session, userEmail, couponCode, discountApplied) {
+  const { pattern, trigger, desired_state, affirmations } = session.metadata || {}
+
+  const dueDate = new Date()
+  dueDate.setDate(dueDate.getDate() + 7)
+
+  // INSERT a new confirmed order — no pre-existing row needed
+  const { error: insertError } = await supabase
     .from('custom_orders')
-    .update({
+    .insert({
+      user_email: userEmail,
+      pattern:       pattern || '',
+      trigger:       trigger || '',
+      desired_state: desired_state || '',
+      affirmations:  affirmations || '',
       status: 'confirmed',
       stripe_session_id: session.id,
       coupon_code_used: couponCode || null,
       discount_applied: discountApplied ? parseFloat(discountApplied) : 0,
+      due_date: dueDate.toISOString(),
+      turnaround_days: 7,
+      created_at: new Date().toISOString(),
     })
-    .eq('id', orderId)
+
+  if (insertError) {
+    console.error('custom_orders insert error:', insertError)
+    // Don't throw — still send the email even if DB insert fails
+  }
 
   // Upsert user
   await supabase
     .from('users')
     .upsert({ email: userEmail, updated_at: new Date().toISOString() }, { onConflict: 'email' })
 
-  // Send order confirmation email
-  const dueDate = new Date()
-  dueDate.setDate(dueDate.getDate() + 7)
+  // Send confirmation email
   const dueDateStr = dueDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-
   await resend.emails.send({
     from: `Matthew at Regulated <${FROM_EMAIL}>`,
     to: userEmail,
