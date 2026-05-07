@@ -39,13 +39,13 @@ export default function CustomAudio() {
       e.email = 'Valid email required for delivery'
     }
     if (!form.pattern.trim() || form.pattern.trim().length < 20) {
-      e.pattern = 'Please describe your pattern in detail (at least 20 characters)'
+      e.pattern = 'Please describe your pattern — the more detail, the better the audio'
     }
     if (!form.trigger.trim()) {
-      e.trigger = 'Trigger is required'
+      e.trigger = 'Required — this anchors the whole session'
     }
     if (!form.desiredState.trim()) {
-      e.desiredState = 'Desired state is required'
+      e.desiredState = 'Required — this is where we guide you'
     }
     return e
   }
@@ -71,7 +71,6 @@ export default function CustomAudio() {
   async function handleCheckout() {
     setLoading(true)
     try {
-      // Create order record in Supabase first
       const order = await createCustomOrder({
         user_email: form.email,
         pattern: form.pattern,
@@ -80,10 +79,8 @@ export default function CustomAudio() {
         affirmations: form.affirmations,
       })
 
-      // Save email to local state
       setUserEmail(form.email)
 
-      // Create Stripe checkout session
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -91,7 +88,7 @@ export default function CustomAudio() {
           type: 'custom_audio',
           orderId: order.id,
           email: form.email,
-          amount: Math.round(finalPrice * 100), // cents, post-discount
+          amount: Math.round(finalPrice * 100),
           couponCode: appliedCoupon?.code || null,
           discountType: appliedCoupon?.discount_type || null,
           discountAmount: appliedCoupon?.discount_amount || null,
@@ -137,7 +134,7 @@ export default function CustomAudio() {
         </div>
 
         {/* What you get */}
-        <div className="card" style={{ marginBottom: 24 }}>
+        <div className="card" style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
             What's included
           </div>
@@ -163,6 +160,7 @@ export default function CustomAudio() {
         {step === 'form' && (
           <form onSubmit={handleReview}>
 
+            {/* Email */}
             <div className="form-group">
               <label className="form-label">Your Email *</label>
               <input
@@ -178,45 +176,89 @@ export default function CustomAudio() {
               </span>
             </div>
 
+            {/* Pattern — expanded with full instruction block */}
             <div className="form-group">
               <label className="form-label">Your Specific Pattern *</label>
+
+              {/* Instruction block */}
+              <div style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                padding: '18px 20px',
+                marginBottom: 14,
+              }}>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.75, margin: '0 0 14px' }}>
+                  Think of a situation that regularly triggers you. It might be a person, a place, a request, or a moment that always seems to pull you out of your calm.
+                </p>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.75, margin: '0 0 16px' }}>
+                  Write it as a short scene, like you're describing it to a friend. Include what happens, how your body feels, and how you want to feel instead.
+                </p>
+
+                {/* Example */}
+                <div style={{
+                  background: 'rgba(126, 207, 192, 0.06)',
+                  border: '1px solid rgba(126, 207, 192, 0.2)',
+                  borderRadius: 10,
+                  padding: '14px 16px',
+                  marginBottom: 14,
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', marginBottom: 8 }}>
+                    EXAMPLE
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.75, margin: 0, fontStyle: 'italic' }}>
+                    You get home from a long day. Your boss messages asking you to send an urgent email tonight. You feel the familiar surge of panic and that tight, exhausted tension. Then you catch yourself. You take a breath and choose calm, confidence, and quiet determination. You reply honestly: "I'm exhausted after a full day. I can't get to this tonight." Your boss pauses, then steps back and respects that.
+                  </p>
+                </div>
+
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+                  Your pattern doesn't need to be dramatic. It just needs to be real.
+                </p>
+              </div>
+
               <textarea
                 className="form-input form-textarea"
-                placeholder="e.g. I've struggled with health anxiety for 3 years. Every time I feel a physical sensation, my mind immediately catastrophises to worst-case illness. I've tried therapy but the pattern keeps returning..."
+                placeholder="Describe your pattern here…"
                 value={form.pattern}
                 onChange={e => handleChange('pattern', e.target.value)}
-                style={{ minHeight: 130 }}
+                style={{ minHeight: 300, resize: 'vertical' }}
               />
               {errors.pattern && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.pattern}</span>}
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Be as specific as possible. This is what Matthew builds around.
-              </span>
             </div>
 
+            {/* Trigger */}
             <div className="form-group">
               <label className="form-label">Main Trigger *</label>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 10px' }}>
+                What's the specific moment, person, or feeling that sets the pattern off? Name it precisely — the more specific, the more targeted your audio will be.
+              </p>
               <input
                 type="text"
                 className="form-input"
-                placeholder="e.g. Physical sensations, social situations, work stress, conflict..."
+                placeholder="e.g. When my boss messages me after 6pm. When I feel a pain in my chest. When someone doesn't reply."
                 value={form.trigger}
                 onChange={e => handleChange('trigger', e.target.value)}
               />
               {errors.trigger && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.trigger}</span>}
             </div>
 
+            {/* Desired state */}
             <div className="form-group">
               <label className="form-label">Desired State *</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="e.g. Calm and grounded. Trusting my body. Free from the anxiety loop."
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 10px' }}>
+                How do you want to feel when that trigger arrives? Describe the emotional and physical state — calm, grounded, confident, free. This is the destination your audio guides you toward.
+              </p>
+              <textarea
+                className="form-input form-textarea"
+                placeholder="e.g. Calm and grounded. Trusting my body. Present without panic. Able to set a boundary and feel okay about it."
                 value={form.desiredState}
                 onChange={e => handleChange('desiredState', e.target.value)}
+                style={{ minHeight: 110, resize: 'vertical' }}
               />
               {errors.desiredState && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.desiredState}</span>}
             </div>
 
+            {/* Affirmations */}
             <div className="form-group">
               <label className="form-label">
                 Personal Affirmations
@@ -224,11 +266,15 @@ export default function CustomAudio() {
                   (optional)
                 </span>
               </label>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 10px' }}>
+                Any specific phrases, beliefs, or statements you want Matthew to weave into the audio. These become part of your session's language — phrases that feel true to you, not generic.
+              </p>
               <textarea
                 className="form-input form-textarea"
-                placeholder="Any specific phrases or beliefs you want woven into the audio. e.g. 'My body is safe. I trust myself. I am enough.'"
+                placeholder="e.g. My body is safe. I trust myself. I am allowed to rest. I don't owe anyone my exhaustion."
                 value={form.affirmations}
                 onChange={e => handleChange('affirmations', e.target.value)}
+                style={{ minHeight: 110, resize: 'vertical' }}
               />
             </div>
 
@@ -255,7 +301,7 @@ export default function CustomAudio() {
                   <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>
                     {label.toUpperCase()}
                   </div>
-                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                     {value}
                   </div>
                 </div>
@@ -276,8 +322,7 @@ export default function CustomAudio() {
               </div>
             </div>
 
-            {/* Coupon field on confirm step */}
-            <div style={{ marginTop: 16 }}>
+            <div style={{ marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
                 Have a coupon code?
               </div>
@@ -316,8 +361,8 @@ export default function CustomAudio() {
           </div>
         )}
 
-        {/* Testimonial-style social proof */}
-        <div style={{ marginTop: 32, marginBottom: 8 }}>
+        {/* Social proof */}
+        <div style={{ marginTop: 36, marginBottom: 8 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 14 }}>
             WHAT OTHERS SAY
           </div>
