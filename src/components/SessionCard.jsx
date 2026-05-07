@@ -27,6 +27,7 @@ export default function SessionCard({ session, compact = false }) {
       navigate('/premium')
       return
     }
+    console.log('Playing session with ID:', session.id, '| title:', session.title)
     navigate(`/sessions/${session.id}`)
   }
 

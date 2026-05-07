@@ -45,35 +45,46 @@ export default function SessionPlayer() {
   const intervalRef = useRef(null)
   const startTimeRef = useRef(null)
 
-  // Load session — Supabase first, fall back to demo data
+  // Load session — Supabase first (only when id is a real UUID), fall back to demo data
   useEffect(() => {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const isUuid = UUID_RE.test(id)
+
     async function loadSession() {
-      console.log('[SessionPlayer] Loading session id:', id)
-      try {
-        console.log('[SessionPlayer] Fetching from Supabase...')
-        const { data, error } = await supabase
-          .from('sessions')
-          .select('*')
-          .eq('id', id)
-          .single()
+      console.log('[SessionPlayer] Loading session id:', id, '| looks like UUID:', isUuid)
 
-        console.log('[SessionPlayer] Supabase response — data:', data, '| error:', error)
+      if (isUuid) {
+        // Real UUID from Supabase — fetch the full row
+        try {
+          console.log('[SessionPlayer] Fetching from Supabase with UUID:', id)
+          const { data, error } = await supabase
+            .from('sessions')
+            .select('*')
+            .eq('id', id)
+            .single()
 
-        if (data && !error) {
-          console.log('[SessionPlayer] ✓ Loaded from Supabase:', data.title)
-          console.log('[SessionPlayer] audio_url:', data.audio_url || '(none — no audio file uploaded yet)')
-          setSession(data)
-          return
+          console.log('[SessionPlayer] Supabase response — data:', data, '| error:', error)
+
+          if (data && !error) {
+            console.log('Playing session with ID:', data.id)
+            console.log('[SessionPlayer] ✓ Loaded:', data.title, '| audio_url:', data.audio_url || '(none)')
+            setSession(data)
+            return
+          }
+
+          console.warn('[SessionPlayer] Supabase returned no data. Full error:', JSON.stringify(error))
+        } catch (e) {
+          console.error('[SessionPlayer] Supabase fetch threw an exception:', e)
         }
-
-        console.warn('[SessionPlayer] Supabase returned no data. Full error:', JSON.stringify(error))
-      } catch (e) {
-        console.error('[SessionPlayer] Supabase fetch threw an exception:', e)
+      } else {
+        // Numeric/demo ID — skip Supabase (it expects a UUID and will reject this)
+        console.log('[SessionPlayer] Non-UUID id "' + id + '" — using demo data directly (no Supabase query)')
       }
 
       // Fall back to demo
       const demo = DEMO_SESSIONS[id] || null
-      console.log('[SessionPlayer] Falling back to demo data for session', id, '| audio_url:', demo?.audio_url || '(none)')
+      console.log('[SessionPlayer] Using demo session for id', id, '| audio_url:', demo?.audio_url || '(none)')
+      if (demo) console.log('Playing session with ID:', demo.id)
       setSession(demo)
     }
 
