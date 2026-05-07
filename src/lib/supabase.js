@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { HARDCODED_SESSIONS } from './hardcodedSessions'
 
 // ---------------------------------------------------------------------------
 // Key inspection helper
@@ -93,47 +94,15 @@ export async function trackSessionCompletion(sessionId, userEmail, moodBefore, m
   }
 }
 
-export async function getSessions(includeAllForPremium = false) {
-  console.log('[Supabase] getSessions — fetching (includeAll:', includeAllForPremium, ')')
-  let query = supabase
-    .from('sessions')
-    .select('*')
-    .order('created_at', { ascending: true })
-
-  if (!includeAllForPremium) {
-    query = query.eq('free', true)
-  }
-
-  const { data, error } = await query
-  if (error) {
-    console.error('[Supabase] getSessions ERROR:', error.message, error.code)
-    throw error
-  }
-  console.log('[Supabase] getSessions — returned', data?.length ?? 0, 'rows')
-  return data || []
+export async function getSessions() {
+  console.log('[Sessions] Using hard-coded sessions for testing — 4 sessions loaded')
+  return HARDCODED_SESSIONS.filter(s => s.free)
 }
 
 export async function getAllSessions() {
-  console.log('[Supabase] getAllSessions — fetching...')
-  const { data, error } = await supabase
-    .from('sessions')
-    .select('*')
-    .order('created_at', { ascending: true })
-
-  if (error) {
-    console.error('[Supabase] getAllSessions ERROR — full error object:', error)
-    console.error('[Supabase] getAllSessions error message:', error.message)
-    console.error('[Supabase] getAllSessions error code:', error.code)
-    // Re-throw so callers know this failed rather than silently returning []
-    throw error
-  }
-
-  console.log('[Supabase] getAllSessions — returned', data?.length ?? 0, 'rows')
-  if (data?.length) {
-    console.log('[Supabase] getAllSessions — first session id:', data[0].id, '| title:', data[0].title)
-    console.log('[Supabase] getAllSessions — all ids:', data.map(s => s.id))
-  }
-  return data || []
+  console.log('[Sessions] Using hard-coded sessions for testing — 4 sessions loaded')
+  console.log('[Sessions] Session IDs:', HARDCODED_SESSIONS.map(s => s.id))
+  return HARDCODED_SESSIONS
 }
 
 // ---------------------------------------------------------------------------

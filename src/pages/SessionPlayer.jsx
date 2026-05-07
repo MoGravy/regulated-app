@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { supabase, trackSessionCompletion } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
+import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import MoodTracker from '../components/MoodTracker'
 
 const DEMO_SESSIONS = {
@@ -81,9 +82,11 @@ export default function SessionPlayer() {
         console.log('[SessionPlayer] Non-UUID id "' + id + '" — using demo data directly (no Supabase query)')
       }
 
-      // Fall back to demo
-      const demo = DEMO_SESSIONS[id] || null
-      console.log('[SessionPlayer] Using demo session for id', id, '| audio_url:', demo?.audio_url || '(none)')
+      // Fall back: check hardcoded sessions first (have real audio_urls), then old demo stubs
+      const hardcoded = HARDCODED_SESSIONS_BY_ID[id] || null
+      const demo = hardcoded || DEMO_SESSIONS[id] || null
+      const source = hardcoded ? 'hardcoded' : 'demo stub (no audio)'
+      console.log('[SessionPlayer] Fallback lookup for id', id, '— source:', source, '| audio_url:', demo?.audio_url || '(none)')
       if (demo) console.log('Playing session with ID:', demo.id)
       setSession(demo)
     }
