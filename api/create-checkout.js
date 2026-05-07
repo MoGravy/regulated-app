@@ -1,12 +1,15 @@
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-// APP_URL must match the actual deployed URL so Stripe redirects land correctly.
-// Set APP_URL in Vercel env vars. Falls back to the current Vercel preview URL.
-const APP_URL =
-  process.env.APP_URL ||
-  process.env.VITE_APP_URL ||
-  'https://regulated-41wm9xok4-mogravys-projects.vercel.app'
+// APP_URL for Stripe success/cancel redirects.
+// Priority: explicit env var → request Origin header → Vercel preview fallback.
+// Using the request Origin means redirects always land on the same domain the
+// user is browsing from, even across preview/production deployments.
+function getAppUrl(req) {
+  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, '')
+  if (req.headers.origin) return req.headers.origin.replace(/\/$/, '')
+  return 'https://regulated-41wm9xok4-mogravys-projects.vercel.app'
+}
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -26,6 +29,8 @@ export default async function handler(req, res) {
   // Stripe metadata values are capped at 500 chars — truncate long free-text fields
   const trunc = (str, max = 490) =>
     str && str.length > max ? str.slice(0, max) + '…' : (str || '')
+
+  const appUrl = getAppUrl(req)
 
   try {
     // Build Stripe discount object from coupon if provided
@@ -56,7 +61,7 @@ export default async function handler(req, res) {
               product_data: {
                 name: 'Custom Audio Session',
                 description: 'Personalized nervous system regulation audio — delivered within 7 days',
-                images: [`${APP_URL}/og-image.jpg`],
+                images: [`${appUrl}/og-image.jpg`],
               },
             },
             quantity: 1,
@@ -76,8 +81,8 @@ export default async function handler(req, res) {
           coupon_code:   couponCode || '',
           discount_applied: discountAmount ? String(discountAmount) : '0',
         },
-        success_url: `${APP_URL}/success?type=custom_audio&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${APP_URL}/custom`,
+        success_url: `${appUrl}/success?type=custom_audio&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${appUrl}/custom`,
       })
 
       return res.status(200).json({ url: session.url, sessionId: session.id })
@@ -99,8 +104,8 @@ export default async function handler(req, res) {
         subscription_data: {
           metadata: { user_email: email, plan },
         },
-        success_url: `${APP_URL}/success?type=subscription&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${APP_URL}/premium`,
+        success_url: `${appUrl}/success?type=subscription&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${appUrl}/premium`,
       })
 
       return res.status(200).json({ url: session.url, sessionId: session.id })
