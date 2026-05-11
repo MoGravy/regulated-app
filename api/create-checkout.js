@@ -57,7 +57,7 @@ export default async function handler(req, res) {
           {
             price_data: {
               currency: 'usd',
-              unit_amount: amount || 7500,
+              unit_amount: amount || 9900,
               product_data: {
                 name: 'Custom Audio Session',
                 description: 'Personalized nervous system regulation audio — delivered within 7 days',

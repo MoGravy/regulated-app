@@ -603,7 +603,7 @@ export default function SessionPlayer() {
               These sessions are powerful — but a custom audio built around <em>your exact pattern and triggers</em> is in a different league. Matthew builds it personally.
             </p>
             <button className="btn-primary" onClick={() => navigate('/custom')}>
-              Order Custom Audio — $75
+              Order Custom Audio — $99
             </button>
             <button className="btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={() => setShowCustomPrompt(false)}>
               Not now
