@@ -65,14 +65,58 @@ export async function trackSessionCompletion(sessionId, userEmail, moodBefore, m
 }
 
 export async function getSessions() {
-  console.log('[Sessions] Using hard-coded sessions for testing — 4 sessions loaded')
+  console.log('[Sessions] Fetching free sessions from Supabase...')
+  try {
+    const { data, error } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('free', true)
+      .order('sort_order', { ascending: true })
+
+    if (error) throw error
+    if (data?.length) {
+      console.log('[Sessions] ✓', data.length, 'free sessions from Supabase')
+      return data
+    }
+  } catch (err) {
+    console.warn('[Sessions] Supabase free session query failed:', err.message)
+  }
+  // Fallback to hardcoded
   return HARDCODED_SESSIONS.filter(s => s.free)
 }
 
 export async function getAllSessions() {
-  console.log('[Sessions] Using hard-coded sessions for testing — 4 sessions loaded')
-  console.log('[Sessions] Session IDs:', HARDCODED_SESSIONS.map(s => s.id))
-  return HARDCODED_SESSIONS
+  console.log('[Sessions] Fetching all sessions from Supabase...')
+  try {
+    const { data, error } = await supabase
+      .from('sessions')
+      .select('*')
+      .order('sort_order', { ascending: true })
+
+    if (error) throw error
+    if (data?.length) {
+      console.log('[Sessions] ✓', data.length, 'sessions from Supabase')
+      return data
+    }
+  } catch (err) {
+    console.warn('[Sessions] Supabase all sessions query failed:', err.message)
+  }
+  // Fallback: merge hardcoded with any premium sessions that exist
+  const freeFromDb = []
+  try {
+    const { data } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('free', true)
+      .order('sort_order', { ascending: true })
+    if (data?.length) freeFromDb.push(...data)
+  } catch {}
+  
+  const hardcoded = HARDCODED_SESSIONS
+  const premium = hardcoded.filter(s => !s.free)
+  const result = [...freeFromDb, ...premium]
+  console.log('[Sessions] Fallback: using', freeFromDb.length, 'from DB +', premium.length, 'hardcoded premium')
+  return result
 }
 
 // ---------------------------------------------------------------------------
