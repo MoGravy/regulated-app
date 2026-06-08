@@ -81,11 +81,28 @@ export default function SessionPlayer() {
       if (demo) console.log('Playing session with ID:', demo.id)
       setSession(demo)
     }
+    useEffect(() => {
+      loadSession()
+      trackEvent(Events.SESSION_STARTED, { session_id: id })
+      return () => clearInterval(intervalRef.current)
+    }, [id])
 
-    loadSession()
-    trackEvent(Events.SESSION_STARTED, { session_id: id })
-    return () => clearInterval(intervalRef.current)
-  }, [id])
+    useEffect(() => {
+      if (!session) return
+      if (step !== STEP.PRE_MOOD) return
+      if (step === STEP.PLAYING) return
+      if (!session?.audio_url) return
+
+      console.log(
+        '[SessionPlayer] Auto-starting session without pre-mood gate:',
+        session.title,
+        '| id:',
+        session.id,
+      )
+      trackEvent(Events.MOOD_TRACKED, { type: 'before', value: null, session_id: id })
+      setDuration((session.duration || 15) * 60)
+      setStep(STEP.PLAYING)
+    }, [id, session?.id, session?.audio_url, session?.title])
 
   // Start audio playback when the playing step begins (after pre-mood)
   useEffect(() => {
