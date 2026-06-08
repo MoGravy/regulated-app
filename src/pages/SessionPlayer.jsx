@@ -1,15 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
-import { supabase, trackSessionCompletion } from '../lib/supabase'
+import { supabase, trackSessionCompletion, getAudioSignedUrl } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import MoodTracker from '../components/MoodTracker'
 
-// Numeric-keyed stubs removed — HARDCODED_SESSIONS_BY_ID is the fallback now
 const DEMO_SESSIONS = {}
 
-// Mood step states
 const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', POST_MOOD: 'post_mood', DONE: 'done' }
 
 export default function SessionPlayer() {
@@ -26,6 +24,7 @@ export default function SessionPlayer() {
   const [duration, setDuration] = useState(0)
   const [audioError, setAudioError] = useState(false)
   const [showCustomPrompt, setShowCustomPrompt] = useState(false)
+  const [signedAudioUrl, setSignedAudioUrl] = useState(null)
 
   const audioRef = useRef(null)
   const intervalRef = useRef(null)
@@ -42,6 +41,7 @@ export default function SessionPlayer() {
         console.log('[SessionPlayer] Known hardcoded id — using local map directly (skipping Supabase):', id)
         const demo = HARDCODED_SESSIONS_BY_ID[id]
         setSession(demo)
+        setSignedAudioUrl(null)
         return
       }
       try {
@@ -58,6 +58,7 @@ export default function SessionPlayer() {
           console.log('Playing session with ID:', data.id)
           console.log('[SessionPlayer] ✓ Loaded:', data.title, '| audio_url:', data.audio_url || '(none)')
           setSession(data)
+          setSignedAudioUrl(null)
           return
         }
 
@@ -75,6 +76,18 @@ export default function SessionPlayer() {
     console.log('[SessionPlayer] Fallback lookup for id', id, '— source:', source, '| audio_url:', demo?.audio_url || '(none)')
     if (demo) console.log('Playing session with ID:', demo.id)
     setSession(demo)
+    setSignedAudioUrl(null)
+  }
+
+  async function refreshAudioUrl() {
+    if (!session?.filePath) return
+    try {
+      const url = await getAudioSignedUrl(session.filePath)
+      setSignedAudioUrl(url)
+    } catch (err) {
+      console.error('[SessionPlayer] Failed to refresh signed audio URL:', err)
+      setSignedAudioUrl(null)
+    }
   }
 
   // Load session
@@ -88,18 +101,28 @@ export default function SessionPlayer() {
   useEffect(() => {
     if (!session) return
     if (step !== STEP.PRE_MOOD) return
-    if (!session?.audio_url) return
+    if (!session?.audio_url && !session?.filePath) return
 
+    setSignedAudioUrl(null)
+    refreshAudioUrl()
     console.log('[SessionPlayer] Auto-starting pre-mood session:', session.title, '| id:', session.id)
     trackEvent(Events.MOOD_TRACKED, { type: 'before', value: null, session_id: id })
     setDuration((session.duration || 15) * 60)
     setStep(STEP.PLAYING)
-  }, [step, session?.id, session?.audio_url])
+  }, [step, session?.id, session?.filePath])
+
+  // Refresh a fresh signed URL once we hit PLAYING
+  useEffect(() => {
+    if (step !== STEP.PLAYING) return
+    if (!session?.filePath) return
+    refreshAudioUrl()
+  }, [step, session?.filePath, session?.id])
 
   // Start audio playback when the playing step begins
   useEffect(() => {
     if (step !== STEP.PLAYING) return
-    if (!session?.audio_url) return
+    const src = signedAudioUrl || session?.audio_url
+    if (!src) return
 
     const audio = audioRef.current
     if (!audio) {
@@ -107,9 +130,7 @@ export default function SessionPlayer() {
       return
     }
 
-    console.log('[Audio] Element src attribute:', session.audio_url)
-    console.log('[Audio] Element .src (resolved):', audio.src)
-    console.log('[Audio] volume:', audio.volume, '| muted:', audio.muted, '| readyState:', audio.readyState)
+    console.log('[Audio] Element src attribute:', src)
     audio.volume = 1
     audio.muted = false
     console.log('[Audio] Calling play()…')
@@ -126,21 +147,21 @@ export default function SessionPlayer() {
           setIsPlaying(false)
         })
     }
-  }, [step, session?.audio_url, session?.title])
+  }, [step, signedAudioUrl, session?.audio_url, session?.title])
 
   // Debug overlay so the user can read which session is actually loaded
   const debugOverlay = session ? (
     <div style={{
       position: 'fixed', top: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
-      background: 'rgba(0,0,0,0.75)', color: '#fff', padding: '8px 12px', borderRadius: 12, fontSize: 12, fontWeight: 700
+      background: 'rgba(0,0,0,0.85)', color: '#fff', padding: '8px 12px', borderRadius: 12, fontSize: 12, fontWeight: 700
     }}>
-      SESSION: {session.id} — {session.title}
+      SESSION: {session.id} — {session.title} {audioError ? '| ⚠️ audio error' : ''}
     </div>
   ) : null
 
   // Simulate progress when no audio file (demo mode)
   useEffect(() => {
-    if (step === STEP.PLAYING && !session?.audio_url && isPlaying) {
+    if (step === STEP.PLAYING && !(signedAudioUrl || session?.audio_url) && isPlaying) {
       const totalMs = (session?.duration || 15) * 60 * 1000
       startTimeRef.current = Date.now() - currentTime * 1000
 
@@ -157,12 +178,12 @@ export default function SessionPlayer() {
 
       return () => clearInterval(intervalRef.current)
     }
-  }, [step, isPlaying, session?.audio_url])
+  }, [step, isPlaying, session?.audio_url, signedAudioUrl])
 
   function handlePreMood(mood) {
     setMoodBefore(mood)
     setStep(STEP.PLAYING)
-    if (!session?.audio_url) setIsPlaying(true)
+    if (!(signedAudioUrl || session?.audio_url)) setIsPlaying(true)
     setDuration((session?.duration || 15) * 60)
     trackEvent(Events.MOOD_TRACKED, { type: 'before', value: mood, session_id: id })
   }
@@ -295,14 +316,14 @@ export default function SessionPlayer() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ textAlign: 'center', marginBottom: 32 }}>
               <div style={{ fontSize: 64, marginBottom: 16 }}>🧘</div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
+              <h2 style={{ fontSize: 24, fontwbght: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
                 {session.title}
               </h2>
               <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 4 }}>
-                {session.description}
+                {session.description || 'Ready to begin'}
               </p>
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                {session.duration} minutes
+                {session.duration ? `${session.duration} minutes` : ''}
               </p>
             </div>
 
@@ -325,10 +346,10 @@ export default function SessionPlayer() {
         <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 40 }}>
 
           {/* Audio element — always rendered when there's a URL, so ref is available */}
-          {session.audio_url && (
+          {(signedAudioUrl || session.audio_url) && (
             <audio
               ref={audioRef}
-              src={session.audio_url}
+              src={signedAudioUrl || session.audio_url}
               preload="auto"
               onPlay={e => {
                 console.log('[Audio] onPlay event — src:', e.target.src)
