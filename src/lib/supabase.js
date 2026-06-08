@@ -101,12 +101,21 @@ export async function getAllSessions() {
   } catch (err) {
     console.warn('[Sessions] Supabase all sessions query failed:', err.message)
   }
-  // Fallback: use merged sessions so free sessions are always available offline
+  // Fallback: merge hardcoded with any premium sessions that exist
+  const freeFromDb = []
+  try {
+    const { data } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('free', true)
+      .order('sort_order', { ascending: true })
+    if (data?.length) freeFromDb.push(...data)
+  } catch {}
+  
   const hardcoded = HARDCODED_SESSIONS
-  const free = hardcoded.filter(s => s.free)
   const premium = hardcoded.filter(s => !s.free)
-  const result = [...free, ...premium]
-  console.log('[Sessions] Fallback: using', free.length, 'free +', premium.length, 'hardcoded premium')
+  const result = [...freeFromDb, ...premium]
+  console.log('[Sessions] Fallback: using', freeFromDb.length, 'from DB +', premium.length, 'hardcoded premium')
   return result
 }
 
@@ -176,10 +185,9 @@ export async function upsertUser(email) {
 }
 
 export async function getAudioSignedUrl(path) {
-  const normalizedPath = path.replace(/^\/+/, '').replace(/^sessions\//, '')
   const { data, error } = await supabase.storage
-    .from('sessions')
-    .createSignedUrl(normalizedPath, 3600)
+    .from('audio')
+    .createSignedUrl(path, 3600)
   if (error) throw error
   return data.signedUrl
 }
