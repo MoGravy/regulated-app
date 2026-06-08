@@ -316,7 +316,7 @@ export default function SessionPlayer() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ textAlign: 'center', marginBottom: 32 }}>
               <div style={{ fontSize: 64, marginBottom: 16 }}>🧘</div>
-              <h2 style={{ fontSize: 24, fontwbght: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
                 {session.title}
               </h2>
               <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 4 }}>
