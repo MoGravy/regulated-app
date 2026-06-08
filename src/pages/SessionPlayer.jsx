@@ -31,80 +31,72 @@ export default function SessionPlayer() {
   const intervalRef = useRef(null)
   const startTimeRef = useRef(null)
 
-  // Load session — Supabase first (only when id is a real UUID), fall back to demo data
-  useEffect(() => {
-    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    const isUuid = UUID_RE.test(id)
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  const isUuid = UUID_RE.test(id)
 
-    async function loadSession() {
-      console.log('[SessionPlayer] Loading session id:', id, '| looks like UUID:', isUuid)
+  async function loadSession() {
+    console.log('[SessionPlayer] Loading session id:', id, '| looks like UUID:', isUuid)
 
-      if (isUuid) {
-        // Real UUID from Supabase — fetch the full row ONLY if it's not a known hardcoded id
-        if (HARDCODED_SESSIONS_BY_ID[id]) {
-          console.log('[SessionPlayer] Known hardcoded id — using local map directly (skipping Supabase):', id)
-          const demo = HARDCODED_SESSIONS_BY_ID[id]
-          setSession(demo)
+    if (isUuid) {
+      if (HARDCODED_SESSIONS_BY_ID[id]) {
+        console.log('[SessionPlayer] Known hardcoded id — using local map directly (skipping Supabase):', id)
+        const demo = HARDCODED_SESSIONS_BY_ID[id]
+        setSession(demo)
+        return
+      }
+      try {
+        console.log('[SessionPlayer] Fetching from Supabase with UUID:', id)
+        const { data, error } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        console.log('[SessionPlayer] Supabase response — data:', data, '| error:', error)
+
+        if (data && !error) {
+          console.log('Playing session with ID:', data.id)
+          console.log('[SessionPlayer] ✓ Loaded:', data.title, '| audio_url:', data.audio_url || '(none)')
+          setSession(data)
           return
         }
-        try {
-          console.log('[SessionPlayer] Fetching from Supabase with UUID:', id)
-          const { data, error } = await supabase
-            .from('sessions')
-            .select('*')
-            .eq('id', id)
-            .single()
 
-          console.log('[SessionPlayer] Supabase response — data:', data, '| error:', error)
-
-          if (data && !error) {
-            console.log('Playing session with ID:', data.id)
-            console.log('[SessionPlayer] ✓ Loaded:', data.title, '| audio_url:', data.audio_url || '(none)')
-            setSession(data)
-            return
-          }
-
-          console.warn('[SessionPlayer] Supabase returned no data. Full error:', JSON.stringify(error))
-        } catch (e) {
-          console.error('[SessionPlayer] Supabase fetch threw an exception:', e)
-        }
-      } else {
-        // Numeric/demo ID — skip Supabase (it expects a UUID and will reject this)
-        console.log('[SessionPlayer] Non-UUID id "' + id + '" — using demo data directly (no Supabase query)')
+        console.warn('[SessionPlayer] Supabase returned no data. Full error:', JSON.stringify(error))
+      } catch (e) {
+        console.error('[SessionPlayer] Supabase fetch threw an exception:', e)
       }
-
-      // Fall back: check hardcoded sessions first (have real audio_urls), then old demo stubs
-      const hardcoded = HARDCODED_SESSIONS_BY_ID[id] || null
-      const demo = hardcoded || DEMO_SESSIONS[id] || null
-      const source = hardcoded ? 'hardcoded' : 'demo stub (no audio)'
-      console.log('[SessionPlayer] Fallback lookup for id', id, '— source:', source, '| audio_url:', demo?.audio_url || '(none)')
-      if (demo) console.log('Playing session with ID:', demo.id)
-      setSession(demo)
+    } else {
+      console.log('[SessionPlayer] Non-UUID id "' + id + '" — using demo data directly (no Supabase query)')
     }
-    useEffect(() => {
-      loadSession()
-      trackEvent(Events.SESSION_STARTED, { session_id: id })
-      return () => clearInterval(intervalRef.current)
-    }, [id])
 
-    useEffect(() => {
-      if (!session) return
-      if (step !== STEP.PRE_MOOD) return
-      if (step === STEP.PLAYING) return
-      if (!session?.audio_url) return
+    const hardcoded = HARDCODED_SESSIONS_BY_ID[id] || null
+    const demo = hardcoded || DEMO_SESSIONS[id] || null
+    const source = hardcoded ? 'hardcoded' : 'demo stub (no audio)'
+    console.log('[SessionPlayer] Fallback lookup for id', id, '— source:', source, '| audio_url:', demo?.audio_url || '(none)')
+    if (demo) console.log('Playing session with ID:', demo.id)
+    setSession(demo)
+  }
 
-      console.log(
-        '[SessionPlayer] Auto-starting session without pre-mood gate:',
-        session.title,
-        '| id:',
-        session.id,
-      )
-      trackEvent(Events.MOOD_TRACKED, { type: 'before', value: null, session_id: id })
-      setDuration((session.duration || 15) * 60)
-      setStep(STEP.PLAYING)
-    }, [id, session?.id, session?.audio_url, session?.title])
+  // Load session
+  useEffect(() => {
+    loadSession()
+    trackEvent(Events.SESSION_STARTED, { session_id: id })
+    return () => clearInterval(intervalRef.current)
+  }, [id])
 
-  // Start audio playback when the playing step begins (after pre-mood)
+  // Auto-start audio for sessions when step is still PRE_MOOD
+  useEffect(() => {
+    if (!session) return
+    if (step !== STEP.PRE_MOOD) return
+    if (!session?.audio_url) return
+
+    console.log('[SessionPlayer] Auto-starting pre-mood session:', session.title, '| id:', session.id)
+    trackEvent(Events.MOOD_TRACKED, { type: 'before', value: null, session_id: id })
+    setDuration((session.duration || 15) * 60)
+    setStep(STEP.PLAYING)
+  }, [step, session?.id, session?.audio_url])
+
+  // Start audio playback when the playing step begins
   useEffect(() => {
     if (step !== STEP.PLAYING) return
     if (!session?.audio_url) return
@@ -131,11 +123,10 @@ export default function SessionPlayer() {
         })
         .catch(err => {
           console.error('[Audio] play() rejected:', err.name, '—', err.message)
-          // Autoplay blocked — leave isPlaying false so user sees the Play button
           setIsPlaying(false)
         })
     }
-  }, [step, session?.audio_url])
+  }, [step, session?.audio_url, session?.title])
 
   // Debug overlay so the user can read which session is actually loaded
   const debugOverlay = session ? (
@@ -171,8 +162,6 @@ export default function SessionPlayer() {
   function handlePreMood(mood) {
     setMoodBefore(mood)
     setStep(STEP.PLAYING)
-    // Note: isPlaying starts false — the useEffect above will call play() and set it true
-    // For demo sessions (no audio_url), start the simulated timer
     if (!session?.audio_url) setIsPlaying(true)
     setDuration((session?.duration || 15) * 60)
     trackEvent(Events.MOOD_TRACKED, { type: 'before', value: mood, session_id: id })
@@ -220,12 +209,15 @@ export default function SessionPlayer() {
         }
       }
     } else {
-      // Demo mode — no audio element
       if (isPlaying) {
         clearInterval(intervalRef.current)
       }
       setIsPlaying(prev => !prev)
     }
+  }
+
+  function skipPreMood() {
+    handlePreMood(null)
   }
 
   function seek(e) {
@@ -320,6 +312,10 @@ export default function SessionPlayer() {
                 onSubmit={handlePreMood}
               />
             </div>
+
+            <button className="btn-ghost" onClick={skipPreMood} style={{ marginTop: 12 }}>
+              Skip for now
+            </button>
           </div>
         </div>
       )}
@@ -358,14 +354,7 @@ export default function SessionPlayer() {
               onError={e => {
                 const err = e.target.error
                 const codes = { 1: 'ABORTED', 2: 'NETWORK', 3: 'DECODE', 4: 'SRC_NOT_SUPPORTED' }
-                console.error('[Audio] onerror event:', {
-                  code: err?.code,
-                  codeLabel: codes[err?.code] || 'UNKNOWN',
-                  message: err?.message,
-                  src: e.target.src,
-                  networkState: e.target.networkState,
-                  readyState: e.target.readyState,
-                })
+                console.error('[Audio] onerror event:', { code: err?.code, codeLabel: codes[err?.code] || 'UNKNOWN', message: err?.message, src: e.target.src, networkState: e.target.networkState, readyState: e.target.readyState })
                 setAudioError(true)
                 setIsPlaying(false)
               }}
@@ -466,7 +455,6 @@ export default function SessionPlayer() {
 
           {/* Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-            {/* Rewind 15s */}
             <button
               onClick={() => {
                 const t = Math.max(0, currentTime - 15)
@@ -483,7 +471,6 @@ export default function SessionPlayer() {
               </svg>
             </button>
 
-            {/* Play/Pause */}
             <button
               onClick={togglePlay}
               style={{
@@ -497,27 +484,16 @@ export default function SessionPlayer() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 4px 20px rgba(126, 207, 192, 0.4)',
-                transition: 'transform 0.15s ease',
               }}
-              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-              onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
             >
-              {isPlaying ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--bg-deep)">
-                  <rect x="6" y="4" width="4" height="16"/>
-                  <rect x="14" y="4" width="4" height="16"/>
-                </svg>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--bg-deep)" style={{ marginLeft: 3 }}>
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
-              )}
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 4l15 8-15 8V4z"/>
+              </svg>
             </button>
 
-            {/* Forward 15s */}
             <button
               onClick={() => {
-                const t = Math.min(duration || session.duration * 60, currentTime + 15)
+                const t = Math.min(duration || (session.duration * 60), currentTime + 15)
                 setCurrentTime(t)
                 if (audioRef.current) audioRef.current.currentTime = t
                 startTimeRef.current = Date.now() - t * 1000
@@ -526,121 +502,51 @@ export default function SessionPlayer() {
             >
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="23 4 23 10 17 10"/>
-                <path d="M20.49 15a9 9 0 1 1-.49-3.46"/>
-                <text x="8" y="15" style={{ fontSize: '7px', fill: 'currentColor', stroke: 'none', fontWeight: 700 }}>15</text>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                <text x="9" y="15" style={{ fontSize: '7px', fill: 'currentColor', stroke: 'none', fontWeight: 700 }}>15</text>
               </svg>
             </button>
           </div>
-
-          {audioError && (
-            <div style={{ fontSize: 13, color: 'var(--text-muted)', textAlign: 'center', padding: '0 20px' }}>
-              Audio file not yet available. This session is coming soon.
-            </div>
-          )}
-
-          {/* Mark complete manually (for demo) */}
-          {!session.audio_url && (
-            <button
-              onClick={handleSessionComplete}
-              className="btn-ghost"
-              style={{ fontSize: 13 }}
-            >
-              Mark as complete →
-            </button>
-          )}
         </div>
       )}
 
       {/* Post-mood step */}
       {step === STEP.POST_MOOD && (
-        <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>✨</div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
-              Session Complete
-            </h2>
-            <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
-              Great work. One more question.
-            </p>
-          </div>
-          <div className="card">
-            <MoodTracker
-              label="How do you feel now?"
-              onSubmit={handlePostMood}
-              optional
-            />
+        <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+              <div style={{ fontSize: 64, marginBottom: 16 }}>🌟</div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
+                Session complete
+              </h2>
+              <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 4 }}>
+                How do you feel now?
+              </p>
+            </div>
+
+            <div className="card">
+              <MoodTracker
+                label="Rate your state after the session"
+                onSubmit={handlePostMood}
+              />
+            </div>
           </div>
         </div>
       )}
 
       {/* Done step */}
       {step === STEP.DONE && (
-        <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 20, textAlign: 'center' }}>
-
-          {moodBefore !== null && moodAfter !== null && (
-            <div className="card" style={{ width: '100%', marginBottom: 8 }}>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>Your regulation shift</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 36, marginBottom: 4 }}>😐</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>{moodBefore}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Before</div>
-                </div>
-                <div style={{ fontSize: 24, color: moodAfter > moodBefore ? 'var(--success)' : 'var(--text-muted)' }}>
-                  {moodAfter > moodBefore ? '↑' : moodAfter < moodBefore ? '↓' : '→'}
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 36, marginBottom: 4 }}>✨</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: moodAfter > moodBefore ? 'var(--success)' : 'var(--text-primary)' }}>{moodAfter}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>After</div>
-                </div>
-              </div>
-              {moodAfter > moodBefore && (
-                <div style={{ marginTop: 14, fontSize: 14, color: 'var(--success)', fontWeight: 600 }}>
-                  +{moodAfter - moodBefore} points regulated 🌟
-                </div>
-              )}
-            </div>
-          )}
-
-          <div>
-            <div style={{ fontSize: 56, marginBottom: 12 }}>🎉</div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
-              Well done.
+        <div className="animate-fade-in" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>✨</div>
+            <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>
+              Nice work
             </h2>
-            <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              Consistency is how lasting change is built. Come back tomorrow.
+            <p style={{ fontSize: 15, color: 'var(--text-secondary)', marginBottom: 24 }}>
+              {showCustomPrompt ? 'Your nervous system just got a win.' : ''}
             </p>
-          </div>
-
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button className="btn-primary" onClick={() => navigate('/sessions')}>
-              Explore More Sessions
-            </button>
-            <button className="btn-secondary" onClick={() => navigate('/')}>
-              Back to Home
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Custom audio prompt modal */}
-      {showCustomPrompt && step === STEP.DONE && (
-        <div className="modal-overlay" onClick={() => setShowCustomPrompt(false)}>
-          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
-            <div className="modal-handle" />
-            <div style={{ fontSize: 36, marginBottom: 12 }}>🎯</div>
-            <h3 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 10 }}>
-              Want results built for you specifically?
-            </h3>
-            <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 24 }}>
-              These sessions are powerful — but a custom audio built around <em>your exact pattern and triggers</em> is in a different league. Matthew builds it personally.
-            </p>
-            <button className="btn-primary" onClick={() => navigate('/custom')}>
-              Order Custom Audio — $99
-            </button>
-            <button className="btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={() => setShowCustomPrompt(false)}>
-              Not now
+              Back to sessions
             </button>
           </div>
         </div>
