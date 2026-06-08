@@ -176,9 +176,9 @@ export async function upsertUser(email) {
 }
 
 export async function getAudioSignedUrl(path) {
-  const normalizedPath = path.replace(/^\/+/, '').replace(/^audio\//, '')
+  const normalizedPath = path.replace(/^\/+/, '').replace(/^sessions\//, '')
   const { data, error } = await supabase.storage
-    .from('audio')
+    .from('sessions')
     .createSignedUrl(normalizedPath, 3600)
   if (error) throw error
   return data.signedUrl
