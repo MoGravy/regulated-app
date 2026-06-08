@@ -114,6 +114,16 @@ export default function SessionPlayer() {
     }
   }, [step, session?.audio_url])
 
+  // Debug overlay so the user can read which session is actually loaded
+  const debugOverlay = session ? (
+    <div style={{
+      position: 'fixed', top: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 9999,
+      background: 'rgba(0,0,0,0.75)', color: '#fff', padding: '8px 12px', borderRadius: 12, fontSize: 12, fontWeight: 700
+    }}>
+      SESSION: {session.id} — {session.title}
+    </div>
+  ) : null
+
   // Simulate progress when no audio file (demo mode)
   useEffect(() => {
     if (step === STEP.PLAYING && !session?.audio_url && isPlaying) {
@@ -235,6 +245,7 @@ export default function SessionPlayer() {
       paddingTop: 'max(20px, env(safe-area-inset-top))',
       paddingBottom: 'max(32px, env(safe-area-inset-bottom))',
     }}>
+      {debugOverlay}
 
       {/* Back button */}
       <button
