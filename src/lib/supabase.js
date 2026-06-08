@@ -101,7 +101,7 @@ export async function getAllSessions() {
   } catch (err) {
     console.warn('[Sessions] Supabase all sessions query failed:', err.message)
   }
-  // Fallback: use hardcoded sessions so free sessions are always available offline
+  // Fallback: use merged sessions so free sessions are always available offline
   const hardcoded = HARDCODED_SESSIONS
   const free = hardcoded.filter(s => s.free)
   const premium = hardcoded.filter(s => !s.free)
