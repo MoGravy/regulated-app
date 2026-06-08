@@ -40,7 +40,13 @@ export default function SessionPlayer() {
       console.log('[SessionPlayer] Loading session id:', id, '| looks like UUID:', isUuid)
 
       if (isUuid) {
-        // Real UUID from Supabase — fetch the full row
+        // Real UUID from Supabase — fetch the full row ONLY if it's not a known hardcoded id
+        if (HARDCODED_SESSIONS_BY_ID[id]) {
+          console.log('[SessionPlayer] Known hardcoded id — using local map directly (skipping Supabase):', id)
+          const demo = HARDCODED_SESSIONS_BY_ID[id]
+          setSession(demo)
+          return
+        }
         try {
           console.log('[SessionPlayer] Fetching from Supabase with UUID:', id)
           const { data, error } = await supabase
