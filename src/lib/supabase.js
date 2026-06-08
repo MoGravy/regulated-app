@@ -101,21 +101,11 @@ export async function getAllSessions() {
   } catch (err) {
     console.warn('[Sessions] Supabase all sessions query failed:', err.message)
   }
-  // Fallback: merge hardcoded with any premium sessions that exist
-  const freeFromDb = []
-  try {
-    const { data } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('free', true)
-      .order('sort_order', { ascending: true })
-    if (data?.length) freeFromDb.push(...data)
-  } catch {}
-  
-  const hardcoded = HARDCODED_SESSIONS
-  const premium = hardcoded.filter(s => !s.free)
-  const result = [...freeFromDb, ...premium]
-  console.log('[Sessions] Fallback: using', freeFromDb.length, 'from DB +', premium.length, 'hardcoded premium')
+  // Fallback: keep hardcoded free + premium placeholders
+  const free = HARDCODED_SESSIONS.filter(s => s.free)
+  const premium = HARDCODED_SESSIONS.filter(s => !s.free)
+  const result = [...free, ...premium]
+  console.log('[Sessions] Fallback: using', free.length, 'hardcoded free +', premium.length, 'hardcoded premium')
   return result
 }
 

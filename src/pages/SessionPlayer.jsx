@@ -45,13 +45,15 @@ export default function SessionPlayer() {
     let cancelled = false
     const raw = decodeURIComponent(String(id || ''))
     const trimmed = raw.trim()
-    if (!trimmed || !FREE_TITLES.has(trimmed)) return
+    if (!trimmed) return
 
-    const url = resolve(trimmed)
+    const session = HARDCODED_SESSIONS_BY_ID[trimmed]
+    if (!session || !session.free || !session.audio_url) return
+
     if (!cancelled) {
-      setTitle(trimmed)
-      setAudioUrl(url)
-      trackEvent(Events.SESSION_STARTED, { session_title: trimmed })
+      setTitle(session.title)
+      setAudioUrl(session.audio_url)
+      trackEvent(Events.SESSION_STARTED, { session_title: session.title })
     }
     return () => {
       cancelled = true
