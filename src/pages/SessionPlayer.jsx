@@ -37,13 +37,6 @@ export default function SessionPlayer() {
     console.log('[SessionPlayer] Loading session id:', id, '| looks like UUID:', isUuid)
 
     if (isUuid) {
-      if (HARDCODED_SESSIONS_BY_ID[id]) {
-        console.log('[SessionPlayer] Known hardcoded id — using local map directly (skipping Supabase):', id)
-        const demo = HARDCODED_SESSIONS_BY_ID[id]
-        setSession(demo)
-        setSignedAudioUrl(null)
-        return
-      }
       try {
         console.log('[SessionPlayer] Fetching from Supabase with UUID:', id)
         const { data, error } = await supabase
