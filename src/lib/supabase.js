@@ -66,47 +66,41 @@ export async function trackSessionCompletion(sessionId, userEmail, moodBefore, m
 
 export async function getSessions() {
   console.log('[Sessions] Fetching free sessions from Supabase...')
-  try {
-    const { data, error } = await supabase
-      .from('sessions')
-      .select('*')
-      .eq('free', true)
-      .order('sort_order', { ascending: true })
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('free', true)
+    .order('created_at', { ascending: true })
 
-    if (error) throw error
-    if (data?.length) {
-      console.log('[Sessions] ✓', data.length, 'free sessions from Supabase')
-      return data
-    }
-  } catch (err) {
-    console.warn('[Sessions] Supabase free session query failed:', err.message)
+  if (error) {
+    console.error('[Sessions] getSessions() failed — full error:', JSON.stringify(error))
+    return HARDCODED_SESSIONS.filter(s => s.free)
   }
-  // Fallback to hardcoded
-  return HARDCODED_SESSIONS.filter(s => s.free)
+  if (!data?.length) {
+    console.warn('[Sessions] getSessions() returned 0 rows — using hardcoded fallback')
+    return HARDCODED_SESSIONS.filter(s => s.free)
+  }
+  console.log('[Sessions] ✓', data.length, 'free sessions from Supabase')
+  return data
 }
 
 export async function getAllSessions() {
   console.log('[Sessions] Fetching all sessions from Supabase...')
-  try {
-    const { data, error } = await supabase
-      .from('sessions')
-      .select('*')
-      .order('sort_order', { ascending: true })
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('*')
+    .order('created_at', { ascending: true })
 
-    if (error) throw error
-    if (data?.length) {
-      console.log('[Sessions] ✓', data.length, 'sessions from Supabase')
-      return data
-    }
-  } catch (err) {
-    console.warn('[Sessions] Supabase all sessions query failed:', err.message)
+  if (error) {
+    console.error('[Sessions] getAllSessions() failed — full error:', JSON.stringify(error))
+    return HARDCODED_SESSIONS
   }
-  // Fallback: keep hardcoded free + premium placeholders
-  const free = HARDCODED_SESSIONS.filter(s => s.free)
-  const premium = HARDCODED_SESSIONS.filter(s => !s.free)
-  const result = [...free, ...premium]
-  console.log('[Sessions] Fallback: using', free.length, 'hardcoded free +', premium.length, 'hardcoded premium')
-  return result
+  if (!data?.length) {
+    console.warn('[Sessions] getAllSessions() returned 0 rows — using hardcoded fallback')
+    return HARDCODED_SESSIONS
+  }
+  console.log('[Sessions] ✓', data.length, 'sessions from Supabase')
+  return data
 }
 
 // ---------------------------------------------------------------------------
