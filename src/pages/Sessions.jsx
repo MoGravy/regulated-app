@@ -5,7 +5,7 @@ import { getAllSessions } from '../lib/supabase'
 import { HARDCODED_SESSIONS } from '../lib/hardcodedSessions'
 import SessionCard from '../components/SessionCard'
 
-const categories = ['All', 'Sleep', 'Stress', 'IBS', 'Reset', 'Anxiety', 'Focus', 'Confidence', 'Grief', 'Weight Loss']
+const categories = ['All', 'Sleep', 'Stress', 'Daily', 'Habits', 'Anxiety', 'Focus', 'Confidence', 'Grief', 'Weight Loss']
 
 export default function Sessions() {
   const navigate = useNavigate()
