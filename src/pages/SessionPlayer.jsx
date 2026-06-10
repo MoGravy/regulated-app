@@ -166,6 +166,36 @@ export default function SessionPlayer() {
     )
   }
 
+  if (session && !session.audio_url) {
+    return (
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg-deep)' }}>
+        <div style={{ padding: '24px 24px 0' }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+          >
+            ← Back
+          </button>
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 28px', textAlign: 'center' }}>
+          <div style={{ fontSize: 56, marginBottom: 20 }}>🎙️</div>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>
+            {session.title}
+          </h2>
+          <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 8, maxWidth: 300 }}>
+            This session is being recorded and will be available soon.
+          </p>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 32 }}>
+            {session.category} · {session.duration} min
+          </p>
+          <button className="btn-ghost" onClick={() => navigate('/sessions')}>
+            ← Back to sessions
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (!session) {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-deep)' }}>

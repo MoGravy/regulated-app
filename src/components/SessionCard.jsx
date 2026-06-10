@@ -20,17 +20,19 @@ export default function SessionCard({ session, compact = false }) {
 
   const isCompleted = completedSessions.includes(session.id)
   const isLocked = !session.free && !isPremium
+  const isComingSoon = !session.audio_url
   const colors = categoryColors[session.category?.toLowerCase()] || categoryColors.default
 
   function handleClick() {
+    if (isComingSoon) return   // unclickable — no audio yet
     if (isLocked) {
       navigate('/premium')
       return
     }
-    console.log('Playing session with ID:', session.id, '| title:', session.title)
     navigate(`/sessions/${session.id}`)
   }
 
+  // ── Compact view ────────────────────────────────────────────────────────────
   if (compact) {
     return (
       <button
@@ -44,11 +46,12 @@ export default function SessionCard({ session, compact = false }) {
           background: 'var(--bg-card)',
           border: '1px solid var(--border)',
           borderRadius: 14,
-          cursor: 'pointer',
+          cursor: isComingSoon ? 'default' : 'pointer',
           textAlign: 'left',
           transition: 'all 0.2s ease',
+          opacity: isComingSoon ? 0.45 : 1,
         }}
-        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-solid)'}
+        onMouseEnter={e => { if (!isComingSoon) e.currentTarget.style.borderColor = 'var(--border-solid)' }}
         onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
       >
         <div style={{
@@ -69,15 +72,17 @@ export default function SessionCard({ session, compact = false }) {
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
               {session.title}
             </span>
-            {isCompleted && (
-              <span style={{ color: 'var(--success)', fontSize: 13 }}>✓</span>
-            )}
+            {isCompleted && <span style={{ color: 'var(--success)', fontSize: 13 }}>✓</span>}
           </div>
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             {session.duration} min
           </span>
         </div>
-        {isLocked ? (
+        {isComingSoon ? (
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+            SOON
+          </span>
+        ) : isLocked ? (
           <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>🔒</span>
         ) : (
           <div style={{
@@ -100,6 +105,7 @@ export default function SessionCard({ session, compact = false }) {
     )
   }
 
+  // ── Full card view ──────────────────────────────────────────────────────────
   return (
     <button
       onClick={handleClick}
@@ -108,16 +114,16 @@ export default function SessionCard({ session, compact = false }) {
         flexDirection: 'column',
         gap: 12,
         padding: 20,
-        background: isLocked ? 'rgba(26, 58, 74, 0.4)' : 'var(--bg-card)',
-        border: `1px solid ${isLocked ? 'var(--border)' : 'var(--border)'}`,
+        background: isComingSoon ? 'rgba(20, 40, 50, 0.5)' : isLocked ? 'rgba(26, 58, 74, 0.4)' : 'var(--bg-card)',
+        border: '1px solid var(--border)',
         borderRadius: 18,
-        cursor: 'pointer',
+        cursor: isComingSoon ? 'default' : 'pointer',
         textAlign: 'left',
         width: '100%',
         transition: 'all 0.2s ease',
-        opacity: isLocked ? 0.75 : 1,
+        opacity: isComingSoon ? 0.5 : isLocked ? 0.75 : 1,
       }}
-      onMouseEnter={e => { if (!isLocked) e.currentTarget.style.borderColor = 'var(--border-solid)' }}
+      onMouseEnter={e => { if (!isComingSoon && !isLocked) e.currentTarget.style.borderColor = 'var(--border-solid)' }}
       onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -133,14 +139,31 @@ export default function SessionCard({ session, compact = false }) {
         }}>
           {colors.icon}
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {session.free ? (
-            <span className="badge badge-free">Free</span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {isComingSoon ? (
+            <span style={{
+              fontSize: 10,
+              fontWeight: 800,
+              color: 'var(--text-muted)',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid var(--border)',
+              borderRadius: 20,
+              padding: '3px 10px',
+              letterSpacing: '0.08em',
+            }}>
+              COMING SOON
+            </span>
           ) : (
-            <span className="badge badge-premium">Premium</span>
+            <>
+              {session.free ? (
+                <span className="badge badge-free">Free</span>
+              ) : (
+                <span className="badge badge-premium">Premium</span>
+              )}
+              {isLocked && <span style={{ fontSize: 16 }}>🔒</span>}
+              {isCompleted && <span style={{ fontSize: 16 }}>✓</span>}
+            </>
           )}
-          {isLocked && <span style={{ fontSize: 16 }}>🔒</span>}
-          {isCompleted && <span style={{ fontSize: 16 }}>✓</span>}
         </div>
       </div>
       <div>
@@ -155,22 +178,14 @@ export default function SessionCard({ session, compact = false }) {
         <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
           {session.duration} min · {session.category}
         </span>
-        {!isLocked && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            color: colors.accent,
-            fontSize: 13,
-            fontWeight: 600,
-          }}>
+        {isComingSoon ? null : !isLocked ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: colors.accent, fontSize: 13, fontWeight: 600 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"/>
             </svg>
             Play
           </div>
-        )}
-        {isLocked && (
+        ) : (
           <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>Unlock →</span>
         )}
       </div>
