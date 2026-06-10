@@ -242,10 +242,10 @@ function premiumWelcomeEmail() {
     <div style="background:#1A3A4A;border:1px solid rgba(126,207,192,0.15);border-radius:16px;padding:24px;margin-bottom:24px;">
       <div style="font-size:13px;font-weight:700;color:#7ECFC0;letter-spacing:0.08em;margin-bottom:16px;">YOUR ACCESS INCLUDES</div>
       ${[
-        ['🎧', '40+ sessions', 'Every category in the library is now unlocked'],
-        ['📱', 'Offline downloads', 'Listen anywhere, any time, no internet needed'],
-        ['🌐', 'Monthly live sessions', 'Link will appear in the app before each session'],
-        ['⚡', 'Early access', 'You get new sessions first, every month'],
+        ['🎧', '13 sessions and growing', 'Every session in the library is now unlocked. New sessions added regularly.'],
+        ['🎯', 'Built for your pattern', 'Sleep, anxiety, gut, habits, confidence — each session targets a specific nervous system pattern.'],
+        ['🎙️', 'One free custom audio (annual)', 'Order a session built for your exact trigger and outcome. Use code ANNUALFREE at checkout — normally $99, free for you.'],
+        ['🔒', 'Founding price locked for life', 'Your $149/year rate never rises, even when the library hits 40 sessions and the price goes to $199.'],
       ].map(([icon, title, detail]) => `
         <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">
           <span style="font-size:20px;flex-shrink:0">${icon}</span>
