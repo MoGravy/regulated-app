@@ -5,23 +5,26 @@ import { trackEvent, Events } from '../lib/analytics'
 import { upsertUser } from '../lib/supabase'
 import { stripePromise, PRICE_MONTHLY, PRICE_ANNUAL } from '../lib/stripe'
 import CouponField from '../components/CouponField'
+import { ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE, MONTHLY_PRICE } from '../config/pricing'
 
 const PLANS = [
   {
     id: 'annual',
     label: 'Annual',
-    price: 199,
+    price: ANNUAL_FOUNDING_PRICE,
+    originalPrice: ANNUAL_FULL_PRICE,
     period: '/year',
-    perMonth: '$16.58/mo',
-    badge: 'BEST VALUE',
+    perMonth: '$12.42/mo',
+    badge: 'FOUNDING MEMBER',
     badgeColor: 'var(--accent)',
     priceId: PRICE_ANNUAL,
     note: 'Includes 1 free custom audio — use code ANNUALFREE',
+    subline: 'Locks in for life. Price rises to $199 when the library reaches 40 sessions.',
   },
   {
     id: 'monthly',
     label: 'Monthly',
-    price: 19,
+    price: MONTHLY_PRICE,
     period: '/month',
     perMonth: null,
     badge: null,
@@ -31,7 +34,7 @@ const PLANS = [
 ]
 
 const FEATURES = [
-  { icon: '🎧', title: '40+ sessions', desc: 'Full library — sleep, anxiety, gut, confidence, focus, relationships, grief and more' },
+  { icon: '🎧', title: '13 sessions and growing', desc: 'Full library — sleep, anxiety, gut, confidence, focus, relationships, grief and more. New sessions added every week.' },
   { icon: '🌙', title: 'Custom playlists', desc: 'Build your own sequence and save sessions for easy replay' },
   { icon: '📱', title: 'Offline downloads', desc: 'Download any session to listen without internet connection' },
   { icon: '🌐', title: 'Monthly live sessions', desc: 'Join Matthew live for monthly group regulation sessions (link in app)' },
@@ -156,7 +159,7 @@ export default function Premium() {
             Your complete nervous system library.
           </h1>
           <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-            40+ sessions covering every pattern. Built for lasting change, not quick fixes.
+            13 sessions and growing. New sessions added every week. Built for lasting change, not quick fixes.
           </p>
         </div>
 
@@ -199,11 +202,16 @@ export default function Premium() {
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
                 {plan.label}
               </div>
+              {plan.originalPrice && (
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'line-through', marginBottom: 2 }}>
+                  ${plan.originalPrice}/year
+                </div>
+              )}
               <div style={{ fontSize: 22, fontWeight: 800, color: selectedPlan === plan.id ? 'var(--accent)' : 'var(--text-primary)' }}>
                 ${plan.price}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {plan.period}
+                {plan.id === 'annual' ? '/year Founding Member rate' : plan.period}
               </div>
               {plan.perMonth && (
                 <div style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600, marginTop: 4 }}>
@@ -213,6 +221,11 @@ export default function Premium() {
               {plan.note && (
                 <div style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600, marginTop: 6, lineHeight: 1.4 }}>
                   {plan.note}
+                </div>
+              )}
+              {plan.subline && (
+                <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 5, lineHeight: 1.4 }}>
+                  {plan.subline}
                 </div>
               )}
             </button>
@@ -334,7 +347,7 @@ export default function Premium() {
           </div>
           {[
             ['4 foundational sessions', true, true],
-            ['40+ full library', false, true],
+            ['Full library — 13 sessions and growing', false, true],
             ['Offline downloads', false, true],
             ['Monthly live sessions', false, true],
             ['Progress analytics', false, true],
@@ -367,7 +380,7 @@ export default function Premium() {
           </div>
           {[
             ['Can I cancel anytime?', 'Yes. Cancel from your account settings or email hello@regulatedapp.co. No questions asked.'],
-            ['How is this different from the free sessions?', 'Premium unlocks 40+ sessions covering every major nervous system pattern — not just the 4 foundational tracks. Plus monthly live sessions with Matthew.'],
+            ['How is this different from the free sessions?', 'Premium unlocks the full library — 13 sessions and growing, covering every major nervous system pattern beyond the 4 foundational tracks. Plus monthly live sessions with Matthew.'],
             ['What if I already ordered a custom audio?', 'Custom audio is a separate one-time purchase. Premium is the ongoing library. They work perfectly together but are independent.'],
           ].map(([q, a]) => (
             <FAQItem key={q} question={q} answer={a} />

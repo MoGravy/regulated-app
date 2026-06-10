@@ -211,7 +211,7 @@ export default function Home() {
                 PREMIUM
               </div>
               <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8, lineHeight: 1.3 }}>
-                40+ sessions for every pattern
+                13 sessions and growing. New sessions added every week.
               </div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 18, lineHeight: 1.6 }}>
                 Sleep, anxiety, confidence, relationships, gut health, grief, and more. Plus monthly live group sessions.
@@ -225,7 +225,7 @@ export default function Home() {
                   fontWeight: 700,
                   color: 'var(--bg-deep)',
                 }}>
-                  Unlock — $199/year
+                  Unlock — $149/year
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>or $19/mo</div>
               </div>

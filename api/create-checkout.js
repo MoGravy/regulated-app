@@ -1,5 +1,12 @@
 import Stripe from 'stripe'
 
+// ── Founding member pricing ───────────────────────────────────────────────────
+// Change ANNUAL_PRICE_CENTS here (and in src/config/pricing.js) when the rate
+// expires. Annual subscriptions use price_data so this value always wins.
+const ANNUAL_PRICE_CENTS = 14900  // $149 founding rate → raise to 19900 at 40 sessions
+const MONTHLY_PRICE_CENTS = 1900  // $19/month
+// ─────────────────────────────────────────────────────────────────────────────
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 // APP_URL for Stripe success/cancel redirects.
 // Priority: explicit env var → request Origin header → Vercel preview fallback.
@@ -88,10 +95,34 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url, sessionId: session.id })
 
     } else if (type === 'subscription') {
+      // Annual uses price_data so ANNUAL_PRICE_CENTS above controls the charge.
+      // Monthly falls back to priceId (Stripe price) or price_data.
+      const lineItem = plan === 'annual'
+        ? {
+            price_data: {
+              currency: 'usd',
+              unit_amount: ANNUAL_PRICE_CENTS,
+              recurring: { interval: 'year' },
+              product_data: { name: 'Regulated Premium — Annual (Founding Member)' },
+            },
+            quantity: 1,
+          }
+        : priceId
+          ? { price: priceId, quantity: 1 }
+          : {
+              price_data: {
+                currency: 'usd',
+                unit_amount: MONTHLY_PRICE_CENTS,
+                recurring: { interval: 'month' },
+                product_data: { name: 'Regulated Premium — Monthly' },
+              },
+              quantity: 1,
+            }
+
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
         customer_email: email,
-        line_items: [{ price: priceId, quantity: 1 }],
+        line_items: [lineItem],
         discounts,
         ...(discounts ? {} : { allow_promotion_codes: true }),
         metadata: {
