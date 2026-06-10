@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
-import { trackSessionCompletion } from '../lib/supabase'
+import { supabase, trackSessionCompletion } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import MoodTracker from '../components/MoodTracker'
@@ -13,65 +13,78 @@ export default function SessionPlayer() {
   const navigate = useNavigate()
   const { userEmail, markSessionComplete } = useApp()
 
-  const [title, setTitle] = useState(null)
+  const [session, setSession] = useState(null)   // full DB row — single source of truth
+  const [loadError, setLoadError] = useState(false)
   const [step, setStep] = useState(STEP.PRE_MOOD)
   const [moodBefore, setMoodBefore] = useState(null)
-  const [moodAfter, setMoodAfter] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [showCustomPrompt, setShowCustomPrompt] = useState(false)
-  const [audioUrl, setAudioUrl] = useState(null)
 
   const audioRef = useRef(null)
   const startRef = useRef(null)
   const timerRef = useRef(null)
   const autoStartRef = useRef(null)
 
-  const FREE_TITLES = new Set(
-    Object.values(HARDCODED_SESSIONS_BY_ID)
-      .filter(s => s.free && s.audio_url)
-      .map(s => s.title)
-  )
-
-  function resolve(title) {
-    const s = Object.values(HARDCODED_SESSIONS_BY_ID).find(
-      (x) => x.free && x.audio_url && x.title === title
-    )
-    return s ? s.audio_url : null
-  }
-
+  // ---------------------------------------------------------------------------
+  // Load session: Supabase first, hardcoded fallback on error
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     let cancelled = false
-    const raw = decodeURIComponent(String(id || ''))
-    const trimmed = raw.trim()
-    if (!trimmed) return
+    const trimmed = decodeURIComponent(String(id || '')).trim()
+    if (!trimmed) { setLoadError(true); return }
 
-    const session = HARDCODED_SESSIONS_BY_ID[trimmed]
-    if (!session || !session.free || !session.audio_url) return
+    async function fetchSession() {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', trimmed)
+        .single()
 
-    if (!cancelled) {
-      setTitle(session.title)
-      setAudioUrl(session.audio_url)
-      trackEvent(Events.SESSION_STARTED, { session_title: session.title })
+      if (cancelled) return
+
+      if (data && !error) {
+        console.log('[SessionPlayer] Loaded from DB:', data.title)
+        setSession(data)
+        trackEvent(Events.SESSION_STARTED, { session_title: data.title })
+        return
+      }
+
+      // Supabase failed — try hardcoded fallback
+      console.warn('[SessionPlayer] DB fetch failed:', JSON.stringify(error), '— trying hardcoded fallback')
+      const fallback = HARDCODED_SESSIONS_BY_ID[trimmed]
+      if (fallback) {
+        console.log('[SessionPlayer] Using hardcoded fallback:', fallback.title)
+        setSession(fallback)
+        trackEvent(Events.SESSION_STARTED, { session_title: fallback.title })
+      } else {
+        console.error('[SessionPlayer] No session found for id:', trimmed)
+        setLoadError(true)
+      }
     }
+
+    fetchSession()
     return () => {
       cancelled = true
       clearTimeout(autoStartRef.current)
     }
   }, [id])
 
+  // Auto-advance to PLAYING after mood selection delay
   useEffect(() => {
-    if (!title || step !== STEP.PRE_MOOD || !audioUrl) return
-    setDuration(600)
+    if (!session || step !== STEP.PRE_MOOD) return
+    setDuration((session.duration || 20) * 60)
     autoStartRef.current = setTimeout(() => setStep(STEP.PLAYING), 1200)
-  }, [step, title, audioUrl])
+  }, [step, session])
 
+  // Play audio when step becomes PLAYING
   useEffect(() => {
-    if (step !== STEP.PLAYING || !audioUrl || !audioRef.current) return
+    if (step !== STEP.PLAYING || !session?.audio_url || !audioRef.current) return
     audioRef.current.play().catch(() => {})
-  }, [step, audioUrl])
+  }, [step, session])
 
+  // Timer tick
   useEffect(() => {
     if (!isPlaying || step !== STEP.PLAYING) return
     startRef.current = Date.now()
@@ -79,7 +92,7 @@ export default function SessionPlayer() {
     timerRef.current = setInterval(() => {
       const elapsed = (Date.now() - startRef.current) / 1000
       setCurrentTime(elapsed)
-      if (elapsed >= (duration || 600)) {
+      if (elapsed >= (duration || 1200)) {
         clearInterval(timerRef.current)
         setIsPlaying(false)
         setStep(STEP.POST_MOOD)
@@ -91,14 +104,13 @@ export default function SessionPlayer() {
   function handlePreMood(mood) {
     setMoodBefore(mood)
     setStep(STEP.PLAYING)
-    trackEvent(Events.MOOD_TRACKED, { type: 'before', value: mood, session_title: title })
+    trackEvent(Events.MOOD_TRACKED, { type: 'before', value: mood, session_title: session?.title })
   }
 
   function handlePostMood(mood) {
-    setMoodAfter(mood)
-    markSessionComplete(title)
+    markSessionComplete(session?.title)
     trackSessionCompletion(null, userEmail, moodBefore, mood)
-    trackEvent(Events.MOOD_TRACKED, { type: 'after', value: mood, session_title: title })
+    trackEvent(Events.MOOD_TRACKED, { type: 'after', value: mood, session_title: session?.title })
     setStep(STEP.DONE)
     setTimeout(() => setShowCustomPrompt(true), 800)
   }
@@ -113,6 +125,15 @@ export default function SessionPlayer() {
       a.play().catch(() => {})
       setIsPlaying(true)
     }
+  }
+
+  function skip(secs) {
+    const a = audioRef.current
+    if (!a) return
+    const next = Math.max(0, Math.min(a.currentTime + secs, duration))
+    a.currentTime = next
+    setCurrentTime(next)
+    startRef.current = Date.now() - next * 1000
   }
 
   function seek(e) {
@@ -130,9 +151,10 @@ export default function SessionPlayer() {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
   }
 
-  const meta = Object.values(HARDCODED_SESSIONS_BY_ID).find((x) => x.title === title)
-
-  if (!title || !meta) {
+  // ---------------------------------------------------------------------------
+  // Loading / error states
+  // ---------------------------------------------------------------------------
+  if (loadError) {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-deep)' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -144,6 +166,19 @@ export default function SessionPlayer() {
     )
   }
 
+  if (!session) {
+    return (
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-deep)' }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+          <span className="spinner" style={{ width: 32, height: 32 }} />
+        </div>
+      </div>
+    )
+  }
+
+  // ---------------------------------------------------------------------------
+  // Player
+  // ---------------------------------------------------------------------------
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--bg-deep)', display: 'flex', flexDirection: 'column' }}>
       <div
@@ -158,7 +193,7 @@ export default function SessionPlayer() {
       >
         <button
           onClick={() => {
-            trackEvent(Events.SESSION_ABANDONED, { session_title: title, time: currentTime })
+            trackEvent(Events.SESSION_ABANDONED, { session_title: session.title, time: currentTime })
             audioRef.current?.pause()
             navigate(-1)
           }}
@@ -171,8 +206,10 @@ export default function SessionPlayer() {
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 24 }}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 64, marginBottom: 16 }}>🧘</div>
-              <h2 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>{title}</h2>
-              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>{meta.category} · {meta.duration} min</p>
+              <h2 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>{session.title}</h2>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                {session.category} · {session.duration} min
+              </p>
             </div>
             <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 24 }}>
               <MoodTracker label="How regulated do you feel right now?" onSubmit={handlePreMood} />
@@ -182,48 +219,83 @@ export default function SessionPlayer() {
 
         {step === STEP.PLAYING && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 40 }}>
-            {audioUrl && <audio ref={audioRef} src={audioUrl} preload="auto" onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} onEnded={() => { setIsPlaying(false); setStep(STEP.POST_MOOD) }} onError={() => setIsPlaying(false)} />}
+            {session.audio_url && (
+              <audio
+                ref={audioRef}
+                src={session.audio_url}
+                preload="auto"
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onLoadedMetadata={e => setDuration(e.target.duration)}
+                onEnded={() => { setIsPlaying(false); setStep(STEP.POST_MOOD) }}
+                onError={() => setIsPlaying(false)}
+              />
+            )}
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 72, marginBottom: 12 }}>🎧</div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>{title}</h2>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>{session.title}</h2>
               <p style={{ color: 'var(--text-muted)' }}>{fmt(currentTime)}</p>
             </div>
+
+            {/* Scrub bar */}
             <div style={{ width: '100%' }}>
               <div
                 onClick={seek}
                 style={{ height: 4, background: 'var(--border-solid)', borderRadius: 2, cursor: 'pointer', position: 'relative' }}
               >
-                <div
-                  style={{
-                    position: 'absolute', left: 0, top: 0, height: '100%',
-                    width: `${duration ? (currentTime / duration) * 100 : 0}%`,
-                    background: 'var(--accent)', borderRadius: 2,
-                  }}
-                />
-                <div
-                  style={{
-                    position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-                    left: `${duration ? (currentTime / duration) * 100 : 0}%`,
-                    width: 14, height: 14, borderRadius: '50%',
-                    background: 'var(--accent)', marginLeft: -7,
-                    boxShadow: '0 0 0 3px rgba(126,207,192,0.3)',
-                  }}
-                />
+                <div style={{
+                  position: 'absolute', left: 0, top: 0, height: '100%',
+                  width: `${duration ? (currentTime / duration) * 100 : 0}%`,
+                  background: 'var(--accent)', borderRadius: 2,
+                }} />
+                <div style={{
+                  position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+                  left: `${duration ? (currentTime / duration) * 100 : 0}%`,
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: 'var(--accent)', marginLeft: -7,
+                  boxShadow: '0 0 0 3px rgba(126,207,192,0.3)',
+                }} />
               </div>
             </div>
-            <button
-              onClick={togglePlay}
-              style={{
-                width: 76, height: 76, borderRadius: '50%', background: 'var(--accent)',
-                border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              {isPlaying ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--bg-deep)"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--bg-deep)" style={{ marginLeft: 3 }}><polygon points="5 3 19 12 5 21 5 3" /></svg>
-              )}
-            </button>
+
+            {/* Transport controls: skip back · play/pause · skip forward */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+              <button
+                onClick={() => skip(-15)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="1 4 1 10 7 10" />
+                  <path d="M3.51 15a9 9 0 1 0 .49-3.51" />
+                </svg>
+                <span style={{ fontSize: 10, fontWeight: 600 }}>15s</span>
+              </button>
+
+              <button
+                onClick={togglePlay}
+                style={{
+                  width: 76, height: 76, borderRadius: '50%', background: 'var(--accent)',
+                  border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                {isPlaying ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--bg-deep)"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--bg-deep)" style={{ marginLeft: 3 }}><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                )}
+              </button>
+
+              <button
+                onClick={() => skip(15)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-.49-3.51" />
+                </svg>
+                <span style={{ fontSize: 10, fontWeight: 600 }}>15s</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -241,6 +313,16 @@ export default function SessionPlayer() {
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>Nice work. You showed up for yourself today.</p>
             </div>
             <button className="btn-primary" onClick={() => navigate('/sessions')} style={{ padding: '14px 28px' }}>Back to sessions</button>
+            {showCustomPrompt && (
+              <div style={{ textAlign: 'center', marginTop: 8 }}>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                  Want a session built for your exact pattern?
+                </p>
+                <button className="btn-ghost" onClick={() => navigate('/custom')}>
+                  Order Custom Audio — $99
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
