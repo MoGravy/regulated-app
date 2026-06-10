@@ -235,8 +235,8 @@ function premiumWelcomeEmail() {
   <div style="max-width:560px;margin:0 auto;padding:40px 24px;">
     <div style="text-align:center;margin-bottom:32px;">
       <div style="font-size:48px;margin-bottom:12px;">✦</div>
-      <h1 style="color:#F0F4F6;font-size:26px;font-weight:800;margin:0 0 8px;">Welcome to Premium.</h1>
-      <p style="color:#8BA9B5;font-size:16px;margin:0;">You now have access to everything.</p>
+      <h1 style="color:#F0F4F6;font-size:26px;font-weight:800;margin:0 0 8px;">Welcome to Regulated Premium.</h1>
+      <p style="color:#8BA9B5;font-size:16px;margin:0;">Every session in the library is now unlocked. New sessions added every week.</p>
     </div>
 
     <div style="background:#1A3A4A;border:1px solid rgba(126,207,192,0.15);border-radius:16px;padding:24px;margin-bottom:24px;">
@@ -259,7 +259,7 @@ function premiumWelcomeEmail() {
 
     <div style="text-align:center;margin-bottom:32px;">
       <a href="https://regulatedapp.co/sessions" style="display:inline-block;padding:14px 28px;background:#7ECFC0;color:#0D2330;font-size:15px;font-weight:700;border-radius:12px;text-decoration:none;">
-        Explore All Sessions
+        Explore the Library
       </a>
     </div>
 

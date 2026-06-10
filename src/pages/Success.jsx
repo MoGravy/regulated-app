@@ -107,15 +107,15 @@ export default function Success() {
     }}>
       <div style={{ fontSize: 72, marginBottom: 20 }}>✦</div>
       <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12, lineHeight: 1.2 }}>
-        Welcome to Premium.
+        Welcome to Regulated Premium.
       </h1>
       <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 36, maxWidth: 340 }}>
-        You now have access to every session in the library, monthly live calls, and everything Matthew creates going forward.
+        You now have access to every session in the library, with new sessions added every week. Everything Matthew creates goes straight to your library.
       </p>
 
       <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 10 }}>
         <button className="btn-primary" onClick={() => navigate('/sessions')}>
-          Explore All 40+ Sessions
+          Explore the Library
         </button>
         <button className="btn-ghost" style={{ width: '100%' }} onClick={() => navigate('/')}>
           Go Home
@@ -123,7 +123,7 @@ export default function Success() {
       </div>
 
       <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 28, lineHeight: 1.6, maxWidth: 300 }}>
-        Check your email for your welcome message and onboarding guide. Questions? hello@regulatedapp.co
+        Questions? hello@regulatedapp.co
       </p>
     </div>
   )
