@@ -214,7 +214,7 @@ export default function Home() {
                 13 sessions and growing. New sessions added every week.
               </div>
               <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 18, lineHeight: 1.6 }}>
-                Sleep, anxiety, confidence, relationships, gut health, grief, and more. Plus monthly live group sessions.
+                Sleep, anxiety, confidence, relationships, gut health, grief, and more. Built by a practitioner, not an algorithm.
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{

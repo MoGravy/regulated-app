@@ -32,11 +32,11 @@ const PLANS = [
 
 const FEATURES = [
   { icon: '🎧', title: '13 sessions and growing', desc: 'Full library — sleep, anxiety, gut, confidence, focus, relationships, grief and more. New sessions added every week.' },
-  { icon: '🌙', title: 'Custom playlists', desc: 'Build your own sequence and save sessions for easy replay' },
-  { icon: '📱', title: 'Offline downloads', desc: 'Download any session to listen without internet connection' },
-  { icon: '🌐', title: 'Monthly live sessions', desc: 'Join Matthew live for monthly group regulation sessions (link in app)' },
-  { icon: '📊', title: 'Progress tracking', desc: 'Full mood trends, regulation scores, and session history' },
-  { icon: '⚡', title: 'Early access', desc: 'New sessions added monthly, you get them first' },
+  { icon: '🎯', title: 'Built for your pattern, not relaxation', desc: 'Every session targets a specific nervous system pattern: anxiety, sleep, gut, habits. This is hypnosis, not background ambience.' },
+  { icon: '🎙️', title: 'Custom audio service', desc: 'Order a session recorded personally for your exact trigger and desired outcome. $99, or free with annual.' },
+  { icon: '🧠', title: 'Made by a practitioner, not an algorithm', desc: 'Every session is written and recorded by Matthew, a clinical hypnosis and NLP practitioner, drawing on years of one on one client work.' },
+  { icon: '🔒', title: 'Founding price locked for life', desc: '$149 a year now, and it never rises for you, even when the library hits 40 plus sessions and the price goes to $199.' },
+  { icon: '⚡', title: 'Early access', desc: 'New sessions added every week. You get them first.' },
 ]
 
 export default function Premium() {
@@ -104,7 +104,7 @@ export default function Premium() {
               You're Premium
             </h1>
             <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 32 }}>
-              Full access to all sessions, monthly live group calls, and everything new Matthew creates.
+              Full access to all sessions and everything new Matthew creates.
             </p>
             <button className="btn-primary" onClick={() => navigate('/sessions')}>
               Explore All Sessions
@@ -273,6 +273,19 @@ export default function Premium() {
               </div>
             ))}
           </div>
+
+          {/* Roadmap strip */}
+          <div style={{
+            marginTop: 14,
+            padding: '12px 16px',
+            background: 'rgba(255,255,255,0.03)',
+            borderRadius: 12,
+            border: '1px solid var(--border)',
+          }}>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.7, margin: 0 }}>
+              Coming for founding members: offline downloads, custom playlists, and progress tracking with mood trends and regulation scores. You are joining at the start. These arrive as the library grows.
+            </p>
+          </div>
         </div>
 
         {/* Free vs Premium comparison */}
@@ -288,10 +301,8 @@ export default function Premium() {
           {[
             ['4 foundational sessions', true, true],
             ['Full library — 13 sessions and growing', false, true],
-            ['Offline downloads', false, true],
-            ['Monthly live sessions', false, true],
-            ['Progress analytics', false, true],
             ['Custom audio ordering', true, true],
+            ['Early access to new sessions', false, true],
           ].map(([label, free, premium]) => (
             <div key={label} style={{
               display: 'flex',
@@ -320,7 +331,7 @@ export default function Premium() {
           </div>
           {[
             ['Can I cancel anytime?', 'Yes. Cancel from your account settings or email hello@regulatedapp.co. No questions asked.'],
-            ['How is this different from the free sessions?', 'Premium unlocks the full library — 13 sessions and growing, covering every major nervous system pattern beyond the 4 foundational tracks. Plus monthly live sessions with Matthew.'],
+            ['How is this different from the free sessions?', 'Premium unlocks the full library — 13 sessions and growing, covering every major nervous system pattern beyond the 4 foundational tracks. Every session is written and recorded by Matthew, targeting specific patterns.'],
             ['What if I already ordered a custom audio?', 'Custom audio is a separate one-time purchase. Premium is the ongoing library. They work perfectly together but are independent.'],
           ].map(([q, a]) => (
             <FAQItem key={q} question={q} answer={a} />
