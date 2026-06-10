@@ -1,12 +1,5 @@
 import Stripe from 'stripe'
 
-// ── Founding member pricing ───────────────────────────────────────────────────
-// Change ANNUAL_PRICE_CENTS here (and in src/config/pricing.js) when the rate
-// expires. Annual subscriptions use price_data so this value always wins.
-const ANNUAL_PRICE_CENTS = 14900  // $149 founding rate → raise to 19900 at 40 sessions
-const MONTHLY_PRICE_CENTS = 1900  // $19/month
-// ─────────────────────────────────────────────────────────────────────────────
-
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 // APP_URL for Stripe success/cancel redirects.
 // Priority: explicit env var → request Origin header → Vercel preview fallback.
@@ -95,42 +88,28 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url, sessionId: session.id })
 
     } else if (type === 'subscription') {
-      // Annual uses price_data so ANNUAL_PRICE_CENTS above controls the charge.
-      // Monthly falls back to priceId (Stripe price) or price_data.
-      const lineItem = plan === 'annual'
-        ? {
-            price_data: {
-              currency: 'usd',
-              unit_amount: ANNUAL_PRICE_CENTS,
-              recurring: { interval: 'year' },
-              product_data: { name: 'Regulated Premium — Annual (Founding Member)' },
-            },
-            quantity: 1,
-          }
-        : priceId
-          ? { price: priceId, quantity: 1 }
-          : {
-              price_data: {
-                currency: 'usd',
-                unit_amount: MONTHLY_PRICE_CENTS,
-                recurring: { interval: 'month' },
-                product_data: { name: 'Regulated Premium — Monthly' },
-              },
-              quantity: 1,
-            }
+      // Price IDs live in Vercel env vars — never trust the client to send them.
+      // To update pricing: change STRIPE_PRICE_ANNUAL / STRIPE_PRICE_MONTHLY in Vercel.
+      const resolvedPriceId = plan === 'annual'
+        ? process.env.STRIPE_PRICE_ANNUAL
+        : process.env.STRIPE_PRICE_MONTHLY
 
+      if (!resolvedPriceId) {
+        console.error(`[checkout] STRIPE_PRICE_${(plan || 'UNKNOWN').toUpperCase()} env var not set`)
+        return res.status(500).json({ error: 'Subscription price not configured. Contact support.' })
+      }
+
+      // allow_promotion_codes lets customers enter codes (e.g. ANNUALFREE) on
+      // Stripe's hosted page — no programmatic coupon handling needed here.
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
         customer_email: email,
-        line_items: [lineItem],
-        discounts,
-        ...(discounts ? {} : { allow_promotion_codes: true }),
+        line_items: [{ price: resolvedPriceId, quantity: 1 }],
+        allow_promotion_codes: true,
         metadata: {
           type: 'subscription',
           plan,
           user_email: email,
-          coupon_code: couponCode || '',
-          discount_applied: discountAmount ? String(discountAmount) : '0',
         },
         subscription_data: {
           metadata: { user_email: email, plan },

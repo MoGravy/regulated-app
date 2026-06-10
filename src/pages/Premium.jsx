@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
 import { upsertUser } from '../lib/supabase'
-import { stripePromise, PRICE_MONTHLY, PRICE_ANNUAL } from '../lib/stripe'
-import CouponField from '../components/CouponField'
+import { stripePromise } from '../lib/stripe'
 import { ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE, MONTHLY_PRICE } from '../config/pricing'
 
 const PLANS = [
@@ -17,7 +16,6 @@ const PLANS = [
     perMonth: '$12.42/mo',
     badge: 'FOUNDING MEMBER',
     badgeColor: 'var(--accent)',
-    priceId: PRICE_ANNUAL,
     note: 'Includes 1 free custom audio — use code ANNUALFREE',
     subline: 'Locks in for life. Price rises to $199 when the library reaches 40 sessions.',
   },
@@ -28,7 +26,6 @@ const PLANS = [
     period: '/month',
     perMonth: null,
     badge: null,
-    priceId: PRICE_MONTHLY,
     note: null,
   },
 ]
@@ -49,19 +46,9 @@ export default function Premium() {
   const [email, setEmail] = useState(userEmail || '')
   const [emailError, setEmailError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [appliedCoupon, setAppliedCoupon] = useState(null)
 
   const selectedPlanObj = PLANS.find(p => p.id === selectedPlan)
-  const basePrice = selectedPlanObj?.price || 99
-
-  function getDiscountedPrice() {
-    if (!appliedCoupon) return null
-    if (appliedCoupon.discount_type === 'percentage') {
-      return Math.max(0, basePrice * (1 - appliedCoupon.discount_amount / 100))
-    }
-    return Math.max(0, basePrice - appliedCoupon.discount_amount)
-  }
-  const discountedPrice = getDiscountedPrice()
+  const basePrice = selectedPlanObj?.price || 149
 
   async function handleSubscribe() {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -76,20 +63,13 @@ export default function Premium() {
       setUserEmail(email)
       await upsertUser(email)
 
-      const plan = PLANS.find(p => p.id === selectedPlan)
-      const priceId = plan.priceId
-
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'subscription',
           plan: selectedPlan,
-          priceId,
           email,
-          couponCode: appliedCoupon?.code || null,
-          discountType: appliedCoupon?.discount_type || null,
-          discountAmount: appliedCoupon?.discount_amount || null,
         }),
       })
 
@@ -251,50 +231,10 @@ export default function Premium() {
           </span>
         </div>
 
-        {/* Coupon code */}
-        <div style={{ marginBottom: 4 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
-            Have a coupon code?
-          </div>
-          <CouponField
-            appliedCoupon={appliedCoupon}
-            onApply={setAppliedCoupon}
-            onRemove={() => setAppliedCoupon(null)}
-          />
-        </div>
-
-        {/* Price display */}
-        <div style={{ marginBottom: 16 }}>
-          {discountedPrice !== null ? (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-              padding: '12px',
-              background: 'rgba(110, 201, 154, 0.06)',
-              borderRadius: 12,
-              marginBottom: 4,
-            }}>
-              <span style={{ fontSize: 15, color: 'var(--text-muted)', textDecoration: 'line-through' }}>
-                ${basePrice}{selectedPlanObj?.period}
-              </span>
-              <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--success)' }}>
-                ${discountedPrice % 1 === 0 ? discountedPrice : discountedPrice.toFixed(2)}{selectedPlanObj?.period}
-              </span>
-              {discountedPrice === 0 && (
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--success)' }}>FREE</span>
-              )}
-            </div>
-          ) : null}
-        </div>
-
         {/* CTA */}
         <button className="btn-primary" onClick={handleSubscribe} disabled={loading} style={{ marginBottom: 12 }}>
           {loading ? (
             <><span className="spinner" />Redirecting…</>
-          ) : discountedPrice !== null ? (
-            `Start Premium — $${discountedPrice % 1 === 0 ? discountedPrice : discountedPrice.toFixed(2)}${selectedPlanObj?.period}`
           ) : (
             `Start Premium — $${basePrice}${selectedPlanObj?.period}`
           )}
