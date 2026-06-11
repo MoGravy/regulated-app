@@ -93,7 +93,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ received: true })
   } catch (err) {
-    console.error('Webhook handler error:', err)
+    console.error('[webhook] handler error:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
     return res.status(500).json({ error: 'Internal error' })
   }
 }
@@ -123,8 +123,8 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
     })
 
   if (insertError) {
-    console.error('custom_orders insert error:', insertError)
-    // Don't throw — still send the email even if DB insert fails
+    console.error('[webhook] custom_orders insert failed:', JSON.stringify(insertError))
+    // Don't throw — payment succeeded, still send the confirmation email
   }
 
   // Upsert user
@@ -145,19 +145,23 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
 async function handleSubscriptionPayment(session, userEmail, plan, couponCode, discountApplied) {
   const subscription = await stripe.subscriptions.retrieve(session.subscription)
 
-  await supabase
+  const { error: upsertError } = await supabase
     .from('subscriptions')
     .upsert({
       user_email: userEmail,
       stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer,
+      // stripe_customer_id and plan columns do not exist in this table — omitted
       status: 'active',
-      plan: plan || 'annual',
       current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
       coupon_code_used: couponCode || null,
       discount_applied: discountApplied ? parseFloat(discountApplied) : 0,
       created_at: new Date().toISOString(),
     }, { onConflict: 'stripe_subscription_id' })
+
+  if (upsertError) {
+    console.error('[webhook] subscriptions upsert failed:', JSON.stringify(upsertError))
+    throw new Error(`subscriptions upsert failed: ${upsertError.message}`)
+  }
 
   // Upsert user
   await supabase
