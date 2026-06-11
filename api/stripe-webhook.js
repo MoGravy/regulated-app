@@ -104,10 +104,12 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
   const dueDate = new Date()
   dueDate.setDate(dueDate.getDate() + 7)
 
-  // UPSERT keyed on stripe_session_id so event redeliveries are idempotent
-  const { error: upsertError } = await supabase
+  // Plain INSERT — unique constraint on stripe_session_id prevents duplicates.
+  // On re-delivery, PostgreSQL raises 23505 (unique violation) which we treat as
+  // idempotent success. Any other error is a real failure and should cause Stripe to retry.
+  const { error: insertError } = await supabase
     .from('custom_orders')
-    .upsert({
+    .insert({
       user_email: userEmail,
       pattern:       pattern || '',
       trigger:       trigger || '',
@@ -120,11 +122,16 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
       due_date: dueDate.toISOString(),
       turnaround_days: 7,
       created_at: new Date().toISOString(),
-    }, { onConflict: 'stripe_session_id' })
+    })
 
-  if (upsertError) {
-    console.error('[webhook] custom_orders upsert failed:', JSON.stringify(upsertError))
-    throw new Error(`custom_orders upsert failed: ${upsertError.message}`)
+  if (insertError) {
+    if (insertError.code === '23505') {
+      // Duplicate Stripe event redelivery — row already exists, nothing to do
+      console.log('[webhook] custom_orders: duplicate stripe_session_id, skipping insert')
+      return
+    }
+    console.error('[webhook] custom_orders insert failed:', JSON.stringify(insertError))
+    throw new Error(`custom_orders insert failed: ${insertError.message}`)
   }
 
   // Upsert user
