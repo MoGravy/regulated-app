@@ -152,22 +152,27 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
 async function handleSubscriptionPayment(session, userEmail, plan, couponCode, discountApplied) {
   const subscription = await stripe.subscriptions.retrieve(session.subscription)
 
-  const { error: upsertError } = await supabase
+  // Plain INSERT — UNIQUE constraint on stripe_subscription_id prevents duplicates.
+  // 23505 on re-delivery = idempotent; any other error = real failure, Stripe should retry.
+  const { error: insertError } = await supabase
     .from('subscriptions')
-    .upsert({
+    .insert({
       user_email: userEmail,
       stripe_subscription_id: subscription.id,
-      // stripe_customer_id and plan columns do not exist in this table — omitted
       status: 'active',
       current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
       coupon_code_used: couponCode || null,
       discount_applied: discountApplied ? parseFloat(discountApplied) : 0,
       created_at: new Date().toISOString(),
-    }, { onConflict: 'stripe_subscription_id' })
+    })
 
-  if (upsertError) {
-    console.error('[webhook] subscriptions upsert failed:', JSON.stringify(upsertError))
-    throw new Error(`subscriptions upsert failed: ${upsertError.message}`)
+  if (insertError) {
+    if (insertError.code === '23505') {
+      console.log('[webhook] subscriptions: duplicate stripe_subscription_id, skipping insert')
+      return
+    }
+    console.error('[webhook] subscriptions insert failed:', JSON.stringify(insertError))
+    throw new Error(`subscriptions insert failed: ${insertError.message}`)
   }
 
   // Upsert user
