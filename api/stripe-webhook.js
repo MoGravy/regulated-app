@@ -104,10 +104,10 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
   const dueDate = new Date()
   dueDate.setDate(dueDate.getDate() + 7)
 
-  // INSERT a new confirmed order — no pre-existing row needed
-  const { error: insertError } = await supabase
+  // UPSERT keyed on stripe_session_id so event redeliveries are idempotent
+  const { error: upsertError } = await supabase
     .from('custom_orders')
-    .insert({
+    .upsert({
       user_email: userEmail,
       pattern:       pattern || '',
       trigger:       trigger || '',
@@ -120,11 +120,11 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
       due_date: dueDate.toISOString(),
       turnaround_days: 7,
       created_at: new Date().toISOString(),
-    })
+    }, { onConflict: 'stripe_session_id' })
 
-  if (insertError) {
-    console.error('[webhook] custom_orders insert failed:', JSON.stringify(insertError))
-    // Don't throw — payment succeeded, still send the confirmation email
+  if (upsertError) {
+    console.error('[webhook] custom_orders upsert failed:', JSON.stringify(upsertError))
+    throw new Error(`custom_orders upsert failed: ${upsertError.message}`)
   }
 
   // Upsert user
@@ -132,7 +132,7 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
     .from('users')
     .upsert({ email: userEmail, updated_at: new Date().toISOString() }, { onConflict: 'email' })
 
-  // Send confirmation email
+  // Send confirmation email only after the order is recorded
   const dueDateStr = dueDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   await resend.emails.send({
     from: `Matthew at Regulated <${FROM_EMAIL}>`,
