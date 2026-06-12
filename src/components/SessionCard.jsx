@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import {
   Moon, Lightning, Drop, Sun, Waves, CrosshairSimple,
-  Shield, Repeat, Heart, Flame, ArrowsClockwise,
+  Shield, Repeat, Heart, Scales, ArrowsClockwise,
   Rocket, Wind, Spiral, MusicNotes,
 } from '@phosphor-icons/react'
 
@@ -18,7 +18,7 @@ const categoryColors = {
   focus:          { bg: '#1A3A3A', accent: '#7EC8C8', Icon: CrosshairSimple },
   confidence:     { bg: '#3A3A1A', accent: '#C8C87E', Icon: Shield },
   grief:          { bg: '#2A2A3A', accent: '#8E8EC8', Icon: Heart },
-  'weight loss':  { bg: '#1A3A28', accent: '#7EC8A0', Icon: Flame },
+  'weight loss':  { bg: '#1A3A28', accent: '#7EC8A0', Icon: Scales },
   motivation:     { bg: '#3A1A1A', accent: '#C87E7E', Icon: Rocket },
   relief:         { bg: '#1A3A34', accent: '#7EC8B8', Icon: Wind },
   mindfulness:    { bg: '#2A1A3A', accent: '#B87EC8', Icon: Spiral },
