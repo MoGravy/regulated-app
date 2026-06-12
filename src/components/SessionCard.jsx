@@ -1,17 +1,29 @@
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
+import {
+  Moon, Lightning, Drop, Sun, Waves, CrosshairSimple,
+  Shield, Repeat, Heart, Flame, ArrowsClockwise,
+  Rocket, Wind, Spiral, MusicNotes,
+} from '@phosphor-icons/react'
 
 const categoryColors = {
-  sleep: { bg: '#1A2E4A', accent: '#6EA8C8', icon: '🌙' },
-  stress: { bg: '#2A1A3A', accent: '#A87EC8', icon: '🌊' },
-  ibs: { bg: '#1A3A2A', accent: '#7EC8A8', icon: '🌿' },
-  reset: { bg: '#3A2A1A', accent: '#C8A87E', icon: '☀️' },
-  anxiety: { bg: '#2A1A3A', accent: '#C87EA8', icon: '🕊️' },
-  focus: { bg: '#1A3A3A', accent: '#7EC8C8', icon: '🎯' },
-  confidence: { bg: '#3A3A1A', accent: '#C8C87E', icon: '✨' },
-  grief: { bg: '#2A2A3A', accent: '#8E8EC8', icon: '💙' },
-  'weight loss': { bg: '#1A3A28', accent: '#7EC8A0', icon: '🎯' },
-  default: { bg: 'var(--bg-card)', accent: 'var(--accent)', icon: '🎵' },
+  sleep:          { bg: '#1A2E4A', accent: '#6EA8C8', Icon: Moon },
+  stress:         { bg: '#2A1A3A', accent: '#A87EC8', Icon: Lightning },
+  'gut health':   { bg: '#1A3A2A', accent: '#7EC8A8', Icon: Drop },
+  ibs:            { bg: '#1A3A2A', accent: '#7EC8A8', Icon: Drop },
+  daily:          { bg: '#3A2A1A', accent: '#C8A87E', Icon: Sun },
+  reset:          { bg: '#3A2A1A', accent: '#C8A87E', Icon: Sun },
+  habits:         { bg: '#1A2A3A', accent: '#7EA8C8', Icon: Repeat },
+  anxiety:        { bg: '#2A1A2A', accent: '#C87EA8', Icon: Waves },
+  focus:          { bg: '#1A3A3A', accent: '#7EC8C8', Icon: CrosshairSimple },
+  confidence:     { bg: '#3A3A1A', accent: '#C8C87E', Icon: Shield },
+  grief:          { bg: '#2A2A3A', accent: '#8E8EC8', Icon: Heart },
+  'weight loss':  { bg: '#1A3A28', accent: '#7EC8A0', Icon: Flame },
+  motivation:     { bg: '#3A1A1A', accent: '#C87E7E', Icon: Rocket },
+  relief:         { bg: '#1A3A34', accent: '#7EC8B8', Icon: Wind },
+  mindfulness:    { bg: '#2A1A3A', accent: '#B87EC8', Icon: Spiral },
+  meditation:     { bg: '#2A1A3A', accent: '#B87EC8', Icon: Spiral },
+  default:        { bg: 'var(--bg-card)', accent: 'var(--accent)', Icon: MusicNotes },
 }
 
 export default function SessionCard({ session, compact = false }) {
@@ -22,6 +34,7 @@ export default function SessionCard({ session, compact = false }) {
   const isLocked = !session.free && !isPremium
   const isComingSoon = !session.audio_url
   const colors = categoryColors[session.category?.toLowerCase()] || categoryColors.default
+  const CategoryIcon = colors.Icon
 
   function handleClick() {
     if (isComingSoon) return   // unclickable — no audio yet
@@ -62,10 +75,9 @@ export default function SessionCard({ session, compact = false }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 22,
           flexShrink: 0,
         }}>
-          {colors.icon}
+          <CategoryIcon size={22} color={colors.accent} weight="regular" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
@@ -135,9 +147,8 @@ export default function SessionCard({ session, compact = false }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 26,
         }}>
-          {colors.icon}
+          <CategoryIcon size={26} color={colors.accent} weight="regular" />
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {isComingSoon ? (
