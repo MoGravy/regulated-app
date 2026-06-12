@@ -26,6 +26,7 @@ export default function SessionPlayer() {
   const startRef = useRef(null)
   const timerRef = useRef(null)
   const autoStartRef = useRef(null)
+  const wakeLockRef = useRef(null)
 
   // ---------------------------------------------------------------------------
   // Load session: Supabase first, hardcoded fallback on error
@@ -100,6 +101,22 @@ export default function SessionPlayer() {
     }, 500)
     return () => clearInterval(timerRef.current)
   }, [isPlaying, step, duration])
+
+  // Wake lock — request when playing, release on pause/end/unmount
+  useEffect(() => {
+    if (isPlaying) {
+      navigator.wakeLock?.request('screen').then(lock => {
+        wakeLockRef.current = lock
+      }).catch(() => {})
+    } else {
+      wakeLockRef.current?.release().catch(() => {})
+      wakeLockRef.current = null
+    }
+    return () => {
+      wakeLockRef.current?.release().catch(() => {})
+      wakeLockRef.current = null
+    }
+  }, [isPlaying])
 
   function handlePreMood(mood) {
     setMoodBefore(mood)
