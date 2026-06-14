@@ -114,7 +114,7 @@ export default async function handler(req, res) {
         subscription_data: {
           metadata: { user_email: email, plan },
         },
-        success_url: `${appUrl}/success?type=subscription&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${appUrl}/success?type=subscription&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/premium`,
       })
 

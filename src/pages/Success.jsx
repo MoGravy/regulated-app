@@ -9,6 +9,7 @@ export default function Success() {
   const { setIsPremium } = useApp()
 
   const type = params.get('type') // 'subscription' | 'custom_audio'
+  const plan = params.get('plan') // 'annual' | 'monthly' | null
   const sessionId = params.get('session_id')
 
   // Fire analytics in the background — never block rendering on this
@@ -109,9 +110,42 @@ export default function Success() {
       <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12, lineHeight: 1.2 }}>
         Welcome to Regulated Premium.
       </h1>
-      <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 36, maxWidth: 340 }}>
+      <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: plan === 'annual' ? 20 : 36, maxWidth: 340 }}>
         You now have access to every session in the library, with new sessions added every week. Everything Matthew creates goes straight to your library.
       </p>
+
+      {plan === 'annual' && (
+        <div style={{
+          width: '100%',
+          maxWidth: 380,
+          background: 'var(--accent-glow)',
+          border: '1px solid var(--border-solid)',
+          borderRadius: 14,
+          padding: '16px 20px',
+          marginBottom: 24,
+          textAlign: 'left',
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', marginBottom: 6 }}>
+            YOUR FREE CUSTOM AUDIO
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 10 }}>
+            Use this code at checkout when ordering your custom audio session (normally $99 — free for annual members):
+          </div>
+          <div style={{
+            fontFamily: 'monospace',
+            fontSize: 20,
+            fontWeight: 800,
+            color: 'var(--text-primary)',
+            letterSpacing: '0.12em',
+            background: 'rgba(0,0,0,0.2)',
+            borderRadius: 8,
+            padding: '8px 14px',
+            display: 'inline-block',
+          }}>
+            ANNUALFREE
+          </div>
+        </div>
+      )}
 
       <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 10 }}>
         <button className="btn-primary" onClick={() => navigate('/sessions')}>

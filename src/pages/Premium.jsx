@@ -16,7 +16,7 @@ const PLANS = [
     perMonth: '$12.42/mo',
     badge: 'FOUNDING MEMBER',
     badgeColor: 'var(--accent)',
-    note: 'Includes 1 free custom audio — use code ANNUALFREE',
+    note: 'Includes 1 free custom audio session',
     subline: 'Locks in for life. Price rises to $199 when the library reaches 40 sessions.',
   },
   {
@@ -242,7 +242,7 @@ export default function Premium() {
 
         <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 28, lineHeight: 1.6 }}>
           Secure payment via Stripe. Cancel anytime. Annual plan billed once per year.{' '}
-          Annual members get 1 free custom audio — use code <strong style={{ color: 'var(--accent)' }}>ANNUALFREE</strong> at checkout.
+          Annual plan includes 1 free custom audio — code revealed after purchase.
         </p>
 
         {/* Features */}
