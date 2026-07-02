@@ -1,6 +1,31 @@
 import Stripe from 'stripe'
+import { createClient } from '@supabase/supabase-js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+)
+
+// Custom audio price is server-authoritative. The client never sends an amount.
+const CUSTOM_AUDIO_PRICE_CENTS = 9900
+
+// Look up a coupon code in the coupons table — same rules as /api/validate-coupon.
+// Returns the coupon row, or null if the code is missing/inactive/expired/exhausted.
+async function lookupCoupon(code) {
+  if (!code) return null
+  const { data: coupon, error } = await supabase
+    .from('coupons')
+    .select('*')
+    .eq('code', String(code).toUpperCase().trim())
+    .eq('active', true)
+    .single()
+  if (error || !coupon) return null
+  if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) return null
+  if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) return null
+  return coupon
+}
 // APP_URL for Stripe success/cancel redirects.
 // Priority: explicit env var → request Origin header → Vercel preview fallback.
 // Using the request Origin means redirects always land on the same domain the
@@ -20,11 +45,13 @@ export default async function handler(req, res) {
   }
 
   const {
-    type, email, amount, plan, priceId,
-    couponCode, discountType, discountAmount,
+    type, email, plan,
+    couponCode,
     // Custom audio order fields (stored in metadata; webhook creates DB row after payment)
     pattern, trigger, desiredState, affirmations,
   } = req.body
+  // NOTE: price and discount values are never read from the client. Price is a
+  // server constant; discounts come from the coupons table via lookupCoupon().
 
   // Stripe metadata values are capped at 500 chars — truncate long free-text fields
   const trunc = (str, max = 490) =>
@@ -33,18 +60,26 @@ export default async function handler(req, res) {
   const appUrl = getAppUrl(req)
 
   try {
-    // Build Stripe discount object from coupon if provided
+    // Build Stripe discount object from the coupons table — client-sent discount
+    // values are ignored. An invalid/expired code is a hard error rather than a
+    // silent full-price charge: the client validated it moments ago, so a miss
+    // here means tampering or a race on expiry/usage limits.
     let discounts = undefined
-    if (couponCode && discountType && discountAmount) {
+    let appliedCoupon = null
+    if (couponCode) {
+      appliedCoupon = await lookupCoupon(couponCode)
+      if (!appliedCoupon) {
+        return res.status(400).json({ error: 'Invalid or expired coupon code' })
+      }
       const stripeCoupon = await stripe.coupons.create({
-        name: couponCode,
-        ...(discountType === 'percentage'
-          ? { percent_off: discountAmount }
-          : { amount_off: Math.round(discountAmount * 100), currency: 'usd' }
+        name: appliedCoupon.code,
+        ...(appliedCoupon.discount_type === 'percentage'
+          ? { percent_off: appliedCoupon.discount_amount }
+          : { amount_off: Math.round(appliedCoupon.discount_amount * 100), currency: 'usd' }
         ),
         duration: 'once',
         max_redemptions: 1,
-        metadata: { source_coupon: couponCode },
+        metadata: { source_coupon: appliedCoupon.code },
       })
       discounts = [{ coupon: stripeCoupon.id }]
     }
@@ -57,7 +92,7 @@ export default async function handler(req, res) {
           {
             price_data: {
               currency: 'usd',
-              unit_amount: amount || 9900,
+              unit_amount: CUSTOM_AUDIO_PRICE_CENTS,
               product_data: {
                 name: 'Custom Audio Session',
                 description: 'Personalized nervous system regulation audio — delivered within 7 days',
@@ -78,8 +113,8 @@ export default async function handler(req, res) {
           trigger:       trunc(trigger),
           desired_state: trunc(desiredState),
           affirmations:  trunc(affirmations),
-          coupon_code:   couponCode || '',
-          discount_applied: discountAmount ? String(discountAmount) : '0',
+          coupon_code:   appliedCoupon ? appliedCoupon.code : '',
+          discount_applied: appliedCoupon ? String(appliedCoupon.discount_amount) : '0',
         },
         success_url: `${appUrl}/success?type=custom_audio&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/custom`,
