@@ -18,6 +18,7 @@ export default async function handler(req, res) {
       status: session.payment_status,
       customer_email: session.customer_email,
       type: session.metadata?.type,
+      plan: session.metadata?.plan,
     })
   } catch (err) {
     console.error('verify-session error:', err)

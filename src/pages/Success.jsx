@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
@@ -9,32 +9,56 @@ export default function Success() {
   const { setIsPremium } = useApp()
 
   const type = params.get('type') // 'subscription' | 'custom_audio'
-  const plan = params.get('plan') // 'annual' | 'monthly' | null
+  const plan = params.get('plan') // 'annual' | 'monthly' | null — display hint only
   const sessionId = params.get('session_id')
 
-  // Fire analytics in the background — never block rendering on this
+  // Verify the payment server-side before revealing anything sensitive (the
+  // ANNUALFREE code). URL params are untrusted — the code only renders once the
+  // backend confirms a real PAID subscription whose Stripe metadata says annual.
+  const [verifyState, setVerifyState] = useState('pending') // 'pending' | 'confirmed' | 'failed'
+  const [verified, setVerified] = useState(null) // { status, type, plan } from backend
+
   useEffect(() => {
-    if (!sessionId) return
-    async function verifyInBackground() {
+    if (!sessionId) {
+      setVerifyState('failed')
+      return
+    }
+    let cancelled = false
+    async function verify() {
       try {
         const res = await fetch(`/api/verify-session?session_id=${sessionId}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.status === 'paid' || data.status === 'complete') {
-            if (type === 'subscription') {
-              setIsPremium(true)
-              trackEvent(Events.PREMIUM_UPGRADE_COMPLETED)
-            } else {
-              trackEvent(Events.CUSTOM_AUDIO_ORDER_COMPLETED)
-            }
-          }
+        if (!res.ok) throw new Error(`verify-session responded ${res.status}`)
+        const data = await res.json()
+        if (cancelled) return
+        const paid = data.status === 'paid' || data.status === 'complete'
+        if (!paid) {
+          setVerifyState('failed')
+          return
         }
-      } catch {
-        // Ignore — webhook already handled the order
+        setVerified(data)
+        setVerifyState('confirmed')
+        if (data.type === 'subscription') {
+          setIsPremium(true)
+          trackEvent(Events.PREMIUM_UPGRADE_COMPLETED)
+        } else {
+          trackEvent(Events.CUSTOM_AUDIO_ORDER_COMPLETED)
+        }
+      } catch (err) {
+        if (cancelled) return
+        console.error('[Success] verify-session failed:', err?.message || err)
+        setVerifyState('failed')
       }
     }
-    verifyInBackground()
-  }, [sessionId, type])
+    verify()
+    return () => { cancelled = true }
+  }, [sessionId])
+
+  // Gate the reward code strictly on the verified backend result — never on the
+  // URL's plan param.
+  const showAnnualCode =
+    verifyState === 'confirmed' &&
+    verified?.type === 'subscription' &&
+    verified?.plan === 'annual'
 
   // Render immediately — no loading gate. Payment already confirmed by Stripe
   // redirecting here with a session_id.
@@ -114,7 +138,26 @@ export default function Success() {
         You now have access to every session in the library, with new sessions added every week. Everything Matthew creates goes straight to your library.
       </p>
 
-      {plan === 'annual' && (
+      {/* While verifying an annual purchase, show a loading state — never the code */}
+      {plan === 'annual' && verifyState === 'pending' && (
+        <div style={{
+          width: '100%',
+          maxWidth: 380,
+          background: 'var(--accent-glow)',
+          border: '1px solid var(--border-solid)',
+          borderRadius: 14,
+          padding: '16px 20px',
+          marginBottom: 24,
+          textAlign: 'center',
+          fontSize: 14,
+          color: 'var(--text-muted)',
+        }}>
+          Confirming your subscription…
+        </div>
+      )}
+
+      {/* Code renders only after the backend confirms a paid annual subscription */}
+      {showAnnualCode && (
         <div style={{
           width: '100%',
           maxWidth: 380,
