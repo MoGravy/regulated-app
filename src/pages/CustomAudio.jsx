@@ -4,8 +4,7 @@ import { trackEvent, Events } from '../lib/analytics'
 import { useApp } from '../hooks/useApp'
 import { stripePromise } from '../lib/stripe'
 import CouponField from '../components/CouponField'
-
-const PRICE = 99
+import { CUSTOM_AUDIO_PRICE as PRICE } from '../config/pricing'
 
 export default function CustomAudio() {
   const navigate = useNavigate()

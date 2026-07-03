@@ -1,6 +1,7 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { CUSTOM_AUDIO_PRICE, ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE } from '../src/config/pricing.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -260,8 +261,8 @@ function premiumWelcomeEmail() {
       ${[
         ['🎧', '13 sessions and growing', 'Every session in the library is now unlocked. New sessions added regularly.'],
         ['🎯', 'Built for your pattern', 'Sleep, anxiety, gut, habits, confidence — each session targets a specific nervous system pattern.'],
-        ['🎙️', 'One free custom audio (annual)', 'Order a session built for your exact trigger and outcome. Use code ANNUALFREE at checkout — normally $99, free for you.'],
-        ['🔒', 'Founding price locked for life', 'Your $149/year rate never rises, even when the library hits 40 sessions and the price goes to $199.'],
+        ['🎙️', 'One free custom audio (annual)', `Order a session built for your exact trigger and outcome. Use code ANNUALFREE at checkout — normally $${CUSTOM_AUDIO_PRICE}, free for you.`],
+        ['🔒', 'Founding price locked for life', `Your $${ANNUAL_FOUNDING_PRICE}/year rate never rises, even when the library hits 40 sessions and the price goes to $${ANNUAL_FULL_PRICE}.`],
       ].map(([icon, title, detail]) => `
         <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">
           <span style="font-size:20px;flex-shrink:0">${icon}</span>

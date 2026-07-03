@@ -4,7 +4,7 @@ import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
 import { upsertUser } from '../lib/supabase'
 import { stripePromise } from '../lib/stripe'
-import { ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE, MONTHLY_PRICE } from '../config/pricing'
+import { ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE, MONTHLY_PRICE, CUSTOM_AUDIO_PRICE } from '../config/pricing'
 
 const PLANS = [
   {
@@ -17,7 +17,7 @@ const PLANS = [
     badge: 'FOUNDING MEMBER',
     badgeColor: 'var(--accent)',
     note: 'Includes 1 free custom audio session',
-    subline: 'Locks in for life. Price rises to $199 when the library reaches 40 sessions.',
+    subline: `Locks in for life. Price rises to $${ANNUAL_FULL_PRICE} when the library reaches 40 sessions.`,
   },
   {
     id: 'monthly',
@@ -33,9 +33,9 @@ const PLANS = [
 const FEATURES = [
   { icon: '🎧', title: '13 sessions and growing', desc: 'Full library — sleep, anxiety, gut, confidence, focus, relationships, grief and more. New sessions added every week.' },
   { icon: '🎯', title: 'Built for your pattern, not relaxation', desc: 'Every session targets a specific nervous system pattern: anxiety, sleep, gut, habits. This is hypnosis, not background ambience.' },
-  { icon: '🎙️', title: 'Custom audio service', desc: 'Order a session recorded personally for your exact trigger and desired outcome. $99, or free with annual.' },
+  { icon: '🎙️', title: 'Custom audio service', desc: `Order a session recorded personally for your exact trigger and desired outcome. $${CUSTOM_AUDIO_PRICE}, or free with annual.` },
   { icon: '🧠', title: 'Made by a practitioner, not an algorithm', desc: 'Every session is written and recorded by Matthew, a clinical hypnosis and NLP practitioner, drawing on years of one on one client work.' },
-  { icon: '🔒', title: 'Founding price locked for life', desc: '$149 a year now, and it never rises for you, even when the library hits 40 plus sessions and the price goes to $199.' },
+  { icon: '🔒', title: 'Founding price locked for life', desc: `$${ANNUAL_FOUNDING_PRICE} a year now, and it never rises for you, even when the library hits 40 plus sessions and the price goes to $${ANNUAL_FULL_PRICE}.` },
   { icon: '⚡', title: 'Early access', desc: 'New sessions added every week. You get them first.' },
 ]
 
@@ -48,7 +48,7 @@ export default function Premium() {
   const [loading, setLoading] = useState(false)
 
   const selectedPlanObj = PLANS.find(p => p.id === selectedPlan)
-  const basePrice = selectedPlanObj?.price || 149
+  const basePrice = selectedPlanObj?.price || ANNUAL_FOUNDING_PRICE
 
   async function handleSubscribe() {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

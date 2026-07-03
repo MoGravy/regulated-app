@@ -9,7 +9,7 @@ const supabase = createClient(
 )
 
 // Custom audio price is server-authoritative. The client never sends an amount.
-const CUSTOM_AUDIO_PRICE_CENTS = 9900
+import { CUSTOM_AUDIO_PRICE_CENTS } from '../src/config/pricing.js'
 
 // Look up a coupon code in the coupons table — same rules as /api/validate-coupon.
 // Returns the coupon row, or null if the code is missing/inactive/expired/exhausted.

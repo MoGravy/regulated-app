@@ -4,6 +4,7 @@ import { useApp } from '../hooks/useApp'
 import { getSessions } from '../lib/supabase'
 import { HARDCODED_SESSIONS } from '../lib/hardcodedSessions'
 import SessionCard from '../components/SessionCard'
+import { ANNUAL_FOUNDING_PRICE, MONTHLY_PRICE } from '../config/pricing'
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -225,9 +226,9 @@ export default function Home() {
                   fontWeight: 700,
                   color: 'var(--bg-deep)',
                 }}>
-                  Unlock — $149/year
+                  Unlock — ${ANNUAL_FOUNDING_PRICE}/year
                 </div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>or $19/mo</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>or ${MONTHLY_PRICE}/mo</div>
               </div>
             </div>
           </div>

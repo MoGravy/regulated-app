@@ -5,6 +5,7 @@ import { supabase, trackSessionCompletion, SESSION_COLUMNS } from '../lib/supaba
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import MoodTracker from '../components/MoodTracker'
+import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
 
 const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', POST_MOOD: 'post_mood', DONE: 'done' }
 
@@ -403,7 +404,7 @@ export default function SessionPlayer() {
                   Want a session built for your exact pattern?
                 </p>
                 <button className="btn-ghost" onClick={() => navigate('/custom')}>
-                  Order Custom Audio — $99
+                  Order Custom Audio — ${CUSTOM_AUDIO_PRICE}
                 </button>
               </div>
             )}

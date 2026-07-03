@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
+import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
 
 export default function Success() {
   const navigate = useNavigate()
@@ -172,7 +173,7 @@ export default function Success() {
             YOUR FREE CUSTOM AUDIO
           </div>
           <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 10 }}>
-            Use this code at checkout when ordering your custom audio session (normally $99 — free for annual members):
+            Use this code at checkout when ordering your custom audio session (normally ${CUSTOM_AUDIO_PRICE} — free for annual members):
           </div>
           <div style={{
             fontFamily: 'monospace',
