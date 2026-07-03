@@ -257,3 +257,11 @@ insert into public.coupons (code, discount_type, discount_amount, max_uses, part
   ('PARTNER2',     'percentage', 20,   200,  'Partner 2',  true),  -- 20% off custom audio
   ('VGBFREE',      'percentage', 100,  300,  'VGB Launch', true)   -- 1 month free premium
 on conflict (code) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Session previews (30s public marketing clips)
+-- Upload clips to a PUBLIC storage bucket named "previews", then store the
+-- full public URL in preview_url. Public on purpose — previews are marketing
+-- assets; full sessions keep signed-URL access.
+-- ---------------------------------------------------------------------------
+alter table public.sessions add column if not exists preview_url text;

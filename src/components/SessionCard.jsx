@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import {
@@ -24,6 +25,96 @@ const categoryColors = {
   mindfulness:    { bg: '#2A1A3A', accent: '#B87EC8', Icon: Spiral },
   meditation:     { bg: '#2A1A3A', accent: '#B87EC8', Icon: Spiral },
   default:        { bg: 'var(--bg-card)', accent: 'var(--accent)', Icon: MusicNotes },
+}
+
+// ── Preview player ───────────────────────────────────────────────────────────
+// ponytail: module-level singleton — one preview plays at a time app-wide
+let stopActivePreview = null
+
+function PreviewButton({ session, isLocked, accent }) {
+  const [state, setState] = useState('idle') // 'idle' | 'playing' | 'ended'
+  const audioRef = useRef(null)
+
+  // stop on unmount (navigation away)
+  useEffect(() => () => audioRef.current?.pause(), [])
+
+  function toggle(e) {
+    e.stopPropagation()
+    e.preventDefault()
+    if (state === 'playing') {
+      audioRef.current?.pause()
+      audioRef.current = null
+      stopActivePreview = null
+      setState('idle')
+      return
+    }
+    stopActivePreview?.()
+    const audio = new Audio(session.preview_url)
+    audioRef.current = audio
+    stopActivePreview = () => { audio.pause(); setState('idle') }
+    audio.onended = () => {
+      audioRef.current = null
+      stopActivePreview = null
+      setState(isLocked ? 'ended' : 'idle')
+    }
+    audio.play().catch(() => setState('idle'))
+    setState('playing')
+  }
+
+  if (state === 'ended') {
+    // Soft upsell after a locked preview ends. Plain text: the click bubbles
+    // up to the card, which already routes locked cards to /premium.
+    return (
+      <span style={{ fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>
+        Unlock the full session →
+      </span>
+    )
+  }
+
+  const playing = state === 'playing'
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      aria-label={playing ? 'Stop preview' : 'Play 30-second preview'}
+      onClick={toggle}
+      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && toggle(e)}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '5px 10px',
+        borderRadius: 20,
+        border: '1px solid var(--border-solid)',
+        background: playing ? 'var(--accent-glow)' : 'transparent',
+        color: accent,
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: 'pointer',
+        flexShrink: 0,
+      }}
+    >
+      {playing ? (
+        <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: 2, height: 12 }}>
+          {[0, 1, 2].map(i => (
+            <span key={i} style={{
+              width: 3,
+              height: 12,
+              borderRadius: 1,
+              background: accent,
+              transformOrigin: 'bottom',
+              animation: `waveform 0.9s ease-in-out ${i * 0.15}s infinite`,
+            }} />
+          ))}
+        </span>
+      ) : (
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3" />
+        </svg>
+      )}
+      {playing ? 'Playing' : 'Preview'}
+    </span>
+  )
 }
 
 export default function SessionCard({ session, compact = false }) {
@@ -90,6 +181,9 @@ export default function SessionCard({ session, compact = false }) {
             {session.duration} min
           </span>
         </div>
+        {session.preview_url && (
+          <PreviewButton session={session} isLocked={isLocked} accent={colors.accent} />
+        )}
         {isComingSoon ? (
           <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
             SOON
@@ -186,8 +280,11 @@ export default function SessionCard({ session, compact = false }) {
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--text-muted)' }}>
           {session.duration} min · {session.category}
+          {session.preview_url && (
+            <PreviewButton session={session} isLocked={isLocked} accent={colors.accent} />
+          )}
         </span>
         {isComingSoon ? null : !isLocked ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: colors.accent, fontSize: 13, fontWeight: 600 }}>
