@@ -12,8 +12,8 @@ Personalized nervous system regulation app by Matthew Tweedie.
 | Stream | Price | Notes |
 |--------|-------|-------|
 | Free sessions | $0 | No login required — 4 foundational sessions |
-| Custom audio | $75 | One-time, 7-day turnaround, any user |
-| Premium subscription | $99/yr or $14.99/mo | Full 40+ session library |
+| Custom audio | $99 | One-time, 7-day turnaround, any user |
+| Premium subscription | $149/yr founding rate or $19/mo | Full session library (13 and growing) |
 
 ---
 
@@ -49,9 +49,9 @@ Then fill in every value (see `.env.example` for descriptions).
 
 1. Create an account at [stripe.com](https://stripe.com)
 2. In **Products**, create:
-   - **Custom Audio** — one-time $75 (or leave price_id blank; checkout uses inline price)
-   - **Premium Monthly** — recurring $14.99/month → copy price ID → `VITE_STRIPE_PRICE_MONTHLY`
-   - **Premium Annual** — recurring $99/year → copy price ID → `VITE_STRIPE_PRICE_ANNUAL`
+   - **Custom Audio** — one-time $99 (no price ID needed; checkout uses inline price)
+   - **Premium Monthly** — recurring $19/month → copy price ID → `STRIPE_PRICE_MONTHLY`
+   - **Premium Annual** — recurring $149/year (founding rate) → copy price ID → `STRIPE_PRICE_ANNUAL`
 3. In **Developers → Webhooks**, add endpoint:
    - URL: `https://regulatedapp.co/api/stripe-webhook`
    - Events to listen: `checkout.session.completed`, `customer.subscription.deleted`, `invoice.payment_failed`, `invoice.payment_succeeded`
@@ -247,8 +247,8 @@ export default config;
 | `VITE_STRIPE_PUBLISHABLE_KEY` | Frontend | ✓ |
 | `STRIPE_SECRET_KEY` | API only | ✓ |
 | `STRIPE_WEBHOOK_SECRET` | Webhook handler | ✓ |
-| `VITE_STRIPE_PRICE_MONTHLY` | Frontend + API | ✓ |
-| `VITE_STRIPE_PRICE_ANNUAL` | Frontend + API | ✓ |
+| `STRIPE_PRICE_MONTHLY` | API only | ✓ |
+| `STRIPE_PRICE_ANNUAL` | API only | ✓ |
 | `RESEND_API_KEY` | API only | ✓ |
 | `VITE_FROM_EMAIL` | API | ✓ |
 | `VITE_APP_URL` | API (Stripe redirects) | ✓ |
