@@ -265,3 +265,20 @@ on conflict (code) do nothing;
 -- assets; full sessions keep signed-URL access.
 -- ---------------------------------------------------------------------------
 alter table public.sessions add column if not exists preview_url text;
+
+-- ---------------------------------------------------------------------------
+-- Premium audio lockdown (run together with flipping the "sessions" storage
+-- bucket to PRIVATE in Dashboard → Storage → sessions → settings)
+--
+-- 1. has_audio replaces the client's old "!audio_url = coming soon" check.
+-- 2. Column-level grants stop ANY anon/authenticated PostgREST query from
+--    selecting audio_url — changing the app's select() alone would not stop
+--    curl with the anon key. Server functions use the service role and are
+--    unaffected.
+-- ---------------------------------------------------------------------------
+alter table public.sessions
+  add column if not exists has_audio boolean generated always as (audio_url is not null) stored;
+
+revoke select on public.sessions from anon, authenticated;
+grant select (id, title, description, category, duration, free, created_at, preview_url, has_audio)
+  on public.sessions to anon, authenticated;

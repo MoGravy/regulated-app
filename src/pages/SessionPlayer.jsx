@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
-import { supabase, trackSessionCompletion } from '../lib/supabase'
+import { supabase, trackSessionCompletion, SESSION_COLUMNS } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import MoodTracker from '../components/MoodTracker'
@@ -13,7 +13,8 @@ export default function SessionPlayer() {
   const navigate = useNavigate()
   const { userEmail, markSessionComplete } = useApp()
 
-  const [session, setSession] = useState(null)   // full DB row — single source of truth
+  const [session, setSession] = useState(null)   // DB row (safe columns) — single source of truth
+  const [audioUrl, setAudioUrl] = useState(null)  // resolved at play time — premium via signed URL endpoint
   const [loadError, setLoadError] = useState(false)
   const [step, setStep] = useState(STEP.PRE_MOOD)
   const [moodBefore, setMoodBefore] = useState(null)
@@ -39,7 +40,7 @@ export default function SessionPlayer() {
     async function fetchSession() {
       const { data, error } = await supabase
         .from('sessions')
-        .select('*')
+        .select(SESSION_COLUMNS)
         .eq('id', trimmed)
         .single()
 
@@ -72,6 +73,42 @@ export default function SessionPlayer() {
     }
   }, [id])
 
+  // Resolve the playable URL once the session is loaded. Hardcoded fallback
+  // rows carry audio_url directly; DB rows never include it — free and premium
+  // both go through the endpoint (free returns the public URL, premium returns
+  // a 2h signed URL after a subscription check).
+  useEffect(() => {
+    if (!session) return
+    const hasAudio = session.has_audio ?? !!session.audio_url
+    if (!hasAudio) return
+    if (session.audio_url) { setAudioUrl(session.audio_url); return }
+
+    let cancelled = false
+    async function resolveUrl() {
+      try {
+        const res = await fetch('/api/get-audio-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: session.id, email: userEmail }),
+        })
+        if (cancelled) return
+        if (res.status === 401 || res.status === 403) {
+          navigate('/premium')
+          return
+        }
+        if (!res.ok) throw new Error(`get-audio-url responded ${res.status}`)
+        const data = await res.json()
+        setAudioUrl(data.url)
+      } catch (err) {
+        if (cancelled) return
+        console.error('[SessionPlayer] get-audio-url failed:', err?.message || err)
+        setLoadError(true)
+      }
+    }
+    resolveUrl()
+    return () => { cancelled = true }
+  }, [session])
+
   // Auto-advance to PLAYING after mood selection delay
   useEffect(() => {
     if (!session || step !== STEP.PRE_MOOD) return
@@ -81,9 +118,9 @@ export default function SessionPlayer() {
 
   // Play audio when step becomes PLAYING
   useEffect(() => {
-    if (step !== STEP.PLAYING || !session?.audio_url || !audioRef.current) return
+    if (step !== STEP.PLAYING || !audioUrl || !audioRef.current) return
     audioRef.current.play().catch(() => {})
-  }, [step, session])
+  }, [step, audioUrl])
 
   // Timer tick
   useEffect(() => {
@@ -183,7 +220,7 @@ export default function SessionPlayer() {
     )
   }
 
-  if (session && !session.audio_url) {
+  if (session && !(session.has_audio ?? !!session.audio_url)) {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg-deep)' }}>
         <div style={{ padding: '24px 24px 0' }}>
@@ -266,10 +303,10 @@ export default function SessionPlayer() {
 
         {step === STEP.PLAYING && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 40 }}>
-            {session.audio_url && (
+            {audioUrl && (
               <audio
                 ref={audioRef}
-                src={session.audio_url}
+                src={audioUrl}
                 preload="auto"
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}

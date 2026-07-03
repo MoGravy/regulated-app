@@ -64,11 +64,17 @@ export async function trackSessionCompletion(sessionId, userEmail, moodBefore, m
   }
 }
 
+// Safe column list for client reads — audio_url deliberately excluded.
+// Premium audio is served via /api/get-audio-url (subscription-checked,
+// 2h signed URL). has_audio is a generated column standing in for the old
+// "!audio_url = coming soon" check.
+export const SESSION_COLUMNS = 'id, title, description, category, duration, free, created_at, preview_url, has_audio'
+
 export async function getSessions() {
   console.log('[Sessions] Fetching free sessions from Supabase...')
   const { data, error } = await supabase
     .from('sessions')
-    .select('*')
+    .select(SESSION_COLUMNS)
     .eq('free', true)
     .order('created_at', { ascending: true })
 
@@ -88,7 +94,7 @@ export async function getAllSessions() {
   console.log('[Sessions] Fetching all sessions from Supabase...')
   const { data, error } = await supabase
     .from('sessions')
-    .select('*')
+    .select(SESSION_COLUMNS)
     .order('created_at', { ascending: true })
 
   if (error) {

@@ -123,7 +123,7 @@ export default function SessionCard({ session, compact = false }) {
 
   const isCompleted = completedSessions.includes(session.id)
   const isLocked = !session.free && !isPremium
-  const isComingSoon = !session.audio_url
+  const isComingSoon = !(session.has_audio ?? !!session.audio_url) // DB rows expose has_audio, not audio_url
   const colors = categoryColors[session.category?.toLowerCase()] || categoryColors.default
   const CategoryIcon = colors.Icon
 
