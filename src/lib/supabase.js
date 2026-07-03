@@ -70,27 +70,12 @@ export async function trackSessionCompletion(sessionId, userEmail, moodBefore, m
 // "!audio_url = coming soon" check.
 export const SESSION_COLUMNS = 'id, title, description, category, duration, free, created_at, preview_url, has_audio'
 
-export async function getSessions() {
-  console.log('[Sessions] Fetching free sessions from Supabase...')
-  const { data, error } = await supabase
-    .from('sessions')
-    .select(SESSION_COLUMNS)
-    .eq('free', true)
-    .order('created_at', { ascending: true })
-
-  if (error) {
-    console.error('[Sessions] getSessions() failed — full error:', JSON.stringify(error))
-    return HARDCODED_SESSIONS.filter(s => s.free)
-  }
-  if (!data?.length) {
-    console.warn('[Sessions] getSessions() returned 0 rows — using hardcoded fallback')
-    return HARDCODED_SESSIONS.filter(s => s.free)
-  }
-  console.log('[Sessions] ✓', data.length, 'free sessions from Supabase')
-  return data
-}
+// Module-level cache: the library is fetched once per page load, not on every
+// tab switch. Cleared by a full reload; fallback results are never cached.
+let allSessionsCache = null
 
 export async function getAllSessions() {
+  if (allSessionsCache) return allSessionsCache
   console.log('[Sessions] Fetching all sessions from Supabase...')
   const { data, error } = await supabase
     .from('sessions')
@@ -106,7 +91,20 @@ export async function getAllSessions() {
     return HARDCODED_SESSIONS
   }
   console.log('[Sessions] ✓', data.length, 'sessions from Supabase')
+  allSessionsCache = data
   return data
+}
+
+export async function getSessions() {
+  const all = await getAllSessions()
+  const free = all.filter(s => s.free)
+  return free.length ? free : HARDCODED_SESSIONS.filter(s => s.free)
+}
+
+// Synchronous cache lookup for the player — avoids a refetch when the user
+// navigated here from a list that already loaded the library.
+export function getCachedSession(id) {
+  return allSessionsCache?.find(s => String(s.id) === String(id)) || null
 }
 
 // ---------------------------------------------------------------------------

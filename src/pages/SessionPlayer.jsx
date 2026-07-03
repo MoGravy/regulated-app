@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
-import { supabase, trackSessionCompletion, SESSION_COLUMNS } from '../lib/supabase'
+import { supabase, trackSessionCompletion, SESSION_COLUMNS, getCachedSession } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import MoodTracker from '../components/MoodTracker'
@@ -39,6 +39,13 @@ export default function SessionPlayer() {
     if (!trimmed) { setLoadError(true); return }
 
     async function fetchSession() {
+      const cached = getCachedSession(trimmed)
+      if (cached) {
+        setSession(cached)
+        trackEvent(Events.SESSION_STARTED, { session_title: cached.title })
+        return
+      }
+
       const { data, error } = await supabase
         .from('sessions')
         .select(SESSION_COLUMNS)
