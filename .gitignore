@@ -7,6 +7,16 @@ dist-ssr/
 .env.local
 .env.*.local
 
+# Credentials — never commit
+.git-credentials
+*.bak
+credentials_patch*
+
+# Temp / scratch scripts
+.tmp/
+tmp_*
+test-supabase.mjs
+
 # Dependencies
 node_modules/
 
@@ -19,3 +29,4 @@ node_modules/
 
 # Vercel local dev
 .vercel/
+.vercel
