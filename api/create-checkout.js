@@ -33,7 +33,9 @@ async function lookupCoupon(code) {
 function getAppUrl(req) {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, '')
   if (req.headers.origin) return req.headers.origin.replace(/\/$/, '')
-  return 'https://regulated-41wm9xok4-mogravys-projects.vercel.app'
+  // Effectively dead: browser POSTs always send Origin. Kept as a safe last
+  // resort for non-browser callers, pointed at production not a stale preview.
+  return 'https://regulatedapp.co'
 }
 
 export default async function handler(req, res) {

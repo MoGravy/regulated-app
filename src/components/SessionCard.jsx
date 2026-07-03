@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import {
   Moon, Lightning, Drop, Sun, Waves, CrosshairSimple,
-  Shield, Repeat, Heart, Scales, ArrowsClockwise,
+  Shield, Repeat, Heart, Scales,
   Rocket, Wind, Spiral, MusicNotes,
 } from '@phosphor-icons/react'
 
