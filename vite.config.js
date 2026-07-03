@@ -74,13 +74,19 @@ console.log('VITE_STRIPE_PRICE_MONTHLY:   ', process.env.VITE_STRIPE_PRICE_MONTH
 console.log('VITE_STRIPE_PRICE_ANNUAL:    ', process.env.VITE_STRIPE_PRICE_ANNUAL   || '(EMPTY)')
 console.log('=== [vite.config] End diagnostics ===')
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [react()],
   server: {
     port: Number(process.env.PORT) || 3000, // PORT set by preview harness; 3000 locally
   },
+  // Strip console noise from production builds only. Deliberately `pure`, not
+  // drop:['console'] — drop would also erase console.error, which is the
+  // error-logging standard (see stripe-webhook.js).
+  esbuild: command === 'build'
+    ? { pure: ['console.log', 'console.info', 'console.debug', 'console.warn'] }
+    : {},
   build: {
     outDir: 'dist',
     sourcemap: true,
   },
-})
+}))
