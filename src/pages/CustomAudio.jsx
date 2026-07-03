@@ -84,10 +84,8 @@ export default function CustomAudio() {
           trigger: form.trigger,
           desiredState: form.desiredState,
           affirmations: form.affirmations,
-          amount: Math.round(finalPrice * 100),
+          // price and discount are server-authoritative; only the code is sent
           couponCode: appliedCoupon?.code || null,
-          discountType: appliedCoupon?.discount_type || null,
-          discountAmount: appliedCoupon?.discount_amount || null,
         }),
       })
 
