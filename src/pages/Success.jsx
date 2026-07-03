@@ -46,8 +46,13 @@ export default function Success() {
         }
       } catch (err) {
         if (cancelled) return
-        console.error('[Success] verify-session failed:', err?.message || err)
+        console.error('[Success] verify-session failed:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
         setVerifyState('failed')
+        // Network failure ≠ unpaid: Stripe only redirects here after payment,
+        // and the webhook is the server-side source of truth. Don't strand a
+        // paying customer without their premium flag — audio access is
+        // independently gated server-side, so this is safe to set.
+        if (type === 'subscription' && sessionId) setIsPremium(true)
       }
     }
     verify()

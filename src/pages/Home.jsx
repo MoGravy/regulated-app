@@ -33,8 +33,9 @@ export default function Home() {
     try {
       const data = await getSessions(isPremium)
       if (data.length) setSessions(data)
-    } catch {
-      // Use demo data
+    } catch (err) {
+      // Fall back to demo data, but never silently
+      console.error('[Home] getSessions failed:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
     } finally {
       setLoading(false)
     }

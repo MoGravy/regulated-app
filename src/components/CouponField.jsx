@@ -25,7 +25,8 @@ export default function CouponField({ onApply, onRemove, appliedCoupon }) {
         onApply(data)
         setCode('')
       }
-    } catch {
+    } catch (err) {
+      console.error('[CouponField] validate-coupon failed:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
       setError('Could not validate code. Please try again.')
     } finally {
       setLoading(false)
