@@ -33,22 +33,25 @@ export default async function handler(req, res) {
     if (error || !session) return res.status(404).json({ error: 'Session not found' })
     if (!session.audio_url) return res.status(404).json({ error: 'Session has no audio yet' })
 
-    // Free sessions: audio is public by design — return the stored URL as-is.
-    if (session.free) return res.status(200).json({ url: session.audio_url })
+    // ALL sessions get a freshly signed short-lived URL — stored URLs are
+    // treated as storage-path carriers only. Never trust a baked token: the
+    // June 2026 outage was a rotated signing key invalidating year-old tokens.
+    // Free sessions skip the subscription check; premium requires one.
+    if (!session.free) {
+      // Premium: require an active, unexpired subscription for this email.
+      // ponytail: email is the app's only identity (no auth layer) — knowing a
+      // subscriber's email unlocks audio. Upgrade path: real auth (Supabase Auth).
+      if (!email) return res.status(401).json({ error: 'email required' })
+      const { data: sub } = await supabase
+        .from('subscriptions')
+        .select('id')
+        .eq('user_email', String(email).toLowerCase().trim())
+        .eq('status', 'active')
+        .gt('current_period_end', new Date().toISOString())
+        .maybeSingle()
 
-    // Premium: require an active, unexpired subscription for this email.
-    // ponytail: email is the app's only identity (no auth layer) — knowing a
-    // subscriber's email unlocks audio. Upgrade path: real auth (Supabase Auth).
-    if (!email) return res.status(401).json({ error: 'email required' })
-    const { data: sub } = await supabase
-      .from('subscriptions')
-      .select('id')
-      .eq('user_email', String(email).toLowerCase().trim())
-      .eq('status', 'active')
-      .gt('current_period_end', new Date().toISOString())
-      .maybeSingle()
-
-    if (!sub) return res.status(403).json({ error: 'Active subscription required' })
+      if (!sub) return res.status(403).json({ error: 'Active subscription required' })
+    }
 
     const path = storagePath(session.audio_url)
     if (!path) {

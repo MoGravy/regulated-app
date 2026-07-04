@@ -81,15 +81,14 @@ export default function SessionPlayer() {
     }
   }, [id])
 
-  // Resolve the playable URL once the session is loaded. Hardcoded fallback
-  // rows carry audio_url directly; DB rows never include it — free and premium
-  // both go through the endpoint (free returns the public URL, premium returns
-  // a 2h signed URL after a subscription check).
+  // Resolve the playable URL once the session is loaded. ALL audio goes
+  // through /api/get-audio-url for a freshly signed short-lived URL — no
+  // baked tokens anywhere on the client (a rotated signing key silently
+  // killed year-old hardcoded tokens in June 2026).
   useEffect(() => {
     if (!session) return
     const hasAudio = session.has_audio ?? !!session.audio_url
     if (!hasAudio) return
-    if (session.audio_url) { setAudioUrl(session.audio_url); return }
 
     let cancelled = false
     async function resolveUrl() {

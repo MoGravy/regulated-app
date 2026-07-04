@@ -1,5 +1,5 @@
-// Hard-coded sessions for testing — the free sessions are served directly from here.
-// Premium rows will come from Supabase once audio is mastered/hosted there.
+// Emergency fallback metadata only — used when Supabase is unreachable.
+// No audio URLs live here: all playback resolves through /api/get-audio-url.
 
 export const HARDCODED_SESSIONS = [
   {
@@ -9,7 +9,7 @@ export const HARDCODED_SESSIONS = [
     category: 'Sleep',
     free: true,
     description: 'Nervous system reset for deep, restorative sleep. Wake up refreshed.',
-    audio_url: 'https://aynyvirtzioyeshauith.supabase.co/storage/v1/object/sign/sessions/Deep%20Sleep%20Reset.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iY2FjMGI5ZC05ZDMwLTQ4ZWQtYTA4MC01ZDM3OGQ0ZDQyYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzZXNzaW9ucy1EZWVwIFNsZWVwIFJlc2V0Lm1wMyIsImlhdCI6MTc4MDg5OTg0MywiZXhwIjoxODEyNDM1ODQzfQ.VgFdXyKvpDqNcW--burXM-QI4gLozD15zAKyQchXtaY',
+    has_audio: true, // audio resolved via /api/get-audio-url at play time — never bake tokens
   },
   {
     id: 'a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442',
@@ -18,7 +18,7 @@ export const HARDCODED_SESSIONS = [
     category: 'Stress',
     free: true,
     description: 'Immediate downregulation for daily overwhelm. Fast-acting nervous system reset.',
-    audio_url: 'https://aynyvirtzioyeshauith.supabase.co/storage/v1/object/sign/sessions/Stress%20Off%20Switch.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iY2FjMGI5ZC05ZDMwLTQ4ZWQtYTA4MC01ZDM3OGQ0ZDQyYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzZXNzaW9ucy1TdHJlc3MgT2ZmIFN3aXRjaC5tcDMiLCJpYXQiOjE3ODA4OTk4NjYsImV4cCI6MTgxMjQzNTg2Nn0.EMAzHC8zb-PCwouxK4eM11_CP-xf6-UGnTOUoLmQmPM',
+    has_audio: true, // audio resolved via /api/get-audio-url at play time — never bake tokens
   },
   {
     id: 'ca65ecd1-8ade-4a6e-915e-84810f8b26cb',
@@ -27,7 +27,7 @@ export const HARDCODED_SESSIONS = [
     category: 'Gut Health',
     free: true,
     description: 'Direct nervous system communication with your digestive system. Calm your gut naturally.',
-    audio_url: 'https://aynyvirtzioyeshauith.supabase.co/storage/v1/object/sign/sessions/Gut%20Brain%20Reset.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iY2FjMGI5ZC05ZDMwLTQ4ZWQtYTA4MC01ZDM3OGQ0ZDQyYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzZXNzaW9ucy1HdXQgQnJhaW4gUmVzZXQubXAzIiwiaWF0IjoxNzgwODk5ODU0LCJleHAiOjE4MTI0MzU4NTR9.b0thYkbrWVZcShY5KV7M-sXy1APkScQUtvvmbRLkUzc',
+    has_audio: true, // audio resolved via /api/get-audio-url at play time — never bake tokens
   },
   {
     id: 'e184e81c-8163-46eb-8a00-9ef74f727ab4',
@@ -36,7 +36,7 @@ export const HARDCODED_SESSIONS = [
     category: 'Daily',
     free: true,
     description: 'Your daily anchor. Free every morning. Refreshes daily.',
-    audio_url: 'https://aynyvirtzioyeshauith.supabase.co/storage/v1/object/sign/sessions/Daily%20Regulation.mp3?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iY2FjMGI5ZC05ZDMwLTQ4ZWQtYTA4MC01ZDM3OGQ0ZDQyYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzZXNzaW9ucy1EYWlseSBSZWd1bGF0aW9uLm1wMyIsImlhdCI6MTc4MDg5OTc4MCwiZXhwIjoxODEyNDM1NzgwfQ.smGsliHVdTZ0N9NWe-ai-lk0xtuU8Jqw9vdX0zzrh4c',
+    has_audio: true, // audio resolved via /api/get-audio-url at play time — never bake tokens
   },
   // Premium sessions — audio files need mastering by Matthew first
   {
