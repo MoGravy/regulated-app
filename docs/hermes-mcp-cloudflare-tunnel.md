@@ -68,8 +68,11 @@ and the domains are already on Cloudflare nameservers, so it costs $0.
 |---|---|
 | Hostname | `mcp-7fq.adelaideanxietyclinic.com.au` |
 | Origin | `http://127.0.0.1:8765` (unchanged) |
-| Connector URL | `https://mcp-7fq.adelaideanxietyclinic.com.au/sse` |
+| Connector URL | `https://mcp-7fq.adelaideanxietyclinic.com.au/mcp` |
 | Tunnel name | `hermes-box69` |
+
+**Status: done and verified 2026-07-27.** The connector is connected and the
+tunnel is `active (running)` and `enabled`.
 
 `adelaideanxietyclinic.com.au` is retired as a website but stays registered and
 on Cloudflare nameservers. The subdomain is deliberately non-obvious: until
@@ -125,10 +128,56 @@ Expect `200` and a `serverInfo` naming `hermes`.
 ### Repoint the connector
 
 In Claude's connector settings, **delete** the existing connector and re-add it
-against `https://mcp-7fq.adelaideanxietyclinic.com.au/sse`. Delete rather than
-edit — a failed registration can leave stale OAuth state that an edit preserves.
+against:
 
-If `/sse` misbehaves, `/mcp` is also served correctly and is the newer transport.
+```
+https://mcp-7fq.adelaideanxietyclinic.com.au/mcp
+```
+
+Delete rather than edit — a failed registration can leave stale OAuth state that
+an edit preserves.
+
+**Use `/mcp`, not `/sse`.** `/sse` worked fine through ngrok but fails through
+Cloudflare with *"Couldn't reach Hermes"* (ref `ofid_5adb8beff08c65ff`).
+Cloudflare's proxy handles long-lived SSE streams poorly — buffering and idle
+timeouts kill a connection that a quick `curl` still sees as healthy. Streamable
+HTTP does not hold the connection open the same way. Note the error text
+distinguishes the two failures: *"Couldn't register with Hermes's sign-in
+service"* is the OAuth/interstitial bug, *"Couldn't reach Hermes"* is transport
+or connectivity.
+
+## Gotchas hit during the migration
+
+Worth knowing before doing this on another box:
+
+- **The Cloudflare install page has two code boxes.** The first is the apt/gpg
+  package install; the second, further down under *"After you have installed
+  cloudflared on your machine..."*, holds `cloudflared service install <token>`.
+  Copying only the first installs the binary but never creates the service — the
+  symptom is `systemctl is-active cloudflared` returning `inactive` with **no
+  journal entries at all** (a crashed service would have logs).
+- **The public hostname form silently rejects pasted values.** Pasting
+  `127.0.0.1:8765` into the URL field leaves it flagged *"url is required"*. Type
+  it by hand instead, then blur the field. There is also a `://` toggle beside
+  the Type dropdown for entering a full URL in one field.
+- **Long multi-line pastes drop their last line** in a phone terminal. Prefer
+  running the service-install line on its own.
+- **The binary landed in `/usr/local/bin/cloudflared`**, not `/usr/bin` where apt
+  would put it, so `apt upgrade` may not update it. Refresh manually now and
+  then.
+- **Zero Trust "Recommendations" checklist links loop back to the overview** on
+  mobile. Navigate via the sidebar (**Networks → Tunnels**) or
+  `https://one.dash.cloudflare.com/?to=/:account/networks/tunnels`.
+
+## If it fails later: is Cloudflare blocking the client?
+
+Not hit during this migration, but the first thing to check if the connector
+breaks with a reachability error. The zone now proxies through Cloudflare's
+security stack, which ngrok never did:
+
+Dashboard → the zone → **Security** → **Bots** → confirm **Bot Fight Mode** is
+off. It challenges non-browser clients, which is exactly what an MCP client is.
+Also check Under Attack mode under **Security → Settings**.
 
 ## Rollback
 
