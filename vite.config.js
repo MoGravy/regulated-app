@@ -20,6 +20,7 @@ console.log('STRIPE_PUBLIC_KEY:        ', process.env.STRIPE_PUBLIC_KEY   ? `set
 console.log('STRIPE_PRICE_MONTHLY:     ', process.env.STRIPE_PRICE_MONTHLY || '(NOT SET)')
 console.log('STRIPE_PRICE_ANNUAL:      ', process.env.STRIPE_PRICE_ANNUAL  || '(NOT SET)')
 console.log('APP_URL:                  ', process.env.APP_URL              || '(NOT SET)')
+console.log('GA_MEASUREMENT_ID:        ', process.env.GA_MEASUREMENT_ID    || '(NOT SET)')
 console.log('STRIPE_SECRET_KEY:        ', process.env.STRIPE_SECRET_KEY    ? `set (${process.env.STRIPE_SECRET_KEY.length} chars)` : '(NOT SET)')
 console.log('STRIPE_WEBHOOK_SECRET:    ', process.env.STRIPE_WEBHOOK_SECRET ? `set (${process.env.STRIPE_WEBHOOK_SECRET.length} chars)` : '(NOT SET)')
 console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? `set (${process.env.SUPABASE_SERVICE_ROLE_KEY.length} chars)` : '(NOT SET)')
@@ -65,6 +66,10 @@ if (!process.env.VITE_APP_URL && process.env.APP_URL) {
   process.env.VITE_APP_URL = process.env.APP_URL
   console.log('  ✓ Mapped APP_URL → VITE_APP_URL')
 }
+if (!process.env.VITE_GA_MEASUREMENT_ID && process.env.GA_MEASUREMENT_ID) {
+  process.env.VITE_GA_MEASUREMENT_ID = process.env.GA_MEASUREMENT_ID
+  console.log('  ✓ Mapped GA_MEASUREMENT_ID → VITE_GA_MEASUREMENT_ID')
+}
 
 console.log('--- Final VITE_ values that will be baked into bundle ---')
 console.log('VITE_SUPABASE_URL:           ', process.env.VITE_SUPABASE_URL          || '(EMPTY — sessions will fail)')
@@ -72,6 +77,7 @@ console.log('VITE_SUPABASE_ANON_KEY:      ', process.env.VITE_SUPABASE_ANON_KEY 
 console.log('VITE_STRIPE_PUBLISHABLE_KEY: ', process.env.VITE_STRIPE_PUBLISHABLE_KEY ? `set (prefix: ${process.env.VITE_STRIPE_PUBLISHABLE_KEY.slice(0, 12)}…)` : '(EMPTY — payments will fail)')
 console.log('VITE_STRIPE_PRICE_MONTHLY:   ', process.env.VITE_STRIPE_PRICE_MONTHLY  || '(EMPTY)')
 console.log('VITE_STRIPE_PRICE_ANNUAL:    ', process.env.VITE_STRIPE_PRICE_ANNUAL   || '(EMPTY)')
+console.log('VITE_GA_MEASUREMENT_ID:      ', process.env.VITE_GA_MEASUREMENT_ID     || '(EMPTY — Google Analytics will not track)')
 console.log('=== [vite.config] End diagnostics ===')
 
 export default defineConfig(({ command }) => ({

@@ -1,5 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AppProvider } from './hooks/useApp'
+import { trackPageView } from './lib/ga'
 import Navigation from './components/Navigation'
 import Toast from './components/Toast'
 import Home from './pages/Home'
@@ -14,10 +16,19 @@ export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
+        <RouteTracker />
         <AppShell />
       </BrowserRouter>
     </AppProvider>
   )
+}
+
+function RouteTracker() {
+  const location = useLocation()
+  useEffect(() => {
+    trackPageView(location.pathname + location.search)
+  }, [location.pathname, location.search])
+  return null
 }
 
 function AppShell() {

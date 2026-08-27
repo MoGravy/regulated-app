@@ -153,6 +153,20 @@ This will:
 
 ## Analytics & Monitoring
 
+### Google Analytics 4
+
+Set `GA_MEASUREMENT_ID` (Vercel) / `VITE_GA_MEASUREMENT_ID` (local) to your GA4
+web stream's Measurement ID (`G-XXXXXXXXXX`). The app loads gtag.js, reports a
+`page_view` on every route change (this is a SPA — a plain `<head>` snippet
+would miss client-side navigations), and mirrors every `trackEvent()` custom
+event to GA4. If the variable is unset, GA is silently disabled.
+
+After changing it, redeploy — the ID is baked in at build time. Verify in
+GA → Reports → Realtime while you browse the site.
+
+See `docs/cutover-analytics-recovery.md` for the August 2026 cutover
+investigation (why GA flatlined and how to confirm the fix).
+
 ### Key metrics to track (Supabase)
 
 **Session engagement:**
@@ -253,6 +267,7 @@ export default config;
 | `VITE_FROM_EMAIL` | API | ✓ |
 | `VITE_APP_URL` | API (Stripe redirects) | ✓ |
 | `ADMIN_SECRET` | deliver-audio endpoint | ✓ |
+| `GA_MEASUREMENT_ID` | Frontend (Google Analytics 4) | optional — GA is disabled without it |
 
 ---
 

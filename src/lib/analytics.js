@@ -1,7 +1,9 @@
-// Lightweight analytics — sends events to Supabase
+// Lightweight analytics — sends events to Supabase and mirrors them to GA4
 import { supabase } from './supabase'
+import { gaEvent } from './ga'
 
 export async function trackEvent(name, properties = {}) {
+  gaEvent(name, properties)
   try {
     await supabase.from('analytics_events').insert({
       event_name: name,
