@@ -273,6 +273,24 @@ is the confirmation.
 
 ### 4.0 Three questions that must be answered BEFORE any entry is written
 
+**ANSWERED on 2026-08-30. See 260830_AI-Stack_Handoff-04_Cron-4-0-Probe-Results_v1.md for the
+full evidence. Summary, which the rest of section 4 now assumes:**
+
+- **Q1, timezone field: NO.** Schedule is `{"kind":"cron","expr":"0 10 * * 1","display":"0 10 * * 1"}`.
+  No tz, timezone, utc or offset key anywhere. Use the **UTC cron ACST** column in 4.1 and accept
+  the twice-yearly manual edit. Backlog item: teach Hermes cron a tz field.
+- **Q2, capability gate: PARTIAL, and it blocks jobs b and d.** `enabled_toolsets` is a real
+  allowlist, an array of toolset names, populated on live entries. There is **no** files_write path
+  scope field; `workdir` exists but is null on all 31 entries and is a cwd, not a write boundary.
+  Whether toolset granularity alone satisfies the draft-only requirement depends on the Hermes
+  toolset registry, which is not in jobs.json and has not been read. Do not write b or d until it is.
+- **Q3, run history: FOUND, three sources.** `last_status` / `last_error` / `last_run_at` on each
+  entry (one run deep, enough for job c); `/root/.hermes/cron/output/` with 33 subdirectories
+  (probable multi-run store, structure unconfirmed); and `hermes-task-log.service`, read-only over
+  a SQLite state.db, which is the right source for job d but is currently **inactive dead**.
+
+The probes below are kept for reference and for re-running after any Hermes upgrade.
+
 These were surfaced by an adversarial review of the five drafts. Each one changes what gets
 written, so answering them after the fact means rewriting entries. Do this first, as reads only.
 
@@ -362,9 +380,10 @@ Three traps in the UTC columns:
    4 April 2027 the reverse happens, the day is 25 hours and 02:30 local occurs twice. Job d must
    not treat a repeated local hour as a duplicate failure.
 
-If Q1 comes back yes, none of trap 2 or the twice-yearly edit applies, which is the main reason to
-prefer a timezone field. A recurring manual calendar edit is exactly the flagged temporary
-workaround the standing rules reject.
+Q1 came back NO, so the local cron column is unusable and trap 2 is live. Use the UTC cron ACST
+column, and put a calendar reminder on Saturday 3 October 2026 as the interim guard. A recurring
+manual calendar edit is exactly the flagged temporary workaround the standing rules reject, so
+"teach Hermes cron a tz field" goes to the backlog rather than being accepted as the design.
 
 **Collision to avoid:** under ACDT, job e fires Sun/Tue/Thu at 21:30 UTC, which is the same minute
 as the existing weekly Sunday 21:30 UTC visibility report. Do not resolve this by nudging e five
@@ -400,15 +419,43 @@ jq empty /root/.hermes/cron/jobs.json && echo "JSON VALID" || echo "JSON INVALID
 ```
 
 If that ever prints INVALID, restore from the most recent STEP copy before doing anything else.
-Then re-read the entry just written and confirm its stored values, using whatever key or index the
-Q1 and Q2 probes showed to be real. Verify by stored values, never by byte length. A write that
-returns success is acceptance, not confirmation.
+Then re-read the entry just written and confirm its stored values. A write that returns success is
+acceptance, not confirmation.
+
+**Byte length is not merely discouraged here, it is actively misleading on this file.** The 4.0
+probes found that jobs.json and jobs.json.PRE-BOB-20260830 are both exactly 56602 bytes with
+different md5 sums, differing on 88 lines of scheduler bookkeeping. A size check would have called
+them identical. A whole-file md5 is no better, because the bookkeeping fields tick forward on every
+scheduler pass, so the hash changes with no edit at all.
+
+Compare structure with bookkeeping stripped instead. On box 69:
+
+```
+diff <(jq -S 'walk(if type=="object" then del(.last_run_at,.next_run_at,.last_status,.last_error,.last_delivery_error,.updated_at,.completed) else . end)' /root/.hermes/cron/jobs.json.PRE-BOB-20260830) <(jq -S 'walk(if type=="object" then del(.last_run_at,.next_run_at,.last_status,.last_error,.last_delivery_error,.updated_at,.completed) else . end)' /root/.hermes/cron/jobs.json)
+```
+
+Before the first write that should print nothing. After each write it should show exactly one added
+entry and nothing else. Anything more means the write touched something it should not have.
 
 ### 4.3 The five entries
 
-Field names below are deliberately semantic. Copy the real ones from an existing entry after 4.0.
-Nobody in this session has seen the schema, and every read-back that asserts a key name is a guess
-until Q1 and Q2 answer it.
+The schema is now known, from the 4.0 probes. The fields that matter for these five entries:
+
+```
+id, name, prompt, enabled, schedule {kind, expr, display}, enabled_toolsets,
+deliver, chat_id, platform, model, no_agent, workdir, skills, origin, created_at, updated_at
+```
+
+So the cron string goes in `schedule.expr` with `schedule.display` mirroring it, `schedule.kind` is
+`"cron"`, and the capability allowlist is `enabled_toolsets`, an array of toolset names. Live values
+seen: `["terminal","web"]` on two entries, `["terminal"]` on two, null on the other 27. Copy the
+exact shape of a comparable existing entry rather than composing one from this list, since the
+optional fields differ by job type and `no_agent` is true on 19 of 31 entries for reasons nobody has
+established yet.
+
+Still unknown, and still blocking b and d: which toolset contains WordPress publishing and which
+contains files_write. There is no path scope field at all, so `enabled_toolsets` is the only gate
+available.
 
 #### a. Morning brief, 06:50 Adelaide, to Telegram
 
