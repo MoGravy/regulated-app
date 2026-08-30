@@ -23,6 +23,18 @@ depends on something nobody has read yet, that is called out inline.
 Execution model: single line commands only, no heredocs, one command per block, machine stated
 before each block. That matches how the 2026-08-30 phone session ran, with Matthew executing by hand.
 
+Connection commands, from the iPhone via Blink. Use these verbatim:
+
+- box 69: `mosh box69`. Blink host alias `box69`, HostName 69.62.75.37, User root, Key `phone`.
+  mosh, not ssh. Never use `ssh root@69.62.75.37`, which bypasses the saved host, never offers the
+  key, drops to password auth that is not enabled, and risks a fail2ban ban on the phone's IP.
+- jkt: root@187.77.127.100, tailnet 100.106.62.14. Blink alias not confirmed, ask first.
+- Mac: matthews-m1.tail9810ef.ts.net. Blink alias not confirmed. It sleeps, so it is often
+  unreachable, and neither sleep nor a disabled Remote Login can be fixed from the phone.
+
+Preferred execution route is Remote Control on the target box rather than hand-pasting. See
+CLAUDE.md at the repo root.
+
 ## 1. jkt (root@187.77.127.100, tailnet 100.106.62.14)
 
 ### 1.1 Confirm jq
