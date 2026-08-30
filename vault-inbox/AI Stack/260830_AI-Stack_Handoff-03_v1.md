@@ -39,7 +39,12 @@ not already there, and treat the vault copy as canonical. If that folder already
 a handoff numbered 03 or higher, bump this file's number to one past the highest when
 placing it.
 
-Not started: jkt install, Mac install, all Hermes cron work.
+Not started: jkt install, Mac install, all Hermes cron work. Session 2 attempted to execute these
+and could not, for the access reasons above. What it produced instead is the execution detail:
+260830_AI-Stack_Runbook-01_Skills-and-Cron_v1.md in this folder, which carries the exact commands,
+the five cron job definitions, the UTC conversions for both sides of the October DST change, and
+three questions about the live jobs.json that must be answered before any entry is written. Nothing
+in that runbook has been run.
 
 Background on the cron jobs in task 4: they are adapted from the published daily
 schedule of "Bob", a Telegram agent product at leadgenjay.com/bob (02:30 self-review,
