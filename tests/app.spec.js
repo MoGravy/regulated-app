@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { skipOnboarding, watchConsole, expectNoConsoleErrors, HAS_API } from './helpers.js'
+import { skipOnboarding, enterProgram, watchConsole, expectNoConsoleErrors, HAS_API } from './helpers.js'
 
 const SCREENS = [
   ['home', '/'],
@@ -9,6 +9,7 @@ const SCREENS = [
   ['onboarding', '/welcome'],
   ['success', '/success'],
   ['signin', '/signin'],
+  ['program', '/program'],
 ]
 
 test.describe('every screen renders clean at 390x844', () => {
@@ -99,7 +100,14 @@ test('program stays gated until the map is approved', async ({ page }) => {
   const programTab = page.getByRole('tab', { name: /program/i })
   await expect(programTab).toBeVisible()
   await expect(programTab).toBeDisabled()
+  await expect(programTab).toHaveText(/soon/)
   await expect(page.getByRole('tab', { name: /browse/i })).toHaveAttribute('aria-selected', 'true')
+
+  // Typing the URL does not get past the gate either.
+  await page.goto('/program')
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByRole('button', { name: 'Browse the library' })).toBeVisible()
+  await expect(page.getByText('Week 1', { exact: false })).toHaveCount(0)
 })
 
 test('tab bar moves between the three tabs', async ({ page }) => {
@@ -219,4 +227,56 @@ test.describe('needs /api', () => {
     await page.getByRole('button', { name: /continue at \$149/i }).click()
     await expect.poll(() => stripeUrl, { timeout: 20_000 }).toContain('checkout.stripe.com')
   })
+})
+
+
+// Brief phase 4. Program mode is sequential, not calendar-scheduled.
+test('today shows the next day, not a calendar day', async ({ page }, testInfo) => {
+  const errors = watchConsole(page)
+  await enterProgram(page, 9)
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+
+  // Nine days done means week 2 day 3 is next — no date arithmetic involved.
+  await expect(page.getByText('Today · Week 2, day 3')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Start today's session/ })).toBeVisible()
+  await expect(page.getByText('2 of 7 done')).toBeVisible()
+
+  await page.screenshot({ path: testInfo.outputPath('program-today.png'), fullPage: true })
+  await testInfo.attach('program-today', { path: testInfo.outputPath('program-today.png'), contentType: 'image/png' })
+
+  await page.getByRole('button', { name: 'See all six weeks' }).click()
+  await expect(page).toHaveURL(/\/program$/)
+  await expectNoConsoleErrors(errors)
+})
+
+test('six weeks: done, today and locked are all distinct', async ({ page }, testInfo) => {
+  const errors = watchConsole(page)
+  await enterProgram(page, 9)
+  await page.goto('/program')
+  await page.waitForLoadState('networkidle')
+
+  await expect(page.getByText('9 of 42 sessions complete')).toBeVisible()
+
+  // Week 1 finished, week 2 sitting on day 3, week 3 flat, weeks 4 to 6 sunk.
+  await expect(page.getByRole('button', { name: 'Week 1, day 7, done' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Week 2, day 3, today' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Week 2, day 4, not yet' })).toBeDisabled()
+  await expect(page.getByRole('img', { name: 'Locked' })).toHaveCount(3)
+
+  // A locked week draws no days at all, so there is nothing to tap ahead.
+  await expect(page.getByRole('button', { name: /^Week 5, day/ })).toHaveCount(0)
+
+  await page.screenshot({ path: testInfo.outputPath('program-weeks.png'), fullPage: true })
+  await testInfo.attach('program-weeks', { path: testInfo.outputPath('program-weeks.png'), contentType: 'image/png' })
+  await expectNoConsoleErrors(errors)
+})
+
+test('finishing the program does not leave a dangling today', async ({ page }) => {
+  await enterProgram(page, 42)
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+
+  await expect(page.getByText('Six weeks done')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Start today's session/ })).toHaveCount(0)
 })

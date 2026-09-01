@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { supabase, checkSubscription, ensureProfile, signOutUser } from '../lib/supabase'
+import { programAt } from '../config/program'
 
 const AppContext = createContext(null)
 
@@ -15,6 +16,12 @@ export function AppProvider({ children }) {
   const [progress, setProgress] = useLocalStorage('regulated_progress', {})
   const [isPremium, setIsPremium] = useState(false)
   const [onboardingDone, setOnboardingDone] = useLocalStorage('regulated_onboarding', false)
+  // 'program' | 'browse'. Browse is the default and stays the default while
+  // the program is unapproved — brief phase 4.
+  const [mode, setMode] = useLocalStorage('regulated_mode', 'browse')
+  // How many program days are finished. See src/config/program.js for why this
+  // is a counter rather than a set of session ids.
+  const [programDay, setProgramDay] = useLocalStorage('regulated_program_day', 0)
   const [toasts, setToasts] = useState([])
   const [authUser, setAuthUser] = useState(null)
 
@@ -65,6 +72,11 @@ export function AppProvider({ children }) {
     if (!completedSessions.includes(sessionId)) {
       setCompletedSessions([...completedSessions, sessionId])
     }
+    // The program only moves when the session just finished is the one it was
+    // waiting on, so listening ahead in Browse never skips a day.
+    const { today } = programAt(programDay)
+    if (today && String(today.session_id) === String(sessionId)) setProgramDay(programDay + 1)
+
     // Finished sessions leave "Continue listening".
     setProgress(prev => {
       const next = { ...prev }
@@ -112,6 +124,8 @@ export function AppProvider({ children }) {
       isPremium, setIsPremium,
       authUser, signOut,
       onboardingDone, setOnboardingDone,
+      mode, setMode,
+      programDay,
       toasts, addToast,
     }}>
       {children}

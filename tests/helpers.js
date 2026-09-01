@@ -9,6 +9,18 @@ export async function skipOnboarding(page) {
   })
 }
 
+// Program mode with `daysDone` days already finished. The program ships gated
+// behind the content approval, so the preview flag is what makes its screens
+// reachable at all — the gated path is asserted separately.
+export async function enterProgram(page, daysDone = 0) {
+  await page.addInitScript(days => {
+    localStorage.setItem('regulated_onboarding', 'true')
+    localStorage.setItem('regulated_mode', JSON.stringify('program'))
+    localStorage.setItem('regulated_program_day', JSON.stringify(days))
+    sessionStorage.setItem('regulated_program_preview', '1')
+  }, daysDone)
+}
+
 // Collects console errors for a test. Ignores the /api 404s that a local
 // static preview cannot serve — those are asserted separately against a
 // deployment that does have the functions.
