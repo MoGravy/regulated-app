@@ -48,22 +48,31 @@ if (!URL_ || !KEY) {
   process.exit(1)
 }
 
-// A service role JWT carries role=service_role. Anything else writes nothing,
-// because programs and program_days have RLS on with no write policy, and the
-// failure would look like an unexplained 401 forty lines later.
-const role = (() => {
+// Supabase has two generations of privileged key and this accepts either: the
+// new opaque secret key, which is self-identifying by prefix, and the legacy
+// service_role JWT, which carries role=service_role in its payload.
+//
+// Checked up front because the alternative is an unexplained 401 forty lines
+// into the run — programs and program_days have RLS on with no write policy,
+// so an underprivileged key writes nothing while looking like it tried.
+function keyKind(k) {
+  if (k.startsWith('sb_secret_')) return 'secret key'
+  if (k.startsWith('sb_publishable_')) return 'publishable key'
   try {
-    const p = KEY.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const p = k.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
     return JSON.parse(Buffer.from(p, 'base64').toString()).role
   } catch {
-    return null
+    return 'unreadable'
   }
-})()
-if (role !== 'service_role') {
-  console.error(`Key present but its role is "${role ?? 'unreadable'}", not service_role.`)
-  console.error('This is the wrong key. No value is printed.')
+}
+
+const KIND = keyKind(KEY)
+if (KIND !== 'secret key' && KIND !== 'service_role') {
+  console.error(`Key present, but it is a "${KIND}". That cannot write these tables.`)
+  console.error('Wanted the secret key, or the legacy service_role key. No value is printed.')
   process.exit(1)
 }
+console.log(`Key loaded: ${KIND}. Value not printed.`)
 
 const map = JSON.parse(readFileSync(MAP_PATH, 'utf8'))
 const days = map.weeks.flatMap(w => w.days.map(d => ({ ...d, week: w.week })))
