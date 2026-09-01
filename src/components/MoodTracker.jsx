@@ -26,9 +26,11 @@ export default function MoodTracker({ label, onSubmit, optional = false }) {
       </div>
 
       <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 20 }}>
-        {emojis.map(({ val, emoji }) => (
+        {emojis.map(({ val, emoji, label }) => (
           <button
             key={val}
+            aria-label={label || `${val}/10`}
+            title={label || `${val}/10`}
             onClick={() => setValue(val)}
             style={{
               width: 36,
