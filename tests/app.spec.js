@@ -8,6 +8,7 @@ const SCREENS = [
   ['custom-audio', '/custom'],
   ['onboarding', '/welcome'],
   ['success', '/success'],
+  ['signin', '/signin'],
 ]
 
 test.describe('every screen renders clean at 390x844', () => {
@@ -114,6 +115,55 @@ test('tab bar moves between the three tabs', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Today', exact: true }).click()
   await expect(page).toHaveURL(/\/$/)
+})
+
+// Brief phase 3. Auth is additive: nothing that worked signed out may now ask
+// for a login, and the design's magic link stays the primary path.
+test('signed out: nothing requires a login', async ({ page }) => {
+  await skipOnboarding(page)
+
+  for (const path of ['/', '/sessions', '/premium', '/custom']) {
+    await page.goto(path)
+    await page.waitForLoadState('networkidle')
+    await expect(page).toHaveURL(new RegExp(`${path === '/' ? '/' : path}$`))
+    await expect(page.getByRole('button', { name: /^Sign in$/ })).toHaveCount(0)
+  }
+
+  // The paywall keeps its own email-and-restore flow, untouched by auth.
+  await page.goto('/premium')
+  await expect(page.getByRole('button', { name: 'Restore a purchase' })).toBeVisible()
+  await expect(page.locator('#premium-email')).toBeVisible()
+})
+
+test('sign in offers the magic link first and a password behind it', async ({ page }) => {
+  await skipOnboarding(page)
+  await page.goto('/signin')
+  await page.waitForLoadState('networkidle')
+
+  await expect(page.getByRole('button', { name: 'Email me a sign-in link' })).toBeVisible()
+  await expect(page.locator('#signin-password')).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Use a password instead' }).click()
+  await expect(page.locator('#signin-password')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Email me a link instead' }).click()
+  await expect(page.locator('#signin-password')).toHaveCount(0)
+})
+
+// A bad address must never reach Supabase. Nothing here sends an email.
+test('sign in rejects a malformed email before calling out', async ({ page }) => {
+  await skipOnboarding(page)
+  let called = false
+  await page.route('**/auth/v1/**', route => { called = true; route.abort() })
+
+  await page.goto('/signin')
+  await page.waitForLoadState('networkidle')
+  await page.locator('#signin-email').fill('not-an-email')
+  await page.getByRole('button', { name: 'Email me a sign-in link' }).click()
+
+  await expect(page.getByRole('alert')).toContainText('Enter an email')
+  expect(called, 'a malformed address reached the auth endpoint').toBe(false)
 })
 
 // ---------------------------------------------------------------------------

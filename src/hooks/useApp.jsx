@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useLocalStorage } from './useLocalStorage'
-import { checkSubscription } from '../lib/supabase'
+import { supabase, checkSubscription, ensureProfile, signOutUser } from '../lib/supabase'
 
 const AppContext = createContext(null)
 
@@ -16,12 +16,50 @@ export function AppProvider({ children }) {
   const [isPremium, setIsPremium] = useState(false)
   const [onboardingDone, setOnboardingDone] = useLocalStorage('regulated_onboarding', false)
   const [toasts, setToasts] = useState([])
+  const [authUser, setAuthUser] = useState(null)
+
+  // Auth is additive. Signed out, everything below behaves exactly as it did
+  // before phase 3: the localStorage email still drives the premium check.
+  // Signed in, the verified address takes over as that email.
+  useEffect(() => {
+    let live = true
+
+    function adopt(session) {
+      if (!live) return
+      const user = session?.user ?? null
+      setAuthUser(user)
+      if (user?.email) {
+        setUserEmail(user.email)
+        ensureProfile(user)
+      }
+    }
+
+    supabase.auth.getSession().then(({ data }) => adopt(data.session))
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => adopt(session))
+
+    return () => {
+      live = false
+      sub.subscription.unsubscribe()
+    }
+    // setUserEmail is a fresh closure every render; re-running this would tear
+    // down the auth listener on every state change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (userEmail) {
       checkSubscription(userEmail).then(setIsPremium)
     }
   }, [userEmail])
+
+  // Signing out drops the local email too, otherwise premium would survive a
+  // sign-out. "Restore a purchase" on the You tab gets it back.
+  async function signOut() {
+    await signOutUser()
+    setAuthUser(null)
+    setUserEmail(null)
+    setIsPremium(false)
+  }
 
   function markSessionComplete(sessionId) {
     if (!completedSessions.includes(sessionId)) {
@@ -72,6 +110,7 @@ export function AppProvider({ children }) {
       completedSessions, markSessionComplete,
       progress, saveProgress, lastInProgress,
       isPremium, setIsPremium,
+      authUser, signOut,
       onboardingDone, setOnboardingDone,
       toasts, addToast,
     }}>

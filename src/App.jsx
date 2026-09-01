@@ -10,6 +10,7 @@ import CustomAudio from './pages/CustomAudio'
 import Premium from './pages/Premium'
 import Success from './pages/Success'
 import Onboarding from './pages/Onboarding'
+import SignIn from './pages/SignIn'
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ function AppShell() {
       <Toast />
       <Routes>
         <Route path="/welcome" element={<Onboarding />} />
+        <Route path="/signin" element={<SignIn />} />
         <Route path="/" element={<><Home /><Navigation /></>} />
         <Route path="/sessions" element={<><Sessions /><Navigation /></>} />
         <Route path="/sessions/:id" element={<SessionDetail />} />

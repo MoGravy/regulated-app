@@ -117,6 +117,8 @@ export default function Premium() {
           </button>
           <div className="divider" />
           <CustomAudioCard onClick={() => navigate('/custom')} />
+          <div className="divider" />
+          <AccountBlock />
         </div>
       </div>
     )
@@ -193,6 +195,8 @@ export default function Premium() {
           )}
         </div>
 
+        <AccountBlock />
+
         <div style={{ font: '400 14px/22px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
           All sessions are written and recorded by Matthew Tweedie, clinical hypnotherapist, Adelaide.
         </div>
@@ -207,6 +211,41 @@ export default function Premium() {
           {restoring ? 'Checking…' : 'Restore a purchase'}
         </button>
       </div>
+    </div>
+  )
+}
+
+// Signing in is optional everywhere. Nothing on this screen, or any other,
+// requires it — a signed-out visitor keeps the email-and-restore flow that
+// shipped before phase 3.
+function AccountBlock() {
+  const navigate = useNavigate()
+  const { authUser, signOut, addToast } = useApp()
+
+  if (!authUser) {
+    return (
+      <div style={{ margin: '4px 0 18px' }}>
+        <button className="btn-ghost" onClick={() => navigate('/signin')}>
+          Sign in to keep this across devices
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ margin: '4px 0 18px' }}>
+      <div style={{ font: '400 14px/22px var(--font-ui)', color: 'var(--ink-muted)' }}>
+        Signed in as {authUser.email}
+      </div>
+      <button
+        className="btn-ghost"
+        onClick={async () => {
+          await signOut()
+          addToast('Signed out.', 'info')
+        }}
+      >
+        Sign out
+      </button>
     </div>
   )
 }
