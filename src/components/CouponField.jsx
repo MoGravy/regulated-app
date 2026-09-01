@@ -48,10 +48,10 @@ export default function CouponField({ onApply, onRemove, appliedCoupon }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 16 }}>🏷️</span>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--success)' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--cat-habits)' }}>
               {appliedCoupon.code} applied
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: 12, color: 'var(--ink-faint)' }}>
               {appliedCoupon.discount_type === 'percentage'
                 ? `${appliedCoupon.discount_amount}% off`
                 : `$${appliedCoupon.discount_amount} off`}
@@ -64,7 +64,7 @@ export default function CouponField({ onApply, onRemove, appliedCoupon }) {
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--text-muted)',
+            color: 'var(--ink-faint)',
             cursor: 'pointer',
             fontSize: 18,
             padding: '2px 4px',
@@ -95,8 +95,8 @@ export default function CouponField({ onApply, onRemove, appliedCoupon }) {
           disabled={loading || !code.trim()}
           style={{
             padding: '14px 18px',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-solid)',
+            background: 'var(--surface)',
+            border: '1px solid var(--line-strong)',
             borderRadius: 12,
             color: 'var(--accent)',
             fontSize: 14,
@@ -111,7 +111,7 @@ export default function CouponField({ onApply, onRemove, appliedCoupon }) {
         </button>
       </div>
       {error && (
-        <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 6, paddingLeft: 2 }}>
+        <div style={{ fontSize: 12, color: 'var(--cat-motivation)', marginTop: 6, paddingLeft: 2 }}>
           {error}
         </div>
       )}

@@ -1,137 +1,141 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
-import { trackEvent, Events } from '../lib/analytics'
+import Texture from '../components/Texture'
 
-const slides = [
-  {
-    emoji: '🌊',
-    title: 'Your nervous system\nruns everything.',
-    body: 'Anxiety. Poor sleep. Gut issues. Chronic stress. They\'re not separate problems — they\'re all signals from an dysregulated nervous system.',
-  },
-  {
-    emoji: '🎧',
-    title: 'Audio that reprograms\nat the root.',
-    body: 'Each session uses targeted language patterns to speak directly to your subconscious — shifting your body out of survival mode and into regulation.',
-  },
-  {
-    emoji: '✨',
-    title: 'Built specifically\nfor your patterns.',
-    body: 'Start with free foundational sessions, or order a custom audio built around your exact triggers, patterns, and goals.',
-  },
-  {
-    emoji: '🔓',
-    title: 'No account needed\nto start.',
-    body: 'Four free sessions available immediately. No email, no signup. Just press play.',
-  },
-]
+// Three steps: who this is for, what brought you here, then in.
+// Step 1 carries the email field the design puts on the first board.
+const REASONS = ['Sleep', 'Stress', 'Anxiety', 'Gut symptoms', 'Something else']
 
 export default function Onboarding() {
-  const [slide, setSlide] = useState(0)
   const navigate = useNavigate()
-  const { setOnboardingDone } = useApp()
+  const { setOnboardingDone, setUserEmail, userEmail } = useApp()
+  const [step, setStep] = useState(0)
+  const [email, setEmail] = useState(userEmail || '')
+  const [emailError, setEmailError] = useState('')
+  const [reason, setReason] = useState(null)
 
-  function handleNext() {
-    if (slide < slides.length - 1) {
-      setSlide(slide + 1)
-    } else {
-      finish()
+  function submitEmail() {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError('Enter an email we can reach you on.')
+      return
     }
+    setEmailError('')
+    setUserEmail(email)
+    setStep(1)
   }
 
   function finish() {
     setOnboardingDone(true)
-    trackEvent(Events.ONBOARDING_COMPLETED)
     navigate('/')
   }
 
-  const current = slides[slide]
-
   return (
-    <div style={{
-      minHeight: '100dvh',
-      background: 'var(--bg-deep)',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '40px 28px',
-    }}>
-      {/* Skip */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <button
-          className="btn-ghost"
-          onClick={finish}
-          style={{ color: 'var(--text-muted)' }}
-        >
-          Skip
-        </button>
-      </div>
+    <div className="texture" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg)' }}>
+      <Texture ink="#24344D" variant="page" />
 
-      {/* Content */}
-      <div
-        key={slide}
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          animation: 'fadeIn 0.4s ease',
-        }}
-      >
-        <div style={{
-          width: 90,
-          height: 90,
-          borderRadius: 24,
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 44,
-          marginBottom: 36,
-        }}>
-          {current.emoji}
-        </div>
+      <div className="status-bar" style={{ position: 'relative' }}><span /><span /></div>
 
-        <h1 style={{
-          fontSize: 32,
-          fontWeight: 800,
-          color: 'var(--text-primary)',
-          lineHeight: 1.2,
-          marginBottom: 20,
-          whiteSpace: 'pre-line',
-        }}>
-          {current.title}
-        </h1>
+      <div style={{ position: 'relative', flex: 1, padding: '40px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+        <div style={{ font: '500 13px/18px var(--font-ui)', color: 'var(--ink-muted)' }}>Regulated</div>
 
-        <p style={{
-          fontSize: 17,
-          color: 'var(--text-secondary)',
-          lineHeight: 1.7,
-        }}>
-          {current.body}
-        </p>
-      </div>
+        {step === 0 && (
+          <>
+            <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>
+              Feel safe in your own body
+            </h1>
+            <p style={{ margin: '18px 0 0', font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
+              Hypnotherapy audio for sleep, stress, anxiety and gut symptoms, recorded by a clinical
+              hypnotherapist. Four sessions are free.
+            </p>
 
-      {/* Progress + CTA */}
-      <div style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 28, justifyContent: 'center' }}>
-          {slides.map((_, i) => (
-            <div
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" htmlFor="onboard-email">Email</label>
+                <input
+                  id="onboard-email"
+                  className="form-input form-input-lg"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && submitEmail()}
+                  aria-invalid={!!emailError}
+                  aria-describedby={emailError ? 'onboard-email-error' : undefined}
+                />
+                {emailError && (
+                  <div id="onboard-email-error" role="alert" style={{ font: '400 13px/18px var(--font-ui)', color: '#6A4B4E' }}>
+                    {emailError}
+                  </div>
+                )}
+              </div>
+              <button className="btn-primary btn-lg" onClick={submitEmail}>Continue</button>
+              <button className="btn-ghost" onClick={finish}>Skip for now</button>
+            </div>
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>
+              What brought you here?
+            </h1>
+            <p style={{ margin: '18px 0 0', font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
+              It points you at the right session first. You can change it later.
+            </p>
+
+            <div style={{ marginTop: 32, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {REASONS.map(r => (
+                <button
+                  key={r}
+                  className="chip chip-all"
+                  aria-pressed={reason === r}
+                  onClick={() => setReason(r)}
+                  style={reason === r ? undefined : { border: '1px solid var(--line)', color: 'var(--ink-muted)' }}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <button className="btn-primary btn-lg" onClick={() => setStep(2)} disabled={!reason}>Continue</button>
+              <button className="btn-ghost" onClick={() => setStep(2)}>Skip</button>
+            </div>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>
+              Start with the library
+            </h1>
+            <p style={{ margin: '18px 0 0', font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
+              Four sessions are free, no card needed. The six-week program opens once it is ready.
+            </p>
+
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <button className="btn-primary btn-lg" onClick={finish}>Go to the library</button>
+            </div>
+          </>
+        )}
+
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'center', padding: '28px 0 32px' }}>
+          {[0, 1, 2].map(i => (
+            <span
               key={i}
               style={{
-                height: 4,
-                borderRadius: 2,
-                background: i <= slide ? 'var(--accent)' : 'var(--border-solid)',
-                width: i === slide ? 24 : 8,
-                transition: 'all 0.3s ease',
+                width: i === step ? 20 : 8,
+                height: 3,
+                borderRadius: 'var(--r-pill)',
+                background: i === step ? 'var(--accent)' : 'var(--line-strong)',
+                transition: 'width var(--t-enter)',
               }}
             />
           ))}
         </div>
-
-        <button className="btn-primary" onClick={handleNext}>
-          {slide === slides.length - 1 ? 'Start Listening — It\'s Free' : 'Continue'}
-        </button>
       </div>
     </div>
   )

@@ -31,7 +31,7 @@ function AppShell() {
         <Route path="/sessions" element={<><Sessions /><Navigation /></>} />
         <Route path="/sessions/:id" element={<SessionDetail />} />
         <Route path="/sessions/:id/play" element={<SessionPlayer />} />
-        <Route path="/custom" element={<><CustomAudio /><Navigation /></>} />
+        <Route path="/custom" element={<CustomAudio />} />
         <Route path="/premium" element={<><Premium /><Navigation /></>} />
         <Route path="/success" element={<Success />} />
         <Route path="*" element={<Navigate to="/" replace />} />
