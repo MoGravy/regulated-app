@@ -30,3 +30,7 @@ node_modules/
 # Vercel local dev
 .vercel/
 .vercel
+
+# Playwright
+test-results/
+playwright-report/
