@@ -5,8 +5,13 @@
  * Needs the service role key, because programs and program_days have RLS on
  * with no write policy — content is seeded server side, never from a client.
  *
- *   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node scripts/seed-program.mjs
+ *   node scripts/seed-program.mjs
  *   ... --dry-run     print what would change and exit
+ *
+ * The project URL comes from src/config/credentials.js, same as the app. The
+ * service role key is read from ~/.regulated-admin, one line, chmod 600 — the
+ * same pattern as ~/quill/.wp-luma. It is never printed, and it deliberately
+ * does not live in a dotenv-named file.
  *
  * Re-running is safe: rows are upserted on (program_id, week, day).
  *
@@ -17,17 +22,46 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { homedir } from 'node:os'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const MAP_PATH = join(HERE, '..', 'design', 'program-map.json')
+const KEY_PATH = join(homedir(), '.regulated-admin')
 
-const URL_ = process.env.SUPABASE_URL
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+const { SUPABASE_URL: URL_ } = await import('../src/config/credentials.js')
 const DRY = process.argv.includes('--dry-run')
 
+// Env wins if it is set, so CI can supply the key without a file on disk.
+const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || readKeyFile()
+
+function readKeyFile() {
+  try {
+    return readFileSync(KEY_PATH, 'utf8').trim()
+  } catch {
+    return null
+  }
+}
+
 if (!URL_ || !KEY) {
-  console.error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must both be set.')
-  console.error('Neither is printed by this script; it only reports whether they are present.')
+  console.error(`No service role key. Put it on one line in ${KEY_PATH} (chmod 600),`)
+  console.error('or set SUPABASE_SERVICE_ROLE_KEY. The key is never printed by this script.')
+  process.exit(1)
+}
+
+// A service role JWT carries role=service_role. Anything else writes nothing,
+// because programs and program_days have RLS on with no write policy, and the
+// failure would look like an unexplained 401 forty lines later.
+const role = (() => {
+  try {
+    const p = KEY.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(Buffer.from(p, 'base64').toString()).role
+  } catch {
+    return null
+  }
+})()
+if (role !== 'service_role') {
+  console.error(`Key present but its role is "${role ?? 'unreadable'}", not service_role.`)
+  console.error('This is the wrong key. No value is printed.')
   process.exit(1)
 }
 
