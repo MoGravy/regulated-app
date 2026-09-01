@@ -1,145 +1,102 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { getAllSessions } from '../lib/supabase'
 import { HARDCODED_SESSIONS } from '../lib/hardcodedSessions'
-import SessionCard from '../components/SessionCard'
-
-const categories = ['All', 'Sleep', 'Stress', 'Daily', 'Habits', 'Anxiety', 'Focus', 'Confidence', 'Grief', 'Weight Loss']
+import { chipStyle } from '../lib/categories'
+import SessionRow from '../components/SessionRow'
 
 export default function Sessions() {
-  const navigate = useNavigate()
-  const { isPremium, completedSessions } = useApp()
+  const { isPremium } = useApp()
+  const [params, setParams] = useSearchParams()
   const [sessions, setSessions] = useState(HARDCODED_SESSIONS)
-  const [activeCategory, setActiveCategory] = useState('All')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    loadSessions()
-  }, [])
+  const active = params.get('category') || 'All'
+
+  useEffect(() => { loadSessions() }, [])
 
   async function loadSessions() {
-    console.log('[Sessions] loadSessions — starting')
     try {
       const data = await getAllSessions()
       if (data.length) {
-        console.log('[Sessions] ✓ Using Supabase sessions —', data.length, 'rows')
-        const dataFree = data.filter(s => s.free)
-        if (dataFree.length) {
-          setSessions(data)
-        } else {
-          console.warn('[Sessions] Supabase had no free rows — keeping hardcoded free sessions.')
-          setSessions([
-            ...HARDCODED_SESSIONS.filter(s => s.free),
-            ...data.filter(s => !s.free),
-          ])
-        }
+        const hasFree = data.some(s => s.free)
+        setSessions(hasFree ? data : [...HARDCODED_SESSIONS.filter(s => s.free), ...data.filter(s => !s.free)])
       } else {
-        console.warn('[Sessions] Supabase returned 0 rows — keeping hardcoded free sessions.')
+        console.warn('[Sessions] Supabase returned 0 rows — keeping hardcoded fallback.')
         setSessions(HARDCODED_SESSIONS)
       }
     } catch (err) {
-      console.error('[Sessions] getAllSessions threw — keeping hardcoded free sessions. Error:', err?.message || err)
+      console.error('[Sessions] getAllSessions threw — keeping hardcoded fallback:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
       setSessions(HARDCODED_SESSIONS)
     } finally {
       setLoading(false)
     }
   }
 
-  const filtered = activeCategory === 'All'
-    ? sessions
-    : sessions.filter(s => s.category?.toLowerCase() === activeCategory.toLowerCase())
+  // Chips come from the library itself, so a new category never needs a code
+  // change. Biggest families first, matching the design's curated order.
+  const counts = sessions.reduce((acc, s) => {
+    if (s.category) acc[s.category] = (acc[s.category] || 0) + 1
+    return acc
+  }, {})
+  const categories = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b))
 
-  const freeSessions = filtered.filter(s => s.free)
-  const premiumSessions = filtered.filter(s => !s.free)
+  const filtered = active === 'All'
+    ? sessions
+    : sessions.filter(s => s.category?.toLowerCase() === active.toLowerCase())
+
+  // Unlocked first, locked below — design 1d.
+  const unlocked = filtered.filter(s => s.free || isPremium)
+  const locked = filtered.filter(s => !s.free && !isPremium)
+
+  function select(cat) {
+    if (cat === 'All') setParams({}, { replace: true })
+    else setParams({ category: cat }, { replace: true })
+  }
 
   return (
-    <div className="page animate-fade-in">
-      <div className="page-content" style={{ paddingTop: 56 }}>
+    <div className="page">
+      <div className="status-bar"><span /><span>Regulated</span></div>
 
-        {/* Header */}
-        <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
-            Sessions
-          </h1>
-          <p style={{ fontSize: 15, color: 'var(--text-secondary)' }}>
-            {completedSessions.length} completed · {sessions.filter(s => s.free).length} free sessions
-          </p>
-        </div>
-
-        {/* Category filter */}
-        <div style={{
-          display: 'flex',
-          gap: 8,
-          overflowX: 'auto',
-          paddingBottom: 4,
-          marginBottom: 20,
-          scrollbarWidth: 'none',
-        }}>
+      <div style={{ padding: '8px 20px 12px', maxWidth: 480, margin: '0 auto' }}>
+        <h1 style={{ margin: '0 0 14px', font: '300 30px/36px var(--font-display)' }}>Library</h1>
+        <div className="chip-row">
+          <button
+            className="chip chip-all"
+            aria-pressed={active === 'All'}
+            onClick={() => select('All')}
+            style={active === 'All' ? undefined : { border: '1px solid var(--line)', color: 'var(--ink-muted)' }}
+          >
+            All {sessions.length}
+          </button>
           {categories.map(cat => (
             <button
               key={cat}
-              onClick={() => setActiveCategory(cat)}
-              style={{
-                flexShrink: 0,
-                padding: '8px 16px',
-                borderRadius: 20,
-                border: `1px solid ${activeCategory === cat ? 'var(--accent)' : 'var(--border)'}`,
-                background: activeCategory === cat ? 'var(--accent-glow)' : 'transparent',
-                color: activeCategory === cat ? 'var(--accent)' : 'var(--text-secondary)',
-                fontSize: 13,
-                fontWeight: activeCategory === cat ? 700 : 500,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
+              className="chip"
+              aria-pressed={active.toLowerCase() === cat.toLowerCase()}
+              onClick={() => select(cat)}
+              style={
+                active.toLowerCase() === cat.toLowerCase()
+                  ? { ...chipStyle(cat), fontWeight: 500 }
+                  : chipStyle(cat)
+              }
             >
               {cat}
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Free sessions */}
-        {freeSessions.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 12 }}>
-              FREE SESSIONS
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {freeSessions.map(session => (
-                <SessionCard key={session.id} session={session} />
-              ))}
-            </div>
-          </div>
-        )}
+      <div className="page-content">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {unlocked.map(s => <SessionRow key={s.id} session={s} />)}
+          {locked.map(s => <SessionRow key={s.id} session={s} />)}
+        </div>
 
-        {/* Premium sessions */}
-        {premiumSessions.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
-                PREMIUM SESSIONS
-              </div>
-              {!isPremium && (
-                <button
-                  onClick={() => navigate('/premium')}
-                  style={{ fontSize: 12, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
-                >
-                  Unlock all →
-                </button>
-              )}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {premiumSessions.map(session => (
-                <SessionCard key={session.id} session={session} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {!loading && filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>🎵</div>
-            <div>No sessions in this category yet</div>
+        {!loading && !filtered.length && (
+          <div className="t-caption" style={{ padding: '32px 0', textAlign: 'center' }}>
+            Nothing in {active} yet.
           </div>
         )}
       </div>

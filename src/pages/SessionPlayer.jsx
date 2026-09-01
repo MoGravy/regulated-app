@@ -4,6 +4,7 @@ import { useApp } from '../hooks/useApp'
 import { supabase, trackSessionCompletion, SESSION_COLUMNS, getCachedSession } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
+import { categoryOf } from '../lib/categories'
 import MoodTracker from '../components/MoodTracker'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
 
@@ -12,11 +13,13 @@ const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', POST_MOOD: 'post_mood',
 export default function SessionPlayer() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { userEmail, markSessionComplete } = useApp()
+  const { userEmail, markSessionComplete, saveProgress } = useApp()
 
-  const [session, setSession] = useState(null)   // DB row (safe columns) — single source of truth
-  const [audioUrl, setAudioUrl] = useState(null)  // resolved at play time — premium via signed URL endpoint
-  const [loadError, setLoadError] = useState(false)
+  const [session, setSession] = useState(null)
+  const [audioUrl, setAudioUrl] = useState(null)
+  const [loadError, setLoadError] = useState(false)   // session row missing
+  const [audioError, setAudioError] = useState(null)  // session fine, audio would not resolve
+  const [retry, setRetry] = useState(0)
   const [step, setStep] = useState(STEP.PRE_MOOD)
   const [moodBefore, setMoodBefore] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -27,11 +30,11 @@ export default function SessionPlayer() {
   const audioRef = useRef(null)
   const startRef = useRef(null)
   const timerRef = useRef(null)
-  const autoStartRef = useRef(null)
   const wakeLockRef = useRef(null)
+  const progressRef = useRef({ id: null, position: 0, duration: 0 })
 
   // ---------------------------------------------------------------------------
-  // Load session: Supabase first, hardcoded fallback on error
+  // Load session: cache, then Supabase, then hardcoded fallback
   // ---------------------------------------------------------------------------
   useEffect(() => {
     let cancelled = false
@@ -55,17 +58,14 @@ export default function SessionPlayer() {
       if (cancelled) return
 
       if (data && !error) {
-        console.log('[SessionPlayer] Loaded from DB:', data.title)
         setSession(data)
         trackEvent(Events.SESSION_STARTED, { session_title: data.title })
         return
       }
 
-      // Supabase failed — try hardcoded fallback
       console.warn('[SessionPlayer] DB fetch failed:', JSON.stringify(error), '— trying hardcoded fallback')
       const fallback = HARDCODED_SESSIONS_BY_ID[trimmed]
       if (fallback) {
-        console.log('[SessionPlayer] Using hardcoded fallback:', fallback.title)
         setSession(fallback)
         trackEvent(Events.SESSION_STARTED, { session_title: fallback.title })
       } else {
@@ -75,22 +75,19 @@ export default function SessionPlayer() {
     }
 
     fetchSession()
-    return () => {
-      cancelled = true
-      clearTimeout(autoStartRef.current)
-    }
+    return () => { cancelled = true }
   }, [id])
 
-  // Resolve the playable URL once the session is loaded. ALL audio goes
-  // through /api/get-audio-url for a freshly signed short-lived URL — no
-  // baked tokens anywhere on the client (a rotated signing key silently
-  // killed year-old hardcoded tokens in June 2026).
+  // Resolve the playable URL once the session is loaded. ALL audio goes through
+  // /api/get-audio-url for a freshly signed short-lived URL — no baked tokens on
+  // the client. Endpoint itself is untouched.
   useEffect(() => {
     if (!session) return
     const hasAudio = session.has_audio ?? !!session.audio_url
     if (!hasAudio) return
 
     let cancelled = false
+    setAudioError(null)
     async function resolveUrl() {
       try {
         const res = await fetch('/api/get-audio-url', {
@@ -105,34 +102,35 @@ export default function SessionPlayer() {
         }
         if (!res.ok) throw new Error(`get-audio-url responded ${res.status}`)
         const data = await res.json()
+        if (!data?.url) throw new Error('get-audio-url returned no url')
         setAudioUrl(data.url)
       } catch (err) {
         if (cancelled) return
         console.error('[SessionPlayer] get-audio-url failed:', err?.message || err)
-        setLoadError(true)
+        setAudioError(err?.message || 'Audio could not be loaded')
       }
     }
     resolveUrl()
     return () => { cancelled = true }
+  }, [session, retry])
+
+  // Seed the duration from the row until the audio reports its real length.
+  // The pre-mood step used to auto-advance after 1200ms, which made the question
+  // a 1.2s flash and left mood_before permanently null. It now waits for an
+  // answer; "Skip" is still one tap.
+  useEffect(() => {
+    if (!session) return
+    setDuration(d => d || (session.duration || 20) * 60)
   }, [session])
 
-  // Auto-advance to PLAYING after mood selection delay
-  useEffect(() => {
-    if (!session || step !== STEP.PRE_MOOD) return
-    setDuration((session.duration || 20) * 60)
-    autoStartRef.current = setTimeout(() => setStep(STEP.PLAYING), 1200)
-  }, [step, session])
-
-  // Play audio when step becomes PLAYING
   useEffect(() => {
     if (step !== STEP.PLAYING || !audioUrl || !audioRef.current) return
     audioRef.current.play().catch(() => {})
   }, [step, audioUrl])
 
-  // Timer tick
   useEffect(() => {
     if (!isPlaying || step !== STEP.PLAYING) return
-    startRef.current = Date.now()
+    startRef.current = Date.now() - currentTime * 1000
     clearInterval(timerRef.current)
     timerRef.current = setInterval(() => {
       const elapsed = (Date.now() - startRef.current) / 1000
@@ -149,9 +147,7 @@ export default function SessionPlayer() {
   // Wake lock — request when playing, release on pause/end/unmount
   useEffect(() => {
     if (isPlaying) {
-      navigator.wakeLock?.request('screen').then(lock => {
-        wakeLockRef.current = lock
-      }).catch(() => {})
+      navigator.wakeLock?.request('screen').then(lock => { wakeLockRef.current = lock }).catch(() => {})
     } else {
       wakeLockRef.current?.release().catch(() => {})
       wakeLockRef.current = null
@@ -162,6 +158,17 @@ export default function SessionPlayer() {
     }
   }, [isPlaying])
 
+  // Keep the latest position in a ref so the unmount save does not need to be
+  // re-registered on every tick.
+  useEffect(() => {
+    progressRef.current = { id: session?.id, position: currentTime, duration }
+  }, [session, currentTime, duration])
+
+  useEffect(() => () => {
+    const { id: sid, position, duration: d } = progressRef.current
+    if (sid) saveProgress(sid, position, d)
+  }, [])
+
   function handlePreMood(mood) {
     setMoodBefore(mood)
     setStep(STEP.PLAYING)
@@ -169,7 +176,7 @@ export default function SessionPlayer() {
   }
 
   function handlePostMood(mood) {
-    markSessionComplete(session?.title)
+    markSessionComplete(session?.id)
     trackSessionCompletion(null, userEmail, moodBefore, mood)
     trackEvent(Events.MOOD_TRACKED, { type: 'after', value: mood, session_title: session?.title })
     setStep(STEP.DONE)
@@ -179,13 +186,8 @@ export default function SessionPlayer() {
   function togglePlay() {
     const a = audioRef.current
     if (!a) return
-    if (isPlaying) {
-      a.pause()
-      setIsPlaying(false)
-    } else {
-      a.play().catch(() => {})
-      setIsPlaying(true)
-    }
+    if (isPlaying) { a.pause(); setIsPlaying(false) }
+    else { a.play().catch(() => {}); setIsPlaying(true) }
   }
 
   function skip(secs) {
@@ -212,211 +214,208 @@ export default function SessionPlayer() {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
   }
 
-  // ---------------------------------------------------------------------------
-  // Loading / error states
+  function close() {
+    navigate(session ? `/sessions/${session.id}` : '/sessions')
+  }
+
   // ---------------------------------------------------------------------------
   if (loadError) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-deep)' }}>
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>🎵</div>
-          <div>Session not found</div>
-          <button className="btn-ghost" onClick={() => navigate('/sessions')} style={{ marginTop: 16 }}>← Back to sessions</button>
-        </div>
-      </div>
-    )
-  }
-
-  if (session && !(session.has_audio ?? !!session.audio_url)) {
-    return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--bg-deep)' }}>
-        <div style={{ padding: '24px 24px 0' }}>
+      <Shell>
+        <div style={{ margin: 'auto', textAlign: 'center', padding: 32 }}>
+          <div style={{ font: '400 21px/28px var(--font-display)', color: 'var(--player-title)' }}>Session not found</div>
           <button
-            onClick={() => navigate(-1)}
-            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            onClick={() => navigate('/sessions')}
+            style={{ marginTop: 16, background: 'none', border: 'none', color: 'var(--player-muted)', font: '400 14px/20px var(--font-ui)', cursor: 'pointer' }}
           >
-            ← Back
+            Back to the library
           </button>
         </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 28px', textAlign: 'center' }}>
-          <div style={{ fontSize: 56, marginBottom: 20 }}>🎙️</div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>
-            {session.title}
-          </h2>
-          <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 8, maxWidth: 300 }}>
-            This session is being recorded and will be available soon.
-          </p>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 32 }}>
-            {session.category} · {session.duration} min
-          </p>
-          <button className="btn-ghost" onClick={() => navigate('/sessions')}>
-            ← Back to sessions
-          </button>
-        </div>
-      </div>
+      </Shell>
     )
   }
 
   if (!session) {
+    return <Shell><div style={{ margin: 'auto' }}><div className="spinner" /></div></Shell>
+  }
+
+  if (audioError) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-deep)' }}>
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-          <span className="spinner" style={{ width: 32, height: 32 }} />
+      <Shell>
+        <div style={{ margin: 'auto', textAlign: 'center', padding: 32 }}>
+          <div style={{ font: '400 21px/28px var(--font-display)', color: 'var(--player-title)' }}>
+            The audio would not load
+          </div>
+          <p style={{ margin: '12px 0 24px', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)' }}>
+            The session is fine — this was the connection. Try again.
+          </p>
+          <button
+            onClick={() => { setAudioError(null); setRetry(n => n + 1) }}
+            style={{ height: 48, padding: '0 24px', borderRadius: 'var(--r-row)', border: 'none', background: 'var(--control)', color: 'var(--on-control)', font: '500 15px/20px var(--font-ui)', cursor: 'pointer' }}
+          >
+            Try again
+          </button>
+          <button
+            onClick={close}
+            style={{ display: 'block', margin: '16px auto 0', background: 'none', border: 'none', color: 'var(--player-muted)', font: '400 14px/20px var(--font-ui)', cursor: 'pointer' }}
+          >
+            Back
+          </button>
         </div>
-      </div>
+      </Shell>
     )
   }
 
-  // ---------------------------------------------------------------------------
-  // Player
-  // ---------------------------------------------------------------------------
+  const { label } = categoryOf(session.category)
+  const pct = duration ? Math.min(100, (currentTime / duration) * 100) : 0
+
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--bg-deep)', display: 'flex', flexDirection: 'column' }}>
-      <div
-        style={{
-          paddingTop: 'max(20px, env(safe-area-inset-top))',
-          paddingBottom: 'max(32px, env(safe-area-inset-bottom))',
-          padding: '0 24px',
-          display: 'flex',
-          flexDirection: 'column',
-          flex: 1,
-        }}
-      >
-        <button
-          onClick={() => {
-            trackEvent(Events.SESSION_ABANDONED, { session_title: session.title, time: currentTime })
-            audioRef.current?.pause()
-            navigate(-1)
-          }}
-          style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginBottom: 24 }}
-        >
-          ← Back
+    <Shell>
+      {audioUrl && (
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          preload="auto"
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onLoadedMetadata={e => { if (Number.isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration) }}
+          onEnded={() => { setIsPlaying(false); setStep(STEP.POST_MOOD) }}
+        />
+      )}
+
+      <div className="status-bar" style={{ position: 'relative', color: 'var(--player-faint)' }}><span /><span /></div>
+
+      <div style={{ position: 'relative', height: 56, flex: 'none', display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+        <button className="btn-icon" onClick={close} aria-label="Close player">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M3 6l5 5 5-5" stroke="var(--player-faint)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+          </svg>
         </button>
+      </div>
 
-        {step === STEP.PRE_MOOD && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 24 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>🧘</div>
-              <h2 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>{session.title}</h2>
-              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {session.category} · {session.duration} min
-              </p>
-            </div>
-            <div style={{ background: 'var(--bg-card)', borderRadius: 20, padding: 24 }}>
-              <MoodTracker label="How regulated do you feel right now?" onSubmit={handlePreMood} />
-            </div>
-          </div>
-        )}
+      {step === STEP.PRE_MOOD && (
+        <MoodTracker label="Before we start, where are you now?" onSubmit={handlePreMood} optional />
+      )}
 
-        {step === STEP.PLAYING && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 40 }}>
-            {audioUrl && (
-              <audio
-                ref={audioRef}
-                src={audioUrl}
-                preload="auto"
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-                onLoadedMetadata={e => setDuration(e.target.duration)}
-                onEnded={() => { setIsPlaying(false); setStep(STEP.POST_MOOD) }}
-                onError={() => setIsPlaying(false)}
-              />
-            )}
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 72, marginBottom: 12 }}>🎧</div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>{session.title}</h2>
-              <p style={{ color: 'var(--text-muted)' }}>{fmt(currentTime)}</p>
-            </div>
+      {step === STEP.POST_MOOD && (
+        <MoodTracker label="And now?" onSubmit={handlePostMood} />
+      )}
 
-            {/* Scrub bar */}
-            <div style={{ width: '100%' }}>
-              <div
-                onClick={seek}
-                style={{ height: 4, background: 'var(--border-solid)', borderRadius: 2, cursor: 'pointer', position: 'relative' }}
-              >
-                <div style={{
-                  position: 'absolute', left: 0, top: 0, height: '100%',
-                  width: `${duration ? (currentTime / duration) * 100 : 0}%`,
-                  background: 'var(--accent)', borderRadius: 2,
-                }} />
-                <div style={{
-                  position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-                  left: `${duration ? (currentTime / duration) * 100 : 0}%`,
-                  width: 14, height: 14, borderRadius: '50%',
-                  background: 'var(--accent)', marginLeft: -7,
-                  boxShadow: '0 0 0 3px rgba(126,207,192,0.3)',
-                }} />
-              </div>
-            </div>
-
-            {/* Transport controls: skip back · play/pause · skip forward */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+      {step === STEP.DONE && (
+        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px', textAlign: 'center' }}>
+          <h1 style={{ font: '300 32px/38px var(--font-display)', color: 'var(--player-title)' }}>That is done.</h1>
+          <p style={{ margin: '16px 0 0', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)' }}>
+            Stay lying down for a minute if you can.
+          </p>
+          <div style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <button
+              onClick={() => navigate('/sessions')}
+              style={{ height: 52, borderRadius: 'var(--r-row)', border: 'none', background: 'var(--control)', color: 'var(--on-control)', font: '500 16px/22px var(--font-ui)', cursor: 'pointer' }}
+            >
+              Back to the library
+            </button>
+            {showCustomPrompt && (
               <button
-                onClick={() => skip(-15)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+                onClick={() => navigate('/custom')}
+                style={{ height: 48, borderRadius: 'var(--r-row)', border: '1px solid var(--player-track)', background: 'transparent', color: 'var(--player-muted)', font: '400 14px/20px var(--font-ui)', cursor: 'pointer' }}
               >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="1 4 1 10 7 10" />
-                  <path d="M3.51 15a9 9 0 1 0 .49-3.51" />
-                </svg>
-                <span style={{ fontSize: 10, fontWeight: 600 }}>15s</span>
+                A session made for you · ${CUSTOM_AUDIO_PRICE}
               </button>
+            )}
+          </div>
+        </div>
+      )}
 
+      {step === STEP.PLAYING && (
+        <>
+          <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
+            <div style={{ font: '400 13px/18px var(--font-ui)', color: 'var(--player-faint)' }}>{label}</div>
+            <h1 style={{ margin: '10px 0 0', font: '300 36px/43px var(--font-display)', color: 'var(--player-title)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
+              {session.title}
+            </h1>
+            <p style={{ margin: '16px 0 0', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)', maxWidth: 300, textWrap: 'pretty' }}>
+              Lie down. Let the audio do the work. If you fall asleep, that is fine.
+            </p>
+          </div>
+
+          <div style={{ position: 'relative', flex: 'none', padding: '0 32px 48px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 36, marginBottom: 44 }}>
+              <SkipButton dir="back" onClick={() => skip(-15)} />
               <button
+                className="btn-play"
+                style={{ width: 96, height: 96 }}
                 onClick={togglePlay}
-                style={{
-                  width: 76, height: 76, borderRadius: '50%', background: 'var(--accent)',
-                  border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--bg-deep)"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+                  <span style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ width: 6, height: 32, borderRadius: 2, background: 'var(--player-bg)' }} />
+                    <span style={{ width: 6, height: 32, borderRadius: 2, background: 'var(--player-bg)' }} />
+                  </span>
                 ) : (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--bg-deep)" style={{ marginLeft: 3 }}><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                  <svg width="28" height="34" viewBox="0 0 28 34" aria-hidden="true">
+                    <polygon points="4,2 26,17 4,32" fill="var(--player-bg)" />
+                  </svg>
                 )}
               </button>
+              <SkipButton dir="forward" onClick={() => skip(15)} />
+            </div>
 
-              <button
-                onClick={() => skip(15)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
-              >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="23 4 23 10 17 10" />
-                  <path d="M20.49 15a9 9 0 1 1-.49-3.51" />
-                </svg>
-                <span style={{ fontSize: 10, fontWeight: 600 }}>15s</span>
-              </button>
+            <div
+              onClick={seek}
+              role="progressbar"
+              aria-label="Session progress"
+              aria-valuenow={Math.round(pct)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              style={{ height: 3, background: 'var(--player-track)', borderRadius: 'var(--r-pill)', marginBottom: 12, cursor: 'pointer' }}
+            >
+              <div style={{ width: `${pct}%`, height: 3, background: 'var(--control)', borderRadius: 'var(--r-pill)' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', font: '400 13px/18px var(--font-ui)', color: 'var(--player-faint)' }}>
+              <span>{fmt(currentTime)}</span>
+              <span>{fmt(duration)}</span>
             </div>
           </div>
-        )}
+        </>
+      )}
+    </Shell>
+  )
+}
 
-        {step === STEP.POST_MOOD && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
-            <MoodTracker label="How regulated do you feel now?" onSubmit={handlePostMood} />
-          </div>
-        )}
-
-        {step === STEP.DONE && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>✨</div>
-              <h2 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>Session complete</h2>
-              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>Nice work. You showed up for yourself today.</p>
-            </div>
-            <button className="btn-primary" onClick={() => navigate('/sessions')} style={{ padding: '14px 28px' }}>Back to sessions</button>
-            {showCustomPrompt && (
-              <div style={{ textAlign: 'center', marginTop: 8 }}>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
-                  Want a session built for your exact pattern?
-                </p>
-                <button className="btn-ghost" onClick={() => navigate('/custom')}>
-                  Order Custom Audio — ${CUSTOM_AUDIO_PRICE}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+// The only dark surface in the system — design 1b.
+function Shell({ children }) {
+  return (
+    <div style={{ minHeight: '100dvh', background: 'var(--player-bg)', position: 'relative', display: 'flex', flexDirection: 'column', color: 'var(--player-body)', overflow: 'hidden' }}>
+      <div aria-hidden="true" className="blob blob-a" style={{ position: 'absolute', width: 320, height: 260, left: -60, top: 120, background: 'var(--player-blob-a)', filter: 'blur(40px)' }} />
+      <div aria-hidden="true" className="blob blob-b" style={{ position: 'absolute', width: 240, height: 200, right: -50, bottom: 180, background: 'var(--player-blob-b)', filter: 'blur(36px)' }} />
+      {children}
     </div>
+  )
+}
+
+function SkipButton({ dir, onClick }) {
+  const back = dir === 'back'
+  return (
+    <button
+      onClick={onClick}
+      aria-label={back ? 'Back 15 seconds' : 'Forward 15 seconds'}
+      style={{ width: 56, height: 56, border: 'none', background: 'transparent', color: 'var(--player-muted)', font: '500 13px/18px var(--font-ui)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, cursor: 'pointer' }}
+    >
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        {back ? (
+          <>
+            <path d="M9 3.5a5.5 5.5 0 1 1-5.2 3.7" stroke="var(--player-muted)" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+            <path d="M2.2 3v4.2h4.2" stroke="var(--player-muted)" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+          </>
+        ) : (
+          <>
+            <path d="M9 3.5a5.5 5.5 0 1 0 5.2 3.7" stroke="var(--player-muted)" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+            <path d="M15.8 3v4.2h-4.2" stroke="var(--player-muted)" strokeWidth="1.3" fill="none" strokeLinecap="round" />
+          </>
+        )}
+      </svg>
+      <span>15</span>
+    </button>
   )
 }

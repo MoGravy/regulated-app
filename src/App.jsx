@@ -4,6 +4,7 @@ import Navigation from './components/Navigation'
 import Toast from './components/Toast'
 import Home from './pages/Home'
 import Sessions from './pages/Sessions'
+import SessionDetail from './pages/SessionDetail'
 import SessionPlayer from './pages/SessionPlayer'
 import CustomAudio from './pages/CustomAudio'
 import Premium from './pages/Premium'
@@ -28,7 +29,8 @@ function AppShell() {
         <Route path="/welcome" element={<Onboarding />} />
         <Route path="/" element={<><Home /><Navigation /></>} />
         <Route path="/sessions" element={<><Sessions /><Navigation /></>} />
-        <Route path="/sessions/:id" element={<SessionPlayer />} />
+        <Route path="/sessions/:id" element={<SessionDetail />} />
+        <Route path="/sessions/:id/play" element={<SessionPlayer />} />
         <Route path="/custom" element={<><CustomAudio /><Navigation /></>} />
         <Route path="/premium" element={<><Premium /><Navigation /></>} />
         <Route path="/success" element={<Success />} />
