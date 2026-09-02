@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { skipOnboarding, enterProgram, watchConsole, expectNoConsoleErrors, HAS_API } from './helpers.js'
+import { skipOnboarding, enterProgram, watchConsole, expectNoConsoleErrors, noProductionWrites, HAS_API } from './helpers.js'
 
 const SCREENS = [
   ['home', '/'],
@@ -211,6 +211,10 @@ test.describe('needs /api', () => {
   })
 
   test('checkout redirects to Stripe — never completes a payment', async ({ page }) => {
+    // Subscribing upserts a users row before it calls out. Against a real
+    // deployment that row would land in the production database, so the
+    // Supabase write is stubbed while /api/create-checkout is left alone.
+    await noProductionWrites(page)
     await skipOnboarding(page)
     await page.goto('/premium')
     await page.waitForLoadState('networkidle')

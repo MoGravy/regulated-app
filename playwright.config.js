@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { STATE_PATH } from './tests/preview-auth.js'
 
 // BASE_URL picks the target:
 //   local production build (default) — vite preview, no /api routes
@@ -8,6 +9,7 @@ const IS_LOCAL = BASE_URL.includes('localhost')
 
 export default defineConfig({
   testDir: './tests',
+  globalSetup: './tests/preview-auth.js',
   fullyParallel: false,
   workers: 1,
   retries: 0,
@@ -22,6 +24,11 @@ export default defineConfig({
     trace: 'retain-on-failure',
     ...devices['Desktop Chrome'],
     viewport: { width: 390, height: 844 },
+    // The preview bypass rides on a cookie, not a header, so it is never sent
+    // to third-party origins like fonts.gstatic.com.
+    // globalSetup writes this before any context is created, and throws if it
+    // cannot, so the path is safe to name unconditionally.
+    storageState: IS_LOCAL ? undefined : STATE_PATH,
   },
   // Only boot a server when pointed at localhost.
   webServer: IS_LOCAL
