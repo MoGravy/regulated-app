@@ -148,16 +148,16 @@ export async function getCustomOrder(orderId) {
 export async function checkSubscription(email) {
   if (!email) return false
 
-  const { data, error } = await supabase
-    .from('subscriptions')
-    .select('status, current_period_end')
-    .eq('user_email', email)
-    .eq('status', 'active')
-    .gt('current_period_end', new Date().toISOString())
-    .maybeSingle()
-
-  if (error) return false
-  return !!data
+  // Server-side: the subscriptions table is RLS-locked, so the public key
+  // used here always saw zero rows and every subscriber looked unpaid.
+  const res = await fetch('/api/check-subscription', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  if (!res.ok) throw new Error(`check-subscription responded ${res.status}`)
+  const { active } = await res.json()
+  return !!active
 }
 
 // ---------------------------------------------------------------------------

@@ -28,6 +28,10 @@ test.describe('a customer arriving from the current production build', () => {
     await page.addInitScript(state => {
       for (const [k, v] of Object.entries(state)) localStorage.setItem(k, v)
     }, PROD_STATE)
+    // localhost has no /api routes; a 404 here would read as a console error.
+    await page.route(/\/api\/check-subscription/, route => route.fulfill({
+      status: 200, contentType: 'application/json', body: '{"active":false}',
+    }))
   })
 
   test('is not thrown back into onboarding', async ({ page }) => {
@@ -180,8 +184,8 @@ test('the paywall refuses a bad email before it opens checkout', async ({ page }
 
 test('restore reports honestly when there is no subscription', async ({ page }) => {
   await skipOnboarding(page)
-  await page.route(/\/rest\/v1\/subscriptions/, route => route.fulfill({
-    status: 200, contentType: 'application/json', body: '[]',
+  await page.route(/\/api\/check-subscription/, route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '{"active":false}',
   }))
 
   await page.goto('/premium')
@@ -360,6 +364,9 @@ test('listening ahead in Browse does not skip a program day', async ({ page }) =
 // ---------------------------------------------------------------------------
 test('a brand new visitor is taken through onboarding and out the other side', async ({ page }) => {
   const errors = watchConsole(page)
+  await page.route(/\/api\/check-subscription/, route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '{"active":false}',
+  }))
   await page.goto('/')
   await expect(page).toHaveURL(/\/welcome$/)
 

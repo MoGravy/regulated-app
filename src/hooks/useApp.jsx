@@ -55,7 +55,10 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (userEmail) {
-      checkSubscription(userEmail).then(setIsPremium)
+      // A failed check leaves the flag alone: a flaky network must not demote
+      // a paying customer on reload.
+      checkSubscription(userEmail).then(setIsPremium).catch(err =>
+        console.error('[useApp] subscription check failed:', err))
     }
   }, [userEmail])
 

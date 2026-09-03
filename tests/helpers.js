@@ -64,10 +64,10 @@ export async function asPremium(page, email = 'premium@example.com') {
     localStorage.setItem('regulated_onboarding', 'true')
     localStorage.setItem('regulated_email', JSON.stringify(e))
   }, email)
-  await page.route(/\/rest\/v1\/subscriptions/, route => route.fulfill({
+  await page.route(/\/api\/check-subscription/, route => route.fulfill({
     status: 200,
     contentType: 'application/json',
-    body: JSON.stringify([{ status: 'active', current_period_end: '2099-01-01T00:00:00Z' }]),
+    body: JSON.stringify({ active: true }),
   }))
 }
 
