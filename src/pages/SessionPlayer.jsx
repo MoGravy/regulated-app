@@ -247,7 +247,7 @@ export default function SessionPlayer() {
             The audio would not load
           </div>
           <p style={{ margin: '12px 0 24px', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)' }}>
-            The session is fine — this was the connection. Try again.
+            The session is fine. This was the connection. Try again.
           </p>
           <button
             onClick={() => { setAudioError(null); setRetry(n => n + 1) }}

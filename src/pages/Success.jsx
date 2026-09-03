@@ -141,7 +141,7 @@ export default function Success() {
         Welcome to Regulated Premium.
       </h1>
       <p style={{ fontSize: 16, color: 'var(--ink-muted)', lineHeight: 1.7, marginBottom: plan === 'annual' ? 20 : 36, maxWidth: 340 }}>
-        You now have access to every session in the library, with new sessions added every week. Everything Matthew creates goes straight to your library.
+        You now have access to every session in the library, with new sessions added monthly. Everything Matthew creates goes straight to your library.
       </p>
 
       {/* While verifying an annual purchase, show a loading state — never the code */}
