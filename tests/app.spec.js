@@ -211,17 +211,23 @@ test.describe('needs /api', () => {
   })
 
   test('checkout redirects to Stripe — never completes a payment', async ({ page }) => {
-    // Subscribing upserts a users row before it calls out. Against a real
-    // deployment that row would land in the production database, so the
-    // Supabase write is stubbed while /api/create-checkout is left alone.
+    // Subscribing upserts a users row before it calls out, and the server
+    // creates a real live-mode Checkout Session. Against a real deployment both
+    // land in production, so the Supabase write and the checkout call are both
+    // stubbed. The handoff to Stripe is still proven, nothing reaches Stripe.
     await noProductionWrites(page)
+    await page.route('**/api/create-checkout', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ url: 'https://checkout.stripe.com/c/pay/cs_test_playwright_stub' }),
+    }))
     await skipOnboarding(page)
     await page.goto('/premium')
     await page.waitForLoadState('networkidle')
 
     await page.locator('#premium-email').fill('playwright-checkout-probe@example.com')
 
-    // Abort at the redirect. Nothing is ever submitted on Stripe's side.
+    // Abort at the redirect. Nothing is ever requested of Stripe at all.
     let stripeUrl = null
     await page.route('**://checkout.stripe.com/**', route => {
       stripeUrl = route.request().url()
