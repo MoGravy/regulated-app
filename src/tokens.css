@@ -1,0 +1,79 @@
+/* ---------------------------------------------------------------------------
+   Regulated design tokens
+   Extracted verbatim from design/Regulated.dc.html (board 1a).
+   Accent = candidate B "ink navy with warm amber" — the palette board 1d is
+   drawn in, and the quieter of the two candidates. Swapping to candidate D
+   changes only the --accent / --control block below.
+   --------------------------------------------------------------------------- */
+:root {
+  /* base — light clinical */
+  --bg:            #F5F2EC;
+  --surface:       #FFFDF8;
+  --sunk:          #EFEBE3;
+  --sunk-locked:   #F1EDE5;
+  --line:          #E0DACE;
+  --line-strong:   #CFC7B8;
+  --ink:           #24302A;  /* 12.6:1 */
+  --ink-muted:     #55605A;  /* 5.6:1  */
+  --ink-faint:     #7E877F;  /* 3.2:1 — 15px+ only */
+  --ink-disabled:  #B4AC9C;
+  --on-accent:     #FBF8F1;
+
+  /* accent — candidate B, ink navy + warm amber */
+  --accent:        #24344D;
+  --accent-hover:  #1B2841;
+  --accent-soft:   rgba(36, 52, 77, 0.06);
+  --accent-ring:   rgba(36, 52, 77, 0.12);
+  --accent-tint:   rgba(36, 52, 77, 0.10);
+  --control:       #D99A3D;  /* play control + progress fill, appears twice */
+  --on-control:    #1B2841;
+
+  /* player — the only dark surface */
+  --player-bg:     #16202F;
+  --player-blob-a: #22314A;
+  --player-blob-b: #1E2B3F;
+  --player-title:  #F3EEE3;
+  --player-body:   #E8E2D6;
+  --player-muted:  #A9B3C1;
+  --player-faint:  #8C97A8;
+  --player-track:  #2A3549;
+
+  /* category families — chip fill 10%, border 22%, ink full */
+  --cat-sleep:      #3E4C66;
+  --cat-stress:     #3F5A55;
+  --cat-anxiety:    #4B5A3F;
+  --cat-gut:        #6C5B34;
+  --cat-confidence: #5C4A5E;
+  --cat-habits:     #34524F;
+  --cat-motivation: #6A4B4E;
+  --cat-daily:      #4E4C42;
+
+  /* type */
+  --font-display: Newsreader, Georgia, 'Times New Roman', serif;
+  --font-ui:      Archivo, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  /* radius */
+  --r-chip:   6px;
+  --r-row:   10px;
+  --r-card:  14px;
+  --r-sheet: 20px;
+  --r-pill: 999px;
+
+  /* elevation */
+  --e1: 0 1px 2px rgba(36, 48, 42, 0.06);   /* rest  */
+  --e2: 0 6px 20px rgba(36, 48, 42, 0.08);  /* lift  */
+  --e3: 0 -8px 32px rgba(36, 48, 42, 0.12); /* sheet */
+
+  /* motion — response only, never ambience */
+  --t-press: 120ms cubic-bezier(.3, 0, .7, .2);
+  --t-enter: 180ms cubic-bezier(.2, .6, .2, 1);
+  --t-sheet: 240ms cubic-bezier(.2, .6, .2, 1);
+
+  /* layout */
+  --nav-height:  76px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0ms !important; animation: none !important; }
+}

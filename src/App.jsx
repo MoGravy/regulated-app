@@ -4,11 +4,14 @@ import Navigation from './components/Navigation'
 import Toast from './components/Toast'
 import Home from './pages/Home'
 import Sessions from './pages/Sessions'
+import SessionDetail from './pages/SessionDetail'
 import SessionPlayer from './pages/SessionPlayer'
 import CustomAudio from './pages/CustomAudio'
 import Premium from './pages/Premium'
 import Success from './pages/Success'
 import Onboarding from './pages/Onboarding'
+import Program from './pages/Program'
+import SignIn from './pages/SignIn'
 
 export default function App() {
   return (
@@ -26,10 +29,13 @@ function AppShell() {
       <Toast />
       <Routes>
         <Route path="/welcome" element={<Onboarding />} />
+        <Route path="/signin" element={<SignIn />} />
         <Route path="/" element={<><Home /><Navigation /></>} />
+        <Route path="/program" element={<><Program /><Navigation /></>} />
         <Route path="/sessions" element={<><Sessions /><Navigation /></>} />
-        <Route path="/sessions/:id" element={<SessionPlayer />} />
-        <Route path="/custom" element={<><CustomAudio /><Navigation /></>} />
+        <Route path="/sessions/:id" element={<SessionDetail />} />
+        <Route path="/sessions/:id/play" element={<SessionPlayer />} />
+        <Route path="/custom" element={<CustomAudio />} />
         <Route path="/premium" element={<><Premium /><Navigation /></>} />
         <Route path="/success" element={<Success />} />
         <Route path="*" element={<Navigate to="/" replace />} />

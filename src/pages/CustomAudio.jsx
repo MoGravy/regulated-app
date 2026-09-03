@@ -4,6 +4,7 @@ import { trackEvent, Events } from '../lib/analytics'
 import { useApp } from '../hooks/useApp'
 import { stripePromise } from '../lib/stripe'
 import CouponField from '../components/CouponField'
+import Texture from '../components/Texture'
 import { CUSTOM_AUDIO_PRICE as PRICE } from '../config/pricing'
 
 export default function CustomAudio() {
@@ -19,7 +20,7 @@ export default function CustomAudio() {
   })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState('form') // 'form' | 'confirm'
+  const [step, setStep] = useState('intro') // 'intro' | 'form' | 'confirm'
   const [appliedCoupon, setAppliedCoupon] = useState(null)
 
   function getDiscountedPrice() {
@@ -110,26 +111,25 @@ export default function CustomAudio() {
     }
   }
 
+  if (step === 'intro') return <CustomAudioIntro onStart={() => setStep('form')} onBack={() => navigate(-1)} />
+
   return (
     <div className="page animate-fade-in">
       <div className="page-content" style={{ paddingTop: 56 }}>
 
         {/* Header */}
         <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', marginBottom: 8 }}>
-            CUSTOM AUDIO
-          </div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2, marginBottom: 12 }}>
-            Built for your exact pattern.
+          <h1 style={{ margin: '0 0 12px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
+            A session made for you
           </h1>
-          <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-            Matthew personally creates a 20–30 minute audio session targeting your specific pattern, trigger, and desired outcome. Delivered within 7 days.
+          <p style={{ font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
+            Six questions, about ten minutes. Matthew writes and records from your answers.
           </p>
         </div>
 
         {/* What you get */}
         <div className="card" style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', marginBottom: 14 }}>
             What's included
           </div>
           {[
@@ -141,13 +141,13 @@ export default function CustomAudio() {
           ].map(([icon, text]) => (
             <div key={text} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 10 }}>
               <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
-              <span style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{text}</span>
+              <span style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.5 }}>{text}</span>
             </div>
           ))}
           <div className="divider" />
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)' }}>${PRICE}</span>
-            <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>one-time · 7-day turnaround</span>
+            <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--ink)' }}>${PRICE}</span>
+            <span style={{ fontSize: 14, color: 'var(--ink-faint)' }}>one-time · 7-day turnaround</span>
           </div>
         </div>
 
@@ -164,8 +164,8 @@ export default function CustomAudio() {
                 value={form.email}
                 onChange={e => handleChange('email', e.target.value)}
               />
-              {errors.email && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.email}</span>}
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              {errors.email && <span style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.email}</span>}
+              <span style={{ fontSize: 12, color: 'var(--ink-faint)' }}>
                 Your custom audio will be delivered here.
               </span>
             </div>
@@ -176,16 +176,16 @@ export default function CustomAudio() {
 
               {/* Instruction block */}
               <div style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
+                background: 'var(--surface)',
+                border: '1px solid var(--line)',
                 borderRadius: 12,
                 padding: '18px 20px',
                 marginBottom: 14,
               }}>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.75, margin: '0 0 14px' }}>
+                <p style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.75, margin: '0 0 14px' }}>
                   Think of a situation that regularly triggers you. It might be a person, a place, a request, or a moment that always seems to pull you out of your calm.
                 </p>
-                <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.75, margin: '0 0 16px' }}>
+                <p style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.75, margin: '0 0 16px' }}>
                   Write it as a short scene, like you're describing it to a friend. Include what happens, how your body feels, and how you want to feel instead.
                 </p>
 
@@ -200,12 +200,12 @@ export default function CustomAudio() {
                   <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', marginBottom: 8 }}>
                     EXAMPLE
                   </div>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.75, margin: 0, fontStyle: 'italic' }}>
+                  <p style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.75, margin: 0, fontStyle: 'italic' }}>
                     You get home from a long day. Your boss messages asking you to send an urgent email tonight. You feel the familiar surge of panic and that tight, exhausted tension. Then you catch yourself. You take a breath and choose calm, confidence, and quiet determination. You reply honestly: "I'm exhausted after a full day. I can't get to this tonight." Your boss pauses, then steps back and respects that.
                   </p>
                 </div>
 
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>
+                <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: 0 }}>
                   Your pattern doesn't need to be dramatic. It just needs to be real.
                 </p>
               </div>
@@ -217,13 +217,13 @@ export default function CustomAudio() {
                 onChange={e => handleChange('pattern', e.target.value)}
                 style={{ minHeight: 300, resize: 'vertical' }}
               />
-              {errors.pattern && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.pattern}</span>}
+              {errors.pattern && <span style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.pattern}</span>}
             </div>
 
             {/* Trigger */}
             <div className="form-group">
               <label className="form-label">Main Trigger *</label>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 10px' }}>
+              <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: '0 0 10px' }}>
                 What's the specific moment, person, or feeling that sets the pattern off? Name it precisely — the more specific, the more targeted your audio will be.
               </p>
               <input
@@ -233,13 +233,13 @@ export default function CustomAudio() {
                 value={form.trigger}
                 onChange={e => handleChange('trigger', e.target.value)}
               />
-              {errors.trigger && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.trigger}</span>}
+              {errors.trigger && <span style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.trigger}</span>}
             </div>
 
             {/* Desired state */}
             <div className="form-group">
               <label className="form-label">Desired State *</label>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 10px' }}>
+              <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: '0 0 10px' }}>
                 How do you want to feel when that trigger arrives? Describe the emotional and physical state — calm, grounded, confident, free. This is the destination your audio guides you toward.
               </p>
               <textarea
@@ -249,18 +249,18 @@ export default function CustomAudio() {
                 onChange={e => handleChange('desiredState', e.target.value)}
                 style={{ minHeight: 110, resize: 'vertical' }}
               />
-              {errors.desiredState && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.desiredState}</span>}
+              {errors.desiredState && <span style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.desiredState}</span>}
             </div>
 
             {/* Affirmations */}
             <div className="form-group">
               <label className="form-label">
                 Personal Affirmations
-                <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: 6, color: 'var(--text-muted)', fontSize: 12 }}>
+                <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: 6, color: 'var(--ink-faint)', fontSize: 12 }}>
                   (optional)
                 </span>
               </label>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, margin: '0 0 10px' }}>
+              <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: '0 0 10px' }}>
                 Any specific phrases, beliefs, or statements you want Matthew to weave into the audio. These become part of your session's language — phrases that feel true to you, not generic.
               </p>
               <textarea
@@ -281,7 +281,7 @@ export default function CustomAudio() {
         {step === 'confirm' && (
           <div className="animate-fade-in">
             <div className="card" style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', marginBottom: 16 }}>
                 Order Summary
               </div>
               {[
@@ -292,24 +292,24 @@ export default function CustomAudio() {
                 form.affirmations ? ['Affirmations', form.affirmations] : null,
               ].filter(Boolean).map(([label, value]) => (
                 <div key={label} style={{ marginBottom: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', marginBottom: 4 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-faint)', letterSpacing: '0.06em', marginBottom: 4 }}>
                     {label.toUpperCase()}
                   </div>
-                  <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                  <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                     {value}
                   </div>
                 </div>
               ))}
               <div className="divider" />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Total</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>Total</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   {appliedCoupon && (
-                    <span style={{ fontSize: 15, color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                    <span style={{ fontSize: 15, color: 'var(--ink-faint)', textDecoration: 'line-through' }}>
                       ${PRICE}
                     </span>
                   )}
-                  <span style={{ fontSize: 24, fontWeight: 800, color: appliedCoupon ? 'var(--success)' : 'var(--accent)' }}>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: appliedCoupon ? 'var(--cat-habits)' : 'var(--accent)' }}>
                     ${finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)}
                   </span>
                 </div>
@@ -317,7 +317,7 @@ export default function CustomAudio() {
             </div>
 
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-muted)', marginBottom: 8 }}>
                 Have a coupon code?
               </div>
               <CouponField
@@ -349,7 +349,7 @@ export default function CustomAudio() {
               </button>
             </div>
 
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', marginTop: 16, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 12, color: 'var(--ink-faint)', textAlign: 'center', marginTop: 16, lineHeight: 1.6 }}>
               Secure payment via Stripe. You'll receive an email confirmation immediately and your custom audio within 7 days.
             </p>
           </div>
@@ -357,7 +357,7 @@ export default function CustomAudio() {
 
         {/* Social proof */}
         <div style={{ marginTop: 36, marginBottom: 8 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.08em', marginBottom: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-faint)', letterSpacing: '0.08em', marginBottom: 14 }}>
             WHAT OTHERS SAY
           </div>
           {[
@@ -365,15 +365,82 @@ export default function CustomAudio() {
             { quote: '"The specificity is what makes it different. It addressed my exact situation, not a generic relaxation track."', name: 'James R.' },
           ].map((t, i) => (
             <div key={i} className="card" style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 10, fontStyle: 'italic' }}>
+              <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.7, marginBottom: 10, fontStyle: 'italic' }}>
                 {t.quote}
               </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)' }}>{t.name}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-faint)' }}>{t.name}</div>
             </div>
           ))}
         </div>
 
         <div style={{ height: 16 }} />
+      </div>
+    </div>
+  )
+}
+
+// The design's Custom audio board — three numbered steps in the sans, headings
+// in the serif, no icon tiles. Sits in front of the existing brief form.
+function CustomAudioIntro({ onStart, onBack }) {
+  const STEPS = [
+    ['A short written brief', 'Six questions, about ten minutes. No call needed.'],
+    ['Written and recorded', 'Usually seven days. You will get an email when it is ready.'],
+    ['Yours to keep', 'It stays in your library whether or not you subscribe. One free revision.'],
+  ]
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg)' }}>
+      <div className="status-bar"><span /><span>Regulated</span></div>
+
+      <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+        <button className="btn-icon" onClick={onBack} aria-label="Back">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M10 3l-5 5 5 5" stroke="var(--ink-muted)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+        <h1 style={{ margin: '0 0 12px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
+          A session made for you
+        </h1>
+        <p style={{ margin: '0 0 24px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
+          Tell Matthew what you are dealing with. He writes and records a session in your own language,
+          for your situation, and it arrives in your library.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {STEPS.map(([title, desc], i) => (
+            <div key={title} style={{ display: 'flex', gap: 14 }}>
+              <div style={{ width: 28, height: 28, flex: 'none', borderRadius: 'var(--r-pill)', background: 'var(--accent-tint)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', font: '500 13px/18px var(--font-ui)' }}>
+                {i + 1}
+              </div>
+              <div>
+                <div style={{ font: '400 18px/24px var(--font-display)', color: 'var(--ink)' }}>{title}</div>
+                <div style={{ marginTop: 4, font: '400 14px/21px var(--font-ui)', color: 'var(--ink-muted)' }}>{desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="divider" style={{ margin: '26px 0 18px' }} />
+
+        <div className="card texture" style={{ boxShadow: 'none' }}>
+          <Texture ink="#5C4A5E" variant="quote" />
+          <div style={{ position: 'relative', font: '400 15px/24px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
+            Most people order a custom session for something specific: a procedure coming up, a flight,
+            a habit that has not shifted with the library sessions.
+          </div>
+        </div>
+        <div style={{ height: 24 }} />
+      </div>
+
+      <div className="footer-cta">
+        <button className="btn-primary btn-lg" onClick={onStart}>
+          Start a custom session · ${PRICE}
+        </button>
+        <div style={{ marginTop: 12, textAlign: 'center' }} className="t-caption">
+          One payment. Brief first, pay before recording.
+        </div>
       </div>
     </div>
   )

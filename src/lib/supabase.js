@@ -179,3 +179,59 @@ export async function getAudioSignedUrl(path) {
   if (error) throw error
   return data.signedUrl
 }
+
+// ---------------------------------------------------------------------------
+// Auth — brief phase 3
+// Implicit flow, the supabase-js default: the magic link comes back as a hash
+// fragment and detectSessionInUrl consumes it on load. No callback route.
+// ---------------------------------------------------------------------------
+
+export async function sendMagicLink(email) {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin },
+  })
+  if (error) throw error
+}
+
+export async function signInWithPassword(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) throw error
+  return data.user
+}
+
+export async function signUpWithPassword(email, password) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: window.location.origin },
+  })
+  if (error) throw error
+  // A null session means the project is set to confirm the address first.
+  return { user: data.user, needsConfirmation: !data.session }
+}
+
+export async function signOutUser() {
+  const { error } = await supabase.auth.signOut()
+  if (error) console.error('[Supabase] signOut error:', error)
+}
+
+// The on_auth_user_created trigger writes this row at signup. This is the belt
+// to that braces, for any account predating the trigger. Owner-only RLS means
+// it can never reach another user's row.
+export async function ensureProfile(user) {
+  if (!user) return null
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert(
+      { id: user.id, email: user.email, updated_at: new Date().toISOString() },
+      { onConflict: 'id' }
+    )
+    .select()
+    .single()
+  if (error) {
+    console.error('[Supabase] ensureProfile error:', JSON.stringify(error))
+    return null
+  }
+  return data
+}

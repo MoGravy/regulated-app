@@ -1,0 +1,305 @@
+{
+  "approved": false,
+  "note": "PLACEHOLDER SEQUENCING. Generated from the existing library so the Program UI has something to render. The clinical order is Matthew’s to define. Set \"approved\": true only after reviewing every day below, then re-run scripts/seed-program.mjs.",
+  "program": {
+    "slug": "six-weeks",
+    "title": "Six weeks",
+    "subtitle": "One session a day. Miss a day and the week waits for you."
+  },
+  "weeks": [
+    {
+      "week": 1,
+      "title": "Noticing",
+      "blurb": "Learning what your nervous system is already doing, without trying to change it yet.",
+      "days": [
+        {
+          "day": 1,
+          "session_id": "7a875d14-f77e-47e9-8ff3-16d5db08d2e6",
+          "session_title": "Daily Nervous System Reset",
+          "reading": ""
+        },
+        {
+          "day": 2,
+          "session_id": "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442",
+          "session_title": "Stress Off Switch",
+          "reading": ""
+        },
+        {
+          "day": 3,
+          "session_id": "4475ddc0-202f-4775-872b-366e39681932",
+          "session_title": "Mindfulness Hypno-Meditation",
+          "reading": ""
+        },
+        {
+          "day": 4,
+          "session_id": "ca65ecd1-8ade-4a6e-915e-84810f8b26cb",
+          "session_title": "Deep Sleep Reset",
+          "reading": ""
+        },
+        {
+          "day": 5,
+          "session_id": "e184e81c-8163-46eb-8a00-9ef74f727ab4",
+          "session_title": "Gut Brain Reset",
+          "reading": ""
+        },
+        {
+          "day": 6,
+          "session_id": "9b728124-eb92-4236-9968-ebd923773367",
+          "session_title": "Exercise Motivation",
+          "reading": ""
+        },
+        {
+          "day": 7,
+          "session_id": "c2dfc5fe-8a2c-444f-8c9c-f8ae0e3f2a84",
+          "session_title": "Discomfort Be Gone",
+          "reading": ""
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "title": "Breath and pace",
+      "blurb": "Slowing the breath and lengthening the exhale until the body believes it.",
+      "days": [
+        {
+          "day": 1,
+          "session_id": "7a875d14-f77e-47e9-8ff3-16d5db08d2e6",
+          "session_title": "Daily Nervous System Reset",
+          "reading": ""
+        },
+        {
+          "day": 2,
+          "session_id": "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442",
+          "session_title": "Stress Off Switch",
+          "reading": ""
+        },
+        {
+          "day": 3,
+          "session_id": "4475ddc0-202f-4775-872b-366e39681932",
+          "session_title": "Mindfulness Hypno-Meditation",
+          "reading": ""
+        },
+        {
+          "day": 4,
+          "session_id": "ca65ecd1-8ade-4a6e-915e-84810f8b26cb",
+          "session_title": "Deep Sleep Reset",
+          "reading": ""
+        },
+        {
+          "day": 5,
+          "session_id": "e184e81c-8163-46eb-8a00-9ef74f727ab4",
+          "session_title": "Gut Brain Reset",
+          "reading": ""
+        },
+        {
+          "day": 6,
+          "session_id": "9b728124-eb92-4236-9968-ebd923773367",
+          "session_title": "Exercise Motivation",
+          "reading": ""
+        },
+        {
+          "day": 7,
+          "session_id": "c2dfc5fe-8a2c-444f-8c9c-f8ae0e3f2a84",
+          "session_title": "Discomfort Be Gone",
+          "reading": ""
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "title": "Sleep and night",
+      "blurb": "Getting to sleep, and getting back to sleep.",
+      "days": [
+        {
+          "day": 1,
+          "session_id": "ca65ecd1-8ade-4a6e-915e-84810f8b26cb",
+          "session_title": "Deep Sleep Reset",
+          "reading": ""
+        },
+        {
+          "day": 2,
+          "session_id": "8c7cf64a-0f92-4e97-96ef-3b74f468e1bc",
+          "session_title": "Sleep Like a Log",
+          "reading": ""
+        },
+        {
+          "day": 3,
+          "session_id": "7a875d14-f77e-47e9-8ff3-16d5db08d2e6",
+          "session_title": "Daily Nervous System Reset",
+          "reading": ""
+        },
+        {
+          "day": 4,
+          "session_id": "e184e81c-8163-46eb-8a00-9ef74f727ab4",
+          "session_title": "Gut Brain Reset",
+          "reading": ""
+        },
+        {
+          "day": 5,
+          "session_id": "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442",
+          "session_title": "Stress Off Switch",
+          "reading": ""
+        },
+        {
+          "day": 6,
+          "session_id": "9b728124-eb92-4236-9968-ebd923773367",
+          "session_title": "Exercise Motivation",
+          "reading": ""
+        },
+        {
+          "day": 7,
+          "session_id": "c2dfc5fe-8a2c-444f-8c9c-f8ae0e3f2a84",
+          "session_title": "Discomfort Be Gone",
+          "reading": ""
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "title": "Gut and appetite",
+      "blurb": "The gut-brain line, in both directions.",
+      "days": [
+        {
+          "day": 1,
+          "session_id": "e184e81c-8163-46eb-8a00-9ef74f727ab4",
+          "session_title": "Gut Brain Reset",
+          "reading": ""
+        },
+        {
+          "day": 2,
+          "session_id": "9feeb917-cdf7-4e02-b26a-467c8bfc8145",
+          "session_title": "Indigestion Be Gone",
+          "reading": ""
+        },
+        {
+          "day": 3,
+          "session_id": "7a875d14-f77e-47e9-8ff3-16d5db08d2e6",
+          "session_title": "Daily Nervous System Reset",
+          "reading": ""
+        },
+        {
+          "day": 4,
+          "session_id": "ca65ecd1-8ade-4a6e-915e-84810f8b26cb",
+          "session_title": "Deep Sleep Reset",
+          "reading": ""
+        },
+        {
+          "day": 5,
+          "session_id": "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442",
+          "session_title": "Stress Off Switch",
+          "reading": ""
+        },
+        {
+          "day": 6,
+          "session_id": "9b728124-eb92-4236-9968-ebd923773367",
+          "session_title": "Exercise Motivation",
+          "reading": ""
+        },
+        {
+          "day": 7,
+          "session_id": "c2dfc5fe-8a2c-444f-8c9c-f8ae0e3f2a84",
+          "session_title": "Discomfort Be Gone",
+          "reading": ""
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "title": "Under pressure",
+      "blurb": "What to do when the day is already loud.",
+      "days": [
+        {
+          "day": 1,
+          "session_id": "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442",
+          "session_title": "Stress Off Switch",
+          "reading": ""
+        },
+        {
+          "day": 2,
+          "session_id": "c2dfc5fe-8a2c-444f-8c9c-f8ae0e3f2a84",
+          "session_title": "Discomfort Be Gone",
+          "reading": ""
+        },
+        {
+          "day": 3,
+          "session_id": "98e92ec4-792b-4f87-a86b-4201e128f6ae",
+          "session_title": "Cut Anxiety in Half",
+          "reading": ""
+        },
+        {
+          "day": 4,
+          "session_id": "7a875d14-f77e-47e9-8ff3-16d5db08d2e6",
+          "session_title": "Daily Nervous System Reset",
+          "reading": ""
+        },
+        {
+          "day": 5,
+          "session_id": "ca65ecd1-8ade-4a6e-915e-84810f8b26cb",
+          "session_title": "Deep Sleep Reset",
+          "reading": ""
+        },
+        {
+          "day": 6,
+          "session_id": "e184e81c-8163-46eb-8a00-9ef74f727ab4",
+          "session_title": "Gut Brain Reset",
+          "reading": ""
+        },
+        {
+          "day": 7,
+          "session_id": "9b728124-eb92-4236-9968-ebd923773367",
+          "session_title": "Exercise Motivation",
+          "reading": ""
+        }
+      ]
+    },
+    {
+      "week": 6,
+      "title": "Keeping it",
+      "blurb": "Making the change hold once the six weeks are over.",
+      "days": [
+        {
+          "day": 1,
+          "session_id": "9b728124-eb92-4236-9968-ebd923773367",
+          "session_title": "Exercise Motivation",
+          "reading": ""
+        },
+        {
+          "day": 2,
+          "session_id": "9a49ad21-2649-4785-bac1-280d912b6bbd",
+          "session_title": "Chocolate Addiction Be Gone",
+          "reading": ""
+        },
+        {
+          "day": 3,
+          "session_id": "0d099a17-84cc-44f9-8034-2e87d408592f",
+          "session_title": "Accomplish Your Goals",
+          "reading": ""
+        },
+        {
+          "day": 4,
+          "session_id": "7d7d2194-9f93-4829-9b81-5b12eb31ed13",
+          "session_title": "Setting Boundaries",
+          "reading": ""
+        },
+        {
+          "day": 5,
+          "session_id": "7a875d14-f77e-47e9-8ff3-16d5db08d2e6",
+          "session_title": "Daily Nervous System Reset",
+          "reading": ""
+        },
+        {
+          "day": 6,
+          "session_id": "ca65ecd1-8ade-4a6e-915e-84810f8b26cb",
+          "session_title": "Deep Sleep Reset",
+          "reading": ""
+        },
+        {
+          "day": 7,
+          "session_id": "e184e81c-8163-46eb-8a00-9ef74f727ab4",
+          "session_title": "Gut Brain Reset",
+          "reading": ""
+        }
+      ]
+    }
+  ]
+}

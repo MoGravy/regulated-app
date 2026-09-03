@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #E7E2D8; }
+  body { font-family: Archivo, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #24344D; text-decoration: none; }
+  a:hover { color: #D99A3D; }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: 0ms !important; animation: none !important; } }
+</style>
+</helmet>
+
+<section style="display: flex; flex-direction: column; gap: 72px; padding: 56px; background: #E7E2D8;">
+
+  <div style="display: flex; flex-direction: column; gap: 8px; max-width: 720px;">
+    <div style="font: 500 12px/16px Archivo; color: #7E877F;">Turn 1</div>
+    <h1 style="margin: 0; font: 300 44px/50px Newsreader; color: #24302A; letter-spacing: -0.01em;">Regulated — design system and key screens</h1>
+    <p style="margin: 0; font: 400 16px/25px Archivo; color: #55605A; text-wrap: pretty;">Mobile first at 390px. Boards: <a href="#1a">1a</a> tokens and component kit, <a href="#1b">1b</a> Home and Player in ink navy and amber, <a href="#1c">1c</a> the same two screens in aubergine and dusty rose, <a href="#1d">1d</a> the remaining screens, drawn in navy pending your pick.</p>
+  </div>
+
+  <!-- ============ 1a TOKENS + KIT ============ -->
+  <div id="1a" style="display: flex; flex-direction: column; gap: 24px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span style="font: 500 12px/16px Archivo; color: #FFFDF8; background: #24302A; padding: 4px 8px; border-radius: 6px;">1a</span>
+      <h2 style="margin: 0; font: 400 26px/32px Newsreader; color: #24302A;">Tokens and component kit</h2>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(2, 520px); gap: 24px;">
+
+      <!-- colour -->
+      <div style="background: #F5F2EC; border: 1px solid #E0DACE; border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+        <h3 style="margin: 0; font: 500 15px/20px Archivo; color: #24302A;">Colour — light clinical base</h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 56px; border-radius: 10px; background: #F5F2EC; border: 1px solid #E0DACE;"></div><div style="font: 500 12px/15px Archivo; color: #24302A;">bg</div><div style="font: 400 11px/14px Archivo; color: #7E877F;">#F5F2EC</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 56px; border-radius: 10px; background: #FFFDF8; border: 1px solid #E0DACE;"></div><div style="font: 500 12px/15px Archivo; color: #24302A;">surface</div><div style="font: 400 11px/14px Archivo; color: #7E877F;">#FFFDF8</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 56px; border-radius: 10px; background: #EFEBE3; border: 1px solid #E0DACE;"></div><div style="font: 500 12px/15px Archivo; color: #24302A;">sunk</div><div style="font: 400 11px/14px Archivo; color: #7E877F;">#EFEBE3</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 56px; border-radius: 10px; background: #E0DACE;"></div><div style="font: 500 12px/15px Archivo; color: #24302A;">line</div><div style="font: 400 11px/14px Archivo; color: #7E877F;">#E0DACE</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 56px; border-radius: 10px; background: #24302A;"></div><div style="font: 500 12px/15px Archivo; color: #24302A;">ink</div><div style="font: 400 11px/14px Archivo; color: #7E877F;">#24302A · 12.6:1</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 56px; border-radius: 10px; background: #55605A;"></div><div style="font: 500 12px/15px Archivo; color: #24302A;">ink muted</div><div style="font: 400 11px/14px Archivo; color: #7E877F;">#55605A · 5.6:1</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 56px; border-radius: 10px; background: #7E877F;"></div><div style="font: 500 12px/15px Archivo; color: #24302A;">ink faint</div><div style="font: 400 11px/14px Archivo; color: #7E877F;">#7E877F · 3.2:1, 15px+</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 56px; border-radius: 10px; background: #B4AC9C;"></div><div style="font: 500 12px/15px Archivo; color: #24302A;">disabled</div><div style="font: 400 11px/14px Archivo; color: #7E877F;">#B4AC9C</div></div>
+        </div>
+
+        <div style="height: 1px; background: #E0DACE;"></div>
+
+        <h3 style="margin: 0; font: 500 15px/20px Archivo; color: #24302A;">Accent — two candidates</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="font: 500 12px/15px Archivo; color: #24302A;">B · ink navy</div>
+            <div style="display: flex; gap: 8px;">
+              <div style="flex: 1; height: 44px; border-radius: 10px; background: #24344D;"></div>
+              <div style="flex: 1; height: 44px; border-radius: 10px; background: #D99A3D;"></div>
+              <div style="flex: 1; height: 44px; border-radius: 10px; background: #16202F;"></div>
+            </div>
+            <div style="font: 400 11px/16px Archivo; color: #7E877F;">#24344D primary · #D99A3D control · #16202F player field</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="font: 500 12px/15px Archivo; color: #24302A;">D · deep aubergine</div>
+            <div style="display: flex; gap: 8px;">
+              <div style="flex: 1; height: 44px; border-radius: 10px; background: #503A5C;"></div>
+              <div style="flex: 1; height: 44px; border-radius: 10px; background: #D9A6A0;"></div>
+              <div style="flex: 1; height: 44px; border-radius: 10px; background: #2B1F33;"></div>
+            </div>
+            <div style="font: 400 11px/16px Archivo; color: #7E877F;">#503A5C primary · #D9A6A0 control · #2B1F33 player field</div>
+          </div>
+        </div>
+
+        <div style="height: 1px; background: #E0DACE;"></div>
+
+        <h3 style="margin: 0; font: 500 15px/20px Archivo; color: #24302A;">Category families — chip fill at 10 percent, ink at full</h3>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 40px; border-radius: 10px; background: rgba(62,76,102,0.10); border: 1px solid rgba(62,76,102,0.22);"></div><div style="font: 400 11px/14px Archivo; color: #55605A;">sleep #3E4C66</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 40px; border-radius: 10px; background: rgba(63,90,85,0.10); border: 1px solid rgba(63,90,85,0.22);"></div><div style="font: 400 11px/14px Archivo; color: #55605A;">stress #3F5A55</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 40px; border-radius: 10px; background: rgba(75,90,63,0.10); border: 1px solid rgba(75,90,63,0.22);"></div><div style="font: 400 11px/14px Archivo; color: #55605A;">anxiety #4B5A3F</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 40px; border-radius: 10px; background: rgba(108,91,52,0.10); border: 1px solid rgba(108,91,52,0.22);"></div><div style="font: 400 11px/14px Archivo; color: #55605A;">gut #6C5B34</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 40px; border-radius: 10px; background: rgba(92,74,94,0.10); border: 1px solid rgba(92,74,94,0.22);"></div><div style="font: 400 11px/14px Archivo; color: #55605A;">confidence #5C4A5E</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 40px; border-radius: 10px; background: rgba(52,82,79,0.10); border: 1px solid rgba(52,82,79,0.22);"></div><div style="font: 400 11px/14px Archivo; color: #55605A;">habits #34524F</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 40px; border-radius: 10px; background: rgba(106,75,78,0.10); border: 1px solid rgba(106,75,78,0.22);"></div><div style="font: 400 11px/14px Archivo; color: #55605A;">motivation #6A4B4E</div></div>
+          <div style="display: flex; flex-direction: column; gap: 6px;"><div style="height: 40px; border-radius: 10px; background: rgba(78,76,66,0.10); border: 1px solid rgba(78,76,66,0.22);"></div><div style="font: 400 11px/14px Archivo; color: #55605A;">daily #4E4C42</div></div>
+        </div>
+      </div>
+
+      <!-- type + metrics -->
+      <div style="background: #F5F2EC; border: 1px solid #E0DACE; border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+        <h3 style="margin: 0; font: 500 15px/20px Archivo; color: #24302A;">Type — Newsreader display, Archivo UI</h3>
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; align-items: baseline; gap: 16px;"><span style="width: 118px; flex: none; font: 400 11px/14px Archivo; color: #7E877F;">display-l 34/40</span><span style="font: 300 34px/40px Newsreader; color: #24302A; letter-spacing: -0.01em;">Feel safe in your own body</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px;"><span style="width: 118px; flex: none; font: 400 11px/14px Archivo; color: #7E877F;">display-m 27/34</span><span style="font: 400 27px/34px Newsreader; color: #24302A;">Settling the gut</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px;"><span style="width: 118px; flex: none; font: 400 11px/14px Archivo; color: #7E877F;">title 21/28</span><span style="font: 400 21px/28px Newsreader; color: #24302A;">Sleep without effort</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px;"><span style="width: 118px; flex: none; font: 400 11px/14px Archivo; color: #7E877F;">body 16/24</span><span style="font: 400 16px/24px Archivo; color: #24302A;">Twenty minutes, lying down, eyes closed.</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px;"><span style="width: 118px; flex: none; font: 400 11px/14px Archivo; color: #7E877F;">label 14/20 · 500</span><span style="font: 500 14px/20px Archivo; color: #24302A;">Start session</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px;"><span style="width: 118px; flex: none; font: 400 11px/14px Archivo; color: #7E877F;">caption 13/18</span><span style="font: 400 13px/18px Archivo; color: #55605A;">Week 1 · Day 3 · 18 min</span></div>
+          <div style="display: flex; align-items: baseline; gap: 16px;"><span style="width: 118px; flex: none; font: 400 11px/14px Archivo; color: #7E877F;">micro 12/16</span><span style="font: 400 12px/16px Archivo; color: #55605A;">Premium</span></div>
+        </div>
+
+        <div style="height: 1px; background: #E0DACE;"></div>
+        <h3 style="margin: 0; font: 500 15px/20px Archivo; color: #24302A;">Spacing — 4pt base</h3>
+        <div style="display: flex; align-items: flex-end; gap: 10px;">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 4px; height: 4px; background: #24344D;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">4</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 8px; height: 8px; background: #24344D;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">8</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 12px; height: 12px; background: #24344D;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">12</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 16px; height: 16px; background: #24344D;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">16</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 20px; height: 20px; background: #24344D;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">20</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 24px; height: 24px; background: #24344D;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">24</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 32px; height: 32px; background: #24344D;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">32</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 40px; height: 40px; background: #24344D;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">40</span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;"><div style="width: 56px; height: 56px; background: #24344D;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">56</span></div>
+        </div>
+
+        <div style="height: 1px; background: #E0DACE;"></div>
+        <h3 style="margin: 0; font: 500 15px/20px Archivo; color: #24302A;">Radius and elevation</h3>
+        <div style="display: flex; gap: 14px;">
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;"><div style="width: 60px; height: 44px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 6px;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">r-6 chip</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;"><div style="width: 60px; height: 44px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">r-10 row</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;"><div style="width: 60px; height: 44px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 14px;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">r-14 card</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;"><div style="width: 60px; height: 44px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 20px;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">r-20 sheet</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;"><div style="width: 60px; height: 44px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 999px;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">r-pill</span></div>
+        </div>
+        <div style="display: flex; gap: 14px;">
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;"><div style="width: 88px; height: 44px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px;"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">e0 line only</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;"><div style="width: 88px; height: 44px; background: #FFFDF8; border-radius: 10px; box-shadow: 0 1px 2px rgba(36,48,42,0.06);"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">e1 rest</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;"><div style="width: 88px; height: 44px; background: #FFFDF8; border-radius: 10px; box-shadow: 0 6px 20px rgba(36,48,42,0.08);"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">e2 lift</span></div>
+          <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;"><div style="width: 88px; height: 44px; background: #FFFDF8; border-radius: 20px; box-shadow: 0 -8px 32px rgba(36,48,42,0.12);"></div><span style="font: 400 11px/14px Archivo; color: #7E877F;">e3 sheet</span></div>
+        </div>
+
+        <div style="height: 1px; background: #E0DACE;"></div>
+        <h3 style="margin: 0; font: 500 15px/20px Archivo; color: #24302A;">Motion — response only, never ambience</h3>
+        <div style="display: flex; flex-direction: column; gap: 6px; font: 400 13px/20px Archivo; color: #55605A;">
+          <div>120ms · cubic-bezier(.3,.0,.7,.2) — press, exit</div>
+          <div>180ms · cubic-bezier(.2,.6,.2,1) — enter, tab change, chip select</div>
+          <div>240ms · cubic-bezier(.2,.6,.2,1) — sheet and player open</div>
+          <div>Progress advances in place with no easing. No looping animation anywhere. prefers-reduced-motion collapses all of the above to 0ms.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- component kit -->
+    <div style="background: #F5F2EC; border: 1px solid #E0DACE; border-radius: 14px; padding: 24px; width: 1064px; display: flex; flex-direction: column; gap: 24px;">
+      <h3 style="margin: 0; font: 500 15px/20px Archivo; color: #24302A;">Component kit — drawn in candidate B</h3>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;">
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="font: 400 11px/14px Archivo; color: #7E877F;">Buttons · 48px, 44 minimum</div>
+          <button style="height: 48px; border: none; border-radius: 10px; background: #24344D; color: #FBF8F1; font: 500 15px/20px Archivo; cursor: pointer; transition: background 120ms cubic-bezier(.3,0,.7,.2);" style-hover="background: #1B2841;">Start session</button>
+          <button style="height: 48px; border: 1px solid #24344D; border-radius: 10px; background: transparent; color: #24344D; font: 500 15px/20px Archivo; cursor: pointer;" style-hover="background: rgba(36,52,77,0.06);">See the program</button>
+          <button style="height: 48px; border: 1px solid #E0DACE; border-radius: 10px; background: #FFFDF8; color: #24302A; font: 500 15px/20px Archivo; cursor: pointer;" style-hover="background: #EFEBE3;">Not now</button>
+          <button style="height: 48px; border: none; border-radius: 10px; background: #EFEBE3; color: #B4AC9C; font: 500 15px/20px Archivo;">Unavailable</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="font: 400 11px/14px Archivo; color: #7E877F;">Segmented mode switch</div>
+          <div style="display: flex; gap: 4px; padding: 4px; background: #EFEBE3; border-radius: 999px;">
+            <div style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #FFFDF8; color: #24302A; font: 500 14px/20px Archivo; box-shadow: 0 1px 2px rgba(36,48,42,0.06);">Program</div>
+            <div style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #55605A; font: 400 14px/20px Archivo;">Browse</div>
+          </div>
+          <div style="font: 400 11px/14px Archivo; color: #7E877F; margin-top: 8px;">Category chips</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <div style="height: 34px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: #24302A; color: #FBF8F1; font: 500 13px/18px Archivo;">All</div>
+            <div style="height: 34px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: rgba(62,76,102,0.10); border: 1px solid rgba(62,76,102,0.22); color: #3E4C66; font: 400 13px/18px Archivo;">Sleep</div>
+            <div style="height: 34px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: rgba(108,91,52,0.10); border: 1px solid rgba(108,91,52,0.22); color: #6C5B34; font: 400 13px/18px Archivo;">Gut</div>
+            <div style="height: 34px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: rgba(75,90,63,0.10); border: 1px solid rgba(75,90,63,0.22); color: #4B5A3F; font: 400 13px/18px Archivo;">Anxiety</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="font: 400 11px/14px Archivo; color: #7E877F;">Session row · free, in progress, locked</div>
+          <div style="display: flex; align-items: center; gap: 14px; height: 68px; padding: 0 14px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px;">
+            <div style="width: 40px; height: 40px; flex: none; border-radius: 999px; background: rgba(62,76,102,0.10); display: flex; align-items: center; justify-content: center;">
+              <svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><polygon points="1,1 11,7 1,13" fill="#3E4C66"></polygon></svg>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font: 400 17px/22px Newsreader; color: #24302A;">Sleep without effort</div>
+              <div style="font: 400 12px/16px Archivo; color: #55605A;">Sleep · 22 min</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; height: 68px; padding: 0 14px; background: #FFFDF8; border: 1px solid #CFC7B8; border-radius: 10px;">
+            <div style="width: 40px; height: 40px; flex: none; border-radius: 999px; background: #D99A3D; display: flex; align-items: center; justify-content: center;">
+              <svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><polygon points="1,1 11,7 1,13" fill="#1B2841"></polygon></svg>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font: 400 17px/22px Newsreader; color: #24302A;">Settling the gut</div>
+              <div style="font: 400 12px/16px Archivo; color: #55605A;">Gut · 9 min left</div>
+              <div style="margin-top: 6px; height: 2px; background: #E0DACE; border-radius: 999px;"><div style="width: 58%; height: 2px; background: #D99A3D; border-radius: 999px;"></div></div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; height: 68px; padding: 0 14px; background: #F1EDE5; border: 1px solid #E0DACE; border-radius: 10px;">
+            <div style="width: 40px; height: 40px; flex: none; border-radius: 999px; border: 1px solid #CFC7B8; display: flex; align-items: center; justify-content: center;">
+              <svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><rect x="0.5" y="6" width="10" height="7.5" rx="1.5" fill="#7E877F"></rect><path d="M2.8 6V3.6a2.7 2.7 0 0 1 5.4 0V6" stroke="#7E877F" stroke-width="1.2" fill="none"></path></svg>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font: 400 17px/22px Newsreader; color: #55605A;">Quiet the racing mind</div>
+              <div style="font: 400 12px/16px Archivo; color: #7E877F;">Stress · 18 min · Premium</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="font: 400 11px/14px Archivo; color: #7E877F;">Day markers · done, today, locked</div>
+          <div style="display: flex; gap: 10px;">
+            <div style="width: 44px; height: 44px; border-radius: 999px; background: #24344D; color: #FBF8F1; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">1</div>
+            <div style="width: 44px; height: 44px; border-radius: 999px; background: #24344D; color: #FBF8F1; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">2</div>
+            <div style="width: 44px; height: 44px; border-radius: 999px; border: 2px solid #D99A3D; color: #24302A; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">3</div>
+            <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">4</div>
+            <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">5</div>
+          </div>
+          <div style="font: 400 11px/14px Archivo; color: #7E877F; margin-top: 8px;">Progress</div>
+          <div style="height: 3px; background: #E0DACE; border-radius: 999px;"><div style="width: 34%; height: 3px; background: #24344D; border-radius: 999px;"></div></div>
+          <div style="font: 400 12px/16px Archivo; color: #55605A;">Week 1 · 3 of 7 days</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="font: 400 11px/14px Archivo; color: #7E877F;">Field and tab bar</div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font: 400 12px/16px Archivo; color: #55605A;">Email</label>
+            <div style="height: 48px; border: 1px solid #CFC7B8; border-radius: 10px; background: #FFFDF8; display: flex; align-items: center; padding: 0 14px; font: 400 16px/24px Archivo; color: #24302A;">matthew@example.com</div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font: 400 12px/16px Archivo; color: #55605A;">Email · focus</label>
+            <div style="height: 48px; border: 1px solid #24344D; box-shadow: 0 0 0 3px rgba(36,52,77,0.12); border-radius: 10px; background: #FFFDF8; display: flex; align-items: center; padding: 0 14px; font: 400 16px/24px Archivo; color: #7E877F;">you@example.com</div>
+          </div>
+          <div style="display: flex; align-items: stretch; height: 60px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px; overflow: hidden;">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #24302A;"><span style="font: 500 13px/18px Archivo;">Today</span><span style="width: 16px; height: 2px; background: #24344D; border-radius: 999px;"></span></div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">Browse</div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">You</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div style="font: 400 11px/14px Archivo; color: #7E877F;">Category texture · one family per category, no imagery of people</div>
+          <div style="height: 120px; border-radius: 14px; background: rgba(62,76,102,0.08); position: relative; overflow: hidden;">
+            <div style="position: absolute; width: 180px; height: 130px; left: -30px; top: 30px; border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; background: rgba(62,76,102,0.16); filter: blur(14px);"></div>
+            <div style="position: absolute; width: 120px; height: 90px; right: 10px; top: -20px; border-radius: 54% 46% 60% 40% / 40% 60% 40% 60%; background: rgba(62,76,102,0.12); filter: blur(12px);"></div>
+          </div>
+          <div style="font: 400 12px/18px Archivo; color: #55605A;">Two soft organic masses at 8–16 percent of the category ink, blurred, never animated. Texture is the only decoration in the system.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 1b NAVY ============ -->
+  <sc-if value="{{ showNavy }}" hint-placeholder-val="{{ true }}">
+  <div id="1b" style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span style="font: 500 12px/16px Archivo; color: #FFFDF8; background: #24344D; padding: 4px 8px; border-radius: 6px;">1b</span>
+      <h2 style="margin: 0; font: 400 26px/32px Newsreader; color: #24302A;">Option B — ink navy with warm amber</h2>
+      <span style="font: 400 13px/18px Archivo; color: #55605A;">Home and Player</span>
+    </div>
+
+    <div style="display: flex; gap: 32px; flex-wrap: wrap;">
+
+      <!-- HOME navy, program mode -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; background: #F5F2EC; border: 1px solid #CFC7B8; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.08); display: flex; flex-direction: column;">
+          <div style="height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #55605A;"><span>9:41</span><span>Regulated</span></div>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0;">
+            <div style="font: 400 13px/18px Archivo; color: #55605A;">Sunday morning</div>
+            <h1 style="margin: 4px 0 20px; font: 300 32px/38px Newsreader; color: #24302A; letter-spacing: -0.01em;">Good morning, Matthew</h1>
+
+            <div style="display: flex; gap: 4px; padding: 4px; background: #EFEBE3; border-radius: 999px; margin-bottom: 24px;">
+              <div style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #FFFDF8; color: #24302A; font: 500 14px/20px Archivo; box-shadow: 0 1px 2px rgba(36,48,42,0.06);">Program</div>
+              <div style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #55605A; font: 400 14px/20px Archivo;">Browse</div>
+            </div>
+
+            <div style="font: 500 13px/18px Archivo; color: #55605A; margin-bottom: 10px;">Today · Week 1, day 3</div>
+            <div style="background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 14px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 1px 2px rgba(36,48,42,0.06);">
+              <div style="position: absolute; width: 200px; height: 150px; right: -60px; top: -50px; border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; background: rgba(63,90,85,0.14); filter: blur(16px);"></div>
+              <div style="position: relative;">
+                <div style="display: inline-flex; height: 26px; padding: 0 10px; align-items: center; border-radius: 999px; background: rgba(63,90,85,0.10); color: #3F5A55; font: 400 12px/16px Archivo;">Stress</div>
+                <h2 style="margin: 12px 0 6px; font: 400 26px/32px Newsreader; color: #24302A;">Down-regulating the day</h2>
+                <div style="font: 400 13px/18px Archivo; color: #55605A;">18 minutes · lying down</div>
+                <p style="margin: 12px 0 18px; font: 400 15px/23px Archivo; color: #55605A; text-wrap: pretty;">A slower breath and a longer exhale. Today's session teaches your body the difference between alert and unsafe.</p>
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <button style="width: 56px; height: 56px; flex: none; border: none; border-radius: 999px; background: #D99A3D; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 120ms cubic-bezier(.3,0,.7,.2);" style-active="transform: scale(0.96)" aria-label="Play today's session">
+                    <svg width="17" height="20" viewBox="0 0 17 20" aria-hidden="true"><polygon points="2,1 16,10 2,19" fill="#1B2841"></polygon></svg>
+                  </button>
+                  <div style="font: 500 15px/20px Archivo; color: #24302A;">Start today's session</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: baseline; justify-content: space-between; margin: 26px 0 10px;">
+              <div style="font: 500 13px/18px Archivo; color: #55605A;">This week</div>
+              <div style="font: 400 13px/18px Archivo; color: #7E877F;">2 of 7 done</div>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: space-between;">
+              <div style="width: 44px; height: 44px; border-radius: 999px; background: #24344D; color: #FBF8F1; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">M</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; background: #24344D; color: #FBF8F1; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">T</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 2px solid #D99A3D; color: #24302A; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">W</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">T</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">F</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">S</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">S</div>
+            </div>
+
+            <div style="font: 500 13px/18px Archivo; color: #55605A; margin: 26px 0 10px;">Continue listening</div>
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px;">
+              <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; background: #D99A3D; display: flex; align-items: center; justify-content: center;">
+                <svg width="13" height="15" viewBox="0 0 13 15" aria-hidden="true"><polygon points="1.5,1 12,7.5 1.5,14" fill="#1B2841"></polygon></svg>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font: 400 18px/24px Newsreader; color: #24302A;">Settling the gut</div>
+                <div style="font: 400 12px/16px Archivo; color: #55605A;">9 min left</div>
+                <div style="margin-top: 7px; height: 2px; background: #E0DACE; border-radius: 999px;"><div style="width: 58%; height: 2px; background: #D99A3D; border-radius: 999px;"></div></div>
+              </div>
+            </div>
+          </div>
+          <div style="flex: none; display: flex; align-items: stretch; height: 76px; border-top: 1px solid #E0DACE; background: #FFFDF8; padding-bottom: 12px;">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #24302A;"><span style="font: 500 13px/18px Archivo;">Today</span><span style="width: 16px; height: 2px; background: #24344D; border-radius: 999px;"></span></div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">Browse</div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">You</div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Home / Today · Program mode. Amber appears twice: the play control and the progress fill.</div>
+      </div>
+
+      <!-- PLAYER navy -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.12); filter: {{ dimFilter }};">
+          <div style="width: 390px; height: 844px; background: #16202F; position: relative; display: flex; flex-direction: column; color: #E8E2D6;">
+            <div style="position: absolute; width: 320px; height: 260px; left: -60px; top: 120px; border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; background: #22314A; filter: blur(40px);"></div>
+            <div style="position: absolute; width: 240px; height: 200px; right: -50px; bottom: 180px; border-radius: 54% 46% 60% 40% / 40% 60% 40% 60%; background: #1E2B3F; filter: blur(36px);"></div>
+
+            <div style="position: relative; height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #8C97A8;"><span>9:41</span><span></span></div>
+            <div style="position: relative; height: 56px; flex: none; display: flex; align-items: center; padding: 0 12px;">
+              <button style="width: 44px; height: 44px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;" aria-label="Close player">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" stroke="#8C97A8" stroke-width="1.4" fill="none" stroke-linecap="round"></path></svg>
+              </button>
+            </div>
+
+            <div style="position: relative; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 32px;">
+              <div style="font: 400 13px/18px Archivo; color: #8C97A8;">Stress · Week 1, day 3</div>
+              <h1 style="margin: 10px 0 0; font: 300 36px/43px Newsreader; color: #F3EEE3; letter-spacing: -0.01em; text-wrap: pretty;">Down-regulating the day</h1>
+              <p style="margin: 16px 0 0; font: 400 15px/24px Archivo; color: #A9B3C1; max-width: 300px; text-wrap: pretty;">Lie down. Let the audio do the work. If you fall asleep, that is fine.</p>
+            </div>
+
+            <div style="position: relative; flex: none; padding: 0 32px 48px;">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 36px; margin-bottom: 44px;">
+                <button style="width: 56px; height: 56px; border: none; background: transparent; color: #A9B3C1; font: 500 13px/18px Archivo; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer;" aria-label="Back 15 seconds">
+                  <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 1-5.2 3.7" stroke="#A9B3C1" stroke-width="1.3" fill="none" stroke-linecap="round"></path><path d="M2.2 3v4.2h4.2" stroke="#A9B3C1" stroke-width="1.3" fill="none" stroke-linecap="round"></path></svg>
+                  <span>15</span>
+                </button>
+                <button style="width: 96px; height: 96px; border: none; border-radius: 999px; background: #D99A3D; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 120ms cubic-bezier(.3,0,.7,.2);" style-active="transform: scale(0.97)" aria-label="Pause">
+                  <span style="display: flex; gap: 8px;"><span style="width: 6px; height: 32px; border-radius: 2px; background: #16202F;"></span><span style="width: 6px; height: 32px; border-radius: 2px; background: #16202F;"></span></span>
+                </button>
+                <button style="width: 56px; height: 56px; border: none; background: transparent; color: #A9B3C1; font: 500 13px/18px Archivo; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer;" aria-label="Forward 15 seconds">
+                  <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 5.2 3.7" stroke="#A9B3C1" stroke-width="1.3" fill="none" stroke-linecap="round"></path><path d="M15.8 3v4.2h-4.2" stroke="#A9B3C1" stroke-width="1.3" fill="none" stroke-linecap="round"></path></svg>
+                  <span>15</span>
+                </button>
+              </div>
+              <div style="height: 3px; background: #2A3549; border-radius: 999px; margin-bottom: 12px;"><div style="width: 34%; height: 3px; background: #D99A3D; border-radius: 999px;"></div></div>
+              <div style="display: flex; align-items: center; justify-content: space-between; font: 400 13px/18px Archivo; color: #8C97A8;"><span>6:12</span><span>18:00</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Full-screen player · the only dark surface. Chrome is one close chevron; everything else is title, control, progress.</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ 1c AUBERGINE ============ -->
+  <sc-if value="{{ showAubergine }}" hint-placeholder-val="{{ true }}">
+  <div id="1c" style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span style="font: 500 12px/16px Archivo; color: #FFFDF8; background: #503A5C; padding: 4px 8px; border-radius: 6px;">1c</span>
+      <h2 style="margin: 0; font: 400 26px/32px Newsreader; color: #24302A;">Option D — deep aubergine with dusty rose</h2>
+      <span style="font: 400 13px/18px Archivo; color: #55605A;">Same screens, same structure</span>
+    </div>
+
+    <div style="display: flex; gap: 32px; flex-wrap: wrap;">
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; background: #F5F2EC; border: 1px solid #CFC7B8; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.08); display: flex; flex-direction: column;">
+          <div style="height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #55605A;"><span>9:41</span><span>Regulated</span></div>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0;">
+            <div style="font: 400 13px/18px Archivo; color: #55605A;">Sunday morning</div>
+            <h1 style="margin: 4px 0 20px; font: 300 32px/38px Newsreader; color: #24302A; letter-spacing: -0.01em;">Good morning, Matthew</h1>
+
+            <div style="display: flex; gap: 4px; padding: 4px; background: #EFEBE3; border-radius: 999px; margin-bottom: 24px;">
+              <div style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #FFFDF8; color: #24302A; font: 500 14px/20px Archivo; box-shadow: 0 1px 2px rgba(36,48,42,0.06);">Program</div>
+              <div style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #55605A; font: 400 14px/20px Archivo;">Browse</div>
+            </div>
+
+            <div style="font: 500 13px/18px Archivo; color: #55605A; margin-bottom: 10px;">Today · Week 1, day 3</div>
+            <div style="background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 14px; padding: 20px; position: relative; overflow: hidden; box-shadow: 0 1px 2px rgba(36,48,42,0.06);">
+              <div style="position: absolute; width: 200px; height: 150px; right: -60px; top: -50px; border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; background: rgba(63,90,85,0.14); filter: blur(16px);"></div>
+              <div style="position: relative;">
+                <div style="display: inline-flex; height: 26px; padding: 0 10px; align-items: center; border-radius: 999px; background: rgba(63,90,85,0.10); color: #3F5A55; font: 400 12px/16px Archivo;">Stress</div>
+                <h2 style="margin: 12px 0 6px; font: 400 26px/32px Newsreader; color: #24302A;">Down-regulating the day</h2>
+                <div style="font: 400 13px/18px Archivo; color: #55605A;">18 minutes · lying down</div>
+                <p style="margin: 12px 0 18px; font: 400 15px/23px Archivo; color: #55605A; text-wrap: pretty;">A slower breath and a longer exhale. Today's session teaches your body the difference between alert and unsafe.</p>
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <button style="width: 56px; height: 56px; flex: none; border: none; border-radius: 999px; background: #503A5C; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 120ms cubic-bezier(.3,0,.7,.2);" style-active="transform: scale(0.96)" aria-label="Play today's session">
+                    <svg width="17" height="20" viewBox="0 0 17 20" aria-hidden="true"><polygon points="2,1 16,10 2,19" fill="#F0DEDB"></polygon></svg>
+                  </button>
+                  <div style="font: 500 15px/20px Archivo; color: #24302A;">Start today's session</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: baseline; justify-content: space-between; margin: 26px 0 10px;">
+              <div style="font: 500 13px/18px Archivo; color: #55605A;">This week</div>
+              <div style="font: 400 13px/18px Archivo; color: #7E877F;">2 of 7 done</div>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: space-between;">
+              <div style="width: 44px; height: 44px; border-radius: 999px; background: #503A5C; color: #F7EFEE; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">M</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; background: #503A5C; color: #F7EFEE; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">T</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 2px solid #C08A83; color: #24302A; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">W</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">T</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">F</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">S</div>
+              <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">S</div>
+            </div>
+
+            <div style="font: 500 13px/18px Archivo; color: #55605A; margin: 26px 0 10px;">Continue listening</div>
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px;">
+              <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; background: #503A5C; display: flex; align-items: center; justify-content: center;">
+                <svg width="13" height="15" viewBox="0 0 13 15" aria-hidden="true"><polygon points="1.5,1 12,7.5 1.5,14" fill="#F0DEDB"></polygon></svg>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font: 400 18px/24px Newsreader; color: #24302A;">Settling the gut</div>
+                <div style="font: 400 12px/16px Archivo; color: #55605A;">9 min left</div>
+                <div style="margin-top: 7px; height: 2px; background: #E0DACE; border-radius: 999px;"><div style="width: 58%; height: 2px; background: #C08A83; border-radius: 999px;"></div></div>
+              </div>
+            </div>
+          </div>
+          <div style="flex: none; display: flex; align-items: stretch; height: 76px; border-top: 1px solid #E0DACE; background: #FFFDF8; padding-bottom: 12px;">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #24302A;"><span style="font: 500 13px/18px Archivo;">Today</span><span style="width: 16px; height: 2px; background: #503A5C; border-radius: 999px;"></span></div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">Browse</div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">You</div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Rose is too light to carry a play glyph, so the control fills with aubergine and rose is reserved for progress and the today ring.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.12); filter: {{ dimFilter }};">
+          <div style="width: 390px; height: 844px; background: #2B1F33; position: relative; display: flex; flex-direction: column; color: #EFE5E4;">
+            <div style="position: absolute; width: 320px; height: 260px; left: -60px; top: 120px; border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; background: #3B2B45; filter: blur(40px);"></div>
+            <div style="position: absolute; width: 240px; height: 200px; right: -50px; bottom: 180px; border-radius: 54% 46% 60% 40% / 40% 60% 40% 60%; background: #34263D; filter: blur(36px);"></div>
+
+            <div style="position: relative; height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #A18FA8;"><span>9:41</span><span></span></div>
+            <div style="position: relative; height: 56px; flex: none; display: flex; align-items: center; padding: 0 12px;">
+              <button style="width: 44px; height: 44px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;" aria-label="Close player">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5" stroke="#A18FA8" stroke-width="1.4" fill="none" stroke-linecap="round"></path></svg>
+              </button>
+            </div>
+
+            <div style="position: relative; flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 32px;">
+              <div style="font: 400 13px/18px Archivo; color: #A18FA8;">Stress · Week 1, day 3</div>
+              <h1 style="margin: 10px 0 0; font: 300 36px/43px Newsreader; color: #F5EBEA; letter-spacing: -0.01em; text-wrap: pretty;">Down-regulating the day</h1>
+              <p style="margin: 16px 0 0; font: 400 15px/24px Archivo; color: #BFB0C4; max-width: 300px; text-wrap: pretty;">Lie down. Let the audio do the work. If you fall asleep, that is fine.</p>
+            </div>
+
+            <div style="position: relative; flex: none; padding: 0 32px 48px;">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 36px; margin-bottom: 44px;">
+                <button style="width: 56px; height: 56px; border: none; background: transparent; color: #BFB0C4; font: 500 13px/18px Archivo; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer;" aria-label="Back 15 seconds">
+                  <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 1-5.2 3.7" stroke="#BFB0C4" stroke-width="1.3" fill="none" stroke-linecap="round"></path><path d="M2.2 3v4.2h4.2" stroke="#BFB0C4" stroke-width="1.3" fill="none" stroke-linecap="round"></path></svg>
+                  <span>15</span>
+                </button>
+                <button style="width: 96px; height: 96px; border: none; border-radius: 999px; background: #D9A6A0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 120ms cubic-bezier(.3,0,.7,.2);" style-active="transform: scale(0.97)" aria-label="Pause">
+                  <span style="display: flex; gap: 8px;"><span style="width: 6px; height: 32px; border-radius: 2px; background: #2B1F33;"></span><span style="width: 6px; height: 32px; border-radius: 2px; background: #2B1F33;"></span></span>
+                </button>
+                <button style="width: 56px; height: 56px; border: none; background: transparent; color: #BFB0C4; font: 500 13px/18px Archivo; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer;" aria-label="Forward 15 seconds">
+                  <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3.5a5.5 5.5 0 1 0 5.2 3.7" stroke="#BFB0C4" stroke-width="1.3" fill="none" stroke-linecap="round"></path><path d="M15.8 3v4.2h-4.2" stroke="#BFB0C4" stroke-width="1.3" fill="none" stroke-linecap="round"></path></svg>
+                  <span>15</span>
+                </button>
+              </div>
+              <div style="height: 3px; background: #43334D; border-radius: 999px; margin-bottom: 12px;"><div style="width: 34%; height: 3px; background: #D9A6A0; border-radius: 999px;"></div></div>
+              <div style="display: flex; align-items: center; justify-content: space-between; font: 400 13px/18px Archivo; color: #A18FA8;"><span>6:12</span><span>18:00</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Aubergine reads warmer at low brightness; navy reads more clinical. Toggle the dim preview in Tweaks to compare at 10 percent.</div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ============ 1d REMAINING SCREENS ============ -->
+  <div id="1d" style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; align-items: baseline; gap: 12px;">
+      <span style="font: 500 12px/16px Archivo; color: #FFFDF8; background: #24302A; padding: 4px 8px; border-radius: 6px;">1d</span>
+      <h2 style="margin: 0; font: 400 26px/32px Newsreader; color: #24302A;">Remaining screens</h2>
+      <span style="font: 400 13px/18px Archivo; color: #55605A;">Drawn in B. Swapping to D changes six hex values, nothing structural.</span>
+    </div>
+
+    <div style="display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start;">
+
+      <!-- HOME browse mode -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; background: #F5F2EC; border: 1px solid #CFC7B8; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.08); display: flex; flex-direction: column;">
+          <div style="height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #55605A;"><span>9:41</span><span>Regulated</span></div>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0;">
+            <div style="font: 400 13px/18px Archivo; color: #55605A;">Sunday morning</div>
+            <h1 style="margin: 4px 0 20px; font: 300 32px/38px Newsreader; color: #24302A; letter-spacing: -0.01em;">Good morning, Matthew</h1>
+            <div style="display: flex; gap: 4px; padding: 4px; background: #EFEBE3; border-radius: 999px; margin-bottom: 24px;">
+              <div style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 999px; color: #55605A; font: 400 14px/20px Archivo;">Program</div>
+              <div style="flex: 1; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #FFFDF8; color: #24302A; font: 500 14px/20px Archivo; box-shadow: 0 1px 2px rgba(36,48,42,0.06);">Browse</div>
+            </div>
+
+            <div style="font: 500 13px/18px Archivo; color: #55605A; margin-bottom: 10px;">Continue listening</div>
+            <div style="background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 14px; padding: 18px; position: relative; overflow: hidden; box-shadow: 0 1px 2px rgba(36,48,42,0.06);">
+              <div style="position: absolute; width: 190px; height: 150px; right: -60px; top: -46px; border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; background: rgba(108,91,52,0.14); filter: blur(16px);"></div>
+              <div style="position: relative; display: flex; align-items: center; gap: 14px;">
+                <button style="width: 52px; height: 52px; flex: none; border: none; border-radius: 999px; background: #D99A3D; display: flex; align-items: center; justify-content: center; cursor: pointer;" aria-label="Resume Settling the gut">
+                  <svg width="15" height="18" viewBox="0 0 15 18" aria-hidden="true"><polygon points="2,1 14,9 2,17" fill="#1B2841"></polygon></svg>
+                </button>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font: 400 22px/28px Newsreader; color: #24302A;">Settling the gut</div>
+                  <div style="font: 400 13px/18px Archivo; color: #55605A;">Gut · 9 min left of 21</div>
+                  <div style="margin-top: 8px; height: 2px; background: #E0DACE; border-radius: 999px;"><div style="width: 58%; height: 2px; background: #D99A3D; border-radius: 999px;"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="font: 500 13px/18px Archivo; color: #55605A; margin: 26px 0 10px;">Where you are today</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div style="height: 96px; border-radius: 14px; background: rgba(62,76,102,0.09); border: 1px solid rgba(62,76,102,0.18); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+                <div style="position: absolute; width: 120px; height: 100px; right: -30px; bottom: -34px; border-radius: 54% 46% 60% 40% / 40% 60% 40% 60%; background: rgba(62,76,102,0.14); filter: blur(12px);"></div>
+                <div style="position: relative; font: 400 19px/24px Newsreader; color: #24302A;">Sleep</div>
+                <div style="position: relative; font: 400 12px/16px Archivo; color: #55605A;">4 sessions</div>
+              </div>
+              <div style="height: 96px; border-radius: 14px; background: rgba(75,90,63,0.09); border: 1px solid rgba(75,90,63,0.18); padding: 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+                <div style="position: absolute; width: 120px; height: 100px; right: -30px; bottom: -34px; border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; background: rgba(75,90,63,0.14); filter: blur(12px);"></div>
+                <div style="position: relative; font: 400 19px/24px Newsreader; color: #24302A;">Anxiety</div>
+                <div style="position: relative; font: 400 12px/16px Archivo; color: #55605A;">3 sessions</div>
+              </div>
+            </div>
+
+            <div style="font: 500 13px/18px Archivo; color: #55605A; margin: 26px 0 10px;">New this month</div>
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px;">
+              <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; background: rgba(52,82,79,0.10); display: flex; align-items: center; justify-content: center;">
+                <svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><polygon points="1,1 11,7 1,13" fill="#34524F"></polygon></svg>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font: 400 18px/24px Newsreader; color: #24302A;">Ending the day early</div>
+                <div style="font: 400 12px/16px Archivo; color: #55605A;">Habits · 14 min</div>
+              </div>
+            </div>
+          </div>
+          <div style="flex: none; display: flex; align-items: stretch; height: 76px; border-top: 1px solid #E0DACE; background: #FFFDF8; padding-bottom: 12px;">
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">Today</div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #24302A;"><span style="font: 500 13px/18px Archivo;">Browse</span><span style="width: 16px; height: 2px; background: #24344D; border-radius: 999px;"></span></div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">You</div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Home / Browse mode. Same shell, no prescribed session, no week strip.</div>
+      </div>
+
+      <!-- BROWSE LIBRARY -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; background: #F5F2EC; border: 1px solid #CFC7B8; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.08); display: flex; flex-direction: column;">
+          <div style="height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #55605A;"><span>9:41</span><span>Regulated</span></div>
+          <div style="flex: none; padding: 8px 20px 12px;">
+            <h1 style="margin: 0 0 14px; font: 300 30px/36px Newsreader; color: #24302A;">Library</h1>
+            <div style="display: flex; gap: 8px; overflow: hidden;">
+              <div style="flex: none; height: 34px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: #24302A; color: #FBF8F1; font: 500 13px/18px Archivo;">All 13</div>
+              <div style="flex: none; height: 34px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: rgba(62,76,102,0.10); border: 1px solid rgba(62,76,102,0.22); color: #3E4C66; font: 400 13px/18px Archivo;">Sleep</div>
+              <div style="flex: none; height: 34px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: rgba(63,90,85,0.10); border: 1px solid rgba(63,90,85,0.22); color: #3F5A55; font: 400 13px/18px Archivo;">Stress</div>
+              <div style="flex: none; height: 34px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: rgba(75,90,63,0.10); border: 1px solid rgba(75,90,63,0.22); color: #4B5A3F; font: 400 13px/18px Archivo;">Anxiety</div>
+              <div style="flex: none; height: 34px; padding: 0 12px; display: flex; align-items: center; border-radius: 999px; background: rgba(108,91,52,0.10); border: 1px solid rgba(108,91,52,0.22); color: #6C5B34; font: 400 13px/18px Archivo;">Gut</div>
+            </div>
+          </div>
+          <div style="flex: 1; overflow: hidden; padding: 0 20px;">
+            <div style="display: flex; flex-direction: column; gap: 7px;">
+
+              <div style="display: flex; align-items: center; gap: 14px; padding: 11px 14px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px;">
+                <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; background: rgba(62,76,102,0.10); display: flex; align-items: center; justify-content: center;"><svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><polygon points="1,1 11,7 1,13" fill="#3E4C66"></polygon></svg></div>
+                <div style="flex: 1; min-width: 0;"><div style="font: 400 18px/24px Newsreader; color: #24302A;">Sleep without effort</div><div style="font: 400 12px/16px Archivo; color: #55605A;">Sleep · 22 min · Free</div></div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #FFFDF8; border: 1px solid #CFC7B8; border-radius: 10px;">
+                <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; background: #D99A3D; display: flex; align-items: center; justify-content: center;"><svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><polygon points="1,1 11,7 1,13" fill="#1B2841"></polygon></svg></div>
+                <div style="flex: 1; min-width: 0;"><div style="font: 400 18px/24px Newsreader; color: #24302A;">Settling the gut</div><div style="font: 400 12px/16px Archivo; color: #55605A;">Gut · 9 min left</div><div style="margin-top: 7px; height: 2px; background: #E0DACE; border-radius: 999px;"><div style="width: 58%; height: 2px; background: #D99A3D; border-radius: 999px;"></div></div></div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px;">
+                <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; background: rgba(63,90,85,0.10); display: flex; align-items: center; justify-content: center;"><svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><polygon points="1,1 11,7 1,13" fill="#3F5A55"></polygon></svg></div>
+                <div style="flex: 1; min-width: 0;"><div style="font: 400 18px/24px Newsreader; color: #24302A;">Down-regulating the day</div><div style="font: 400 12px/16px Archivo; color: #55605A;">Stress · 18 min · Free</div></div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px;">
+                <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; background: rgba(78,76,66,0.10); display: flex; align-items: center; justify-content: center;"><svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><polygon points="1,1 11,7 1,13" fill="#4E4C42"></polygon></svg></div>
+                <div style="flex: 1; min-width: 0;"><div style="font: 400 18px/24px Newsreader; color: #24302A;">Five quiet minutes</div><div style="font: 400 12px/16px Archivo; color: #55605A;">Daily · 5 min · Free</div></div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #F1EDE5; border: 1px solid #E0DACE; border-radius: 10px;">
+                <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; border: 1px solid #CFC7B8; display: flex; align-items: center; justify-content: center;"><svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><rect x="0.5" y="6" width="10" height="7.5" rx="1.5" fill="#7E877F"></rect><path d="M2.8 6V3.6a2.7 2.7 0 0 1 5.4 0V6" stroke="#7E877F" stroke-width="1.2" fill="none"></path></svg></div>
+                <div style="flex: 1; min-width: 0;"><div style="font: 400 18px/24px Newsreader; color: #55605A;">Quiet the racing mind</div><div style="font: 400 12px/16px Archivo; color: #7E877F;">Anxiety · 24 min · Premium</div></div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #F1EDE5; border: 1px solid #E0DACE; border-radius: 10px;">
+                <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; border: 1px solid #CFC7B8; display: flex; align-items: center; justify-content: center;"><svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><rect x="0.5" y="6" width="10" height="7.5" rx="1.5" fill="#7E877F"></rect><path d="M2.8 6V3.6a2.7 2.7 0 0 1 5.4 0V6" stroke="#7E877F" stroke-width="1.2" fill="none"></path></svg></div>
+                <div style="flex: 1; min-width: 0;"><div style="font: 400 18px/24px Newsreader; color: #55605A;">Speaking without the shake</div><div style="font: 400 12px/16px Archivo; color: #7E877F;">Confidence · 16 min · Premium</div></div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #F1EDE5; border: 1px solid #E0DACE; border-radius: 10px;">
+                <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; border: 1px solid #CFC7B8; display: flex; align-items: center; justify-content: center;"><svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><rect x="0.5" y="6" width="10" height="7.5" rx="1.5" fill="#7E877F"></rect><path d="M2.8 6V3.6a2.7 2.7 0 0 1 5.4 0V6" stroke="#7E877F" stroke-width="1.2" fill="none"></path></svg></div>
+                <div style="flex: 1; min-width: 0;"><div style="font: 400 18px/24px Newsreader; color: #55605A;">Waking at 3am</div><div style="font: 400 12px/16px Archivo; color: #7E877F;">Sleep · 28 min · Premium</div></div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #F1EDE5; border: 1px solid #E0DACE; border-radius: 10px;">
+                <div style="width: 44px; height: 44px; flex: none; border-radius: 999px; border: 1px solid #CFC7B8; display: flex; align-items: center; justify-content: center;"><svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><rect x="0.5" y="6" width="10" height="7.5" rx="1.5" fill="#7E877F"></rect><path d="M2.8 6V3.6a2.7 2.7 0 0 1 5.4 0V6" stroke="#7E877F" stroke-width="1.2" fill="none"></path></svg></div>
+                <div style="flex: 1; min-width: 0;"><div style="font: 400 18px/24px Newsreader; color: #55605A;">Finishing what you start</div><div style="font: 400 12px/16px Archivo; color: #7E877F;">Motivation · 12 min · Premium</div></div>
+              </div>
+            </div>
+          </div>
+          <div style="flex: none; display: flex; align-items: stretch; height: 76px; border-top: 1px solid #E0DACE; background: #FFFDF8; padding-bottom: 12px;">
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">Today</div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #24302A;"><span style="font: 500 13px/18px Archivo;">Browse</span><span style="width: 16px; height: 2px; background: #24344D; border-radius: 999px;"></span></div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">You</div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Browse library. Locked rows sink to #F1EDE5 with a lock in place of the play control — dimmed, not badged.</div>
+      </div>
+
+      <!-- SESSION DETAIL -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; background: #F5F2EC; border: 1px solid #CFC7B8; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.08); display: flex; flex-direction: column;">
+          <div style="height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #55605A;"><span>9:41</span><span>Regulated</span></div>
+          <div style="flex: none; height: 240px; position: relative; overflow: hidden; background: rgba(62,76,102,0.10);">
+            <div style="position: absolute; width: 300px; height: 240px; left: -40px; top: 30px; border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; background: rgba(62,76,102,0.20); filter: blur(28px);"></div>
+            <div style="position: absolute; width: 200px; height: 170px; right: -50px; top: -40px; border-radius: 54% 46% 60% 40% / 40% 60% 40% 60%; background: rgba(62,76,102,0.16); filter: blur(24px);"></div>
+            <button style="position: absolute; left: 12px; top: 8px; width: 44px; height: 44px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;" aria-label="Back">
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3l-5 5 5 5" stroke="#24302A" stroke-width="1.4" fill="none" stroke-linecap="round"></path></svg>
+            </button>
+          </div>
+          <div style="flex: 1; padding: 20px 24px 0; overflow: hidden;">
+            <div style="display: inline-flex; height: 26px; padding: 0 10px; align-items: center; border-radius: 999px; background: rgba(62,76,102,0.10); color: #3E4C66; font: 400 12px/16px Archivo;">Sleep</div>
+            <h1 style="margin: 14px 0 6px; font: 300 32px/38px Newsreader; color: #24302A; letter-spacing: -0.01em;">Waking at 3am</h1>
+            <div style="font: 400 13px/18px Archivo; color: #55605A;">28 minutes · Matthew Tweedie · recorded 2026</div>
+            <p style="margin: 18px 0 0; font: 400 16px/25px Archivo; color: #24302A; text-wrap: pretty;">For the night waking that arrives on schedule. The session assumes you are already awake and does not ask you to try to sleep.</p>
+            <p style="margin: 12px 0 0; font: 400 15px/24px Archivo; color: #55605A; text-wrap: pretty;">Hypnotic induction, then a long stretch of low-demand suggestion. Use headphones if you have them, speaker is fine.</p>
+            <div style="height: 1px; background: #E0DACE; margin: 18px 0 14px;"></div>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="display: flex; justify-content: space-between; font: 400 14px/20px Archivo;"><span style="color: #55605A;">Position</span><span style="color: #24302A;">Lying down</span></div>
+              <div style="display: flex; justify-content: space-between; font: 400 14px/20px Archivo;"><span style="color: #55605A;">Best time</span><span style="color: #24302A;">Night waking</span></div>
+              <div style="display: flex; justify-content: space-between; font: 400 14px/20px Archivo;"><span style="color: #55605A;">Ends with</span><span style="color: #24302A;">Sleep, no alerting</span></div>
+            </div>
+          </div>
+          <div style="flex: none; padding: 20px 24px 32px; background: #FFFDF8; border-top: 1px solid #E0DACE; box-shadow: 0 -8px 32px rgba(36,48,42,0.06);">
+            <button style="width: 100%; height: 52px; border: none; border-radius: 10px; background: #24344D; color: #FBF8F1; font: 500 16px/22px Archivo; cursor: pointer;">Start session</button>
+            <div style="margin-top: 12px; text-align: center; font: 400 13px/18px Archivo; color: #55605A;">Included in premium · 28 min</div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Session detail. The category texture is the header; no cover art required.</div>
+      </div>
+
+      <!-- PROGRAM WEEKS -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; background: #F5F2EC; border: 1px solid #CFC7B8; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.08); display: flex; flex-direction: column;">
+          <div style="height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #55605A;"><span>9:41</span><span>Regulated</span></div>
+          <div style="flex: 1; overflow: hidden; padding: 8px 20px 0;">
+            <h1 style="margin: 0 0 6px; font: 300 30px/36px Newsreader; color: #24302A;">Six weeks</h1>
+            <p style="margin: 0 0 20px; font: 400 14px/21px Archivo; color: #55605A;">One session a day. Miss a day and the week waits for you.</p>
+            <div style="height: 3px; background: #E0DACE; border-radius: 999px; margin-bottom: 8px;"><div style="width: 12%; height: 3px; background: #24344D; border-radius: 999px;"></div></div>
+            <div style="font: 400 12px/16px Archivo; color: #7E877F; margin-bottom: 22px;">5 of 42 sessions complete</div>
+
+            <div style="background: #FFFDF8; border: 1px solid #CFC7B8; border-radius: 14px; padding: 18px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(36,48,42,0.06);">
+              <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                <div style="font: 400 21px/28px Newsreader; color: #24302A;">Week 1 · Noticing</div>
+                <div style="font: 400 12px/16px Archivo; color: #55605A;">In progress</div>
+              </div>
+              <p style="margin: 8px 0 16px; font: 400 14px/21px Archivo; color: #55605A; text-wrap: pretty;">Learning what your nervous system is already doing, without trying to change it yet.</p>
+              <div style="display: flex; gap: 6px; justify-content: space-between;">
+                <div style="width: 44px; height: 44px; border-radius: 999px; background: #24344D; color: #FBF8F1; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">1</div>
+                <div style="width: 44px; height: 44px; border-radius: 999px; background: #24344D; color: #FBF8F1; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">2</div>
+                <div style="width: 44px; height: 44px; border-radius: 999px; border: 2px solid #D99A3D; color: #24302A; display: flex; align-items: center; justify-content: center; font: 500 14px/20px Archivo;">3</div>
+                <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">4</div>
+                <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">5</div>
+                <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">6</div>
+                <div style="width: 44px; height: 44px; border-radius: 999px; border: 1px solid #E0DACE; color: #B4AC9C; display: flex; align-items: center; justify-content: center; font: 400 14px/20px Archivo;">7</div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 10px; padding: 16px;">
+                <div style="display: flex; align-items: baseline; justify-content: space-between;"><div style="font: 400 19px/26px Newsreader; color: #24302A;">Week 2 · Breath and pace</div><div style="font: 400 12px/16px Archivo; color: #7E877F;">Opens Monday</div></div>
+                <div style="margin-top: 6px; font: 400 13px/19px Archivo; color: #55605A;">7 sessions · 12 to 20 min</div>
+              </div>
+              <div style="background: #F1EDE5; border: 1px solid #E0DACE; border-radius: 10px; padding: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;"><div style="font: 400 19px/26px Newsreader; color: #55605A; flex: 1;">Week 3 · Sleep and night</div><svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><rect x="0.5" y="6" width="10" height="7.5" rx="1.5" fill="#7E877F"></rect><path d="M2.8 6V3.6a2.7 2.7 0 0 1 5.4 0V6" stroke="#7E877F" stroke-width="1.2" fill="none"></path></svg></div>
+              </div>
+              <div style="background: #F1EDE5; border: 1px solid #E0DACE; border-radius: 10px; padding: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;"><div style="font: 400 19px/26px Newsreader; color: #55605A; flex: 1;">Week 4 · Gut and appetite</div><svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><rect x="0.5" y="6" width="10" height="7.5" rx="1.5" fill="#7E877F"></rect><path d="M2.8 6V3.6a2.7 2.7 0 0 1 5.4 0V6" stroke="#7E877F" stroke-width="1.2" fill="none"></path></svg></div>
+              </div>
+              <div style="background: #F1EDE5; border: 1px solid #E0DACE; border-radius: 10px; padding: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;"><div style="font: 400 19px/26px Newsreader; color: #55605A; flex: 1;">Week 5 · Under pressure</div><svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><rect x="0.5" y="6" width="10" height="7.5" rx="1.5" fill="#7E877F"></rect><path d="M2.8 6V3.6a2.7 2.7 0 0 1 5.4 0V6" stroke="#7E877F" stroke-width="1.2" fill="none"></path></svg></div>
+              </div>
+              <div style="background: #F1EDE5; border: 1px solid #E0DACE; border-radius: 10px; padding: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;"><div style="font: 400 19px/26px Newsreader; color: #55605A; flex: 1;">Week 6 · Keeping it</div><svg width="11" height="14" viewBox="0 0 11 14" aria-hidden="true"><rect x="0.5" y="6" width="10" height="7.5" rx="1.5" fill="#7E877F"></rect><path d="M2.8 6V3.6a2.7 2.7 0 0 1 5.4 0V6" stroke="#7E877F" stroke-width="1.2" fill="none"></path></svg></div>
+              </div>
+            </div>
+          </div>
+          <div style="flex: none; display: flex; align-items: stretch; height: 76px; border-top: 1px solid #E0DACE; background: #FFFDF8; padding-bottom: 12px;">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #24302A;"><span style="font: 500 13px/18px Archivo;">Today</span><span style="width: 16px; height: 2px; background: #24344D; border-radius: 999px;"></span></div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">Browse</div>
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: #55605A; font: 400 13px/18px Archivo;">You</div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Program week view. Current week is the only card with a border shift and lift; later weeks are flat, locked weeks sink.</div>
+      </div>
+
+      <!-- PAYWALL -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; background: #F5F2EC; border: 1px solid #CFC7B8; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.08); display: flex; flex-direction: column;">
+          <div style="height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #55605A;"><span>9:41</span><span>Regulated</span></div>
+          <div style="flex: none; height: 56px; display: flex; align-items: center; padding: 0 12px;">
+            <button style="width: 44px; height: 44px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;" aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="#55605A" stroke-width="1.4" stroke-linecap="round"></path></svg>
+            </button>
+          </div>
+          <div style="flex: 1; overflow: hidden; padding: 0 24px;">
+            <h1 style="margin: 0 0 10px; font: 300 32px/38px Newsreader; color: #24302A; letter-spacing: -0.01em;">Premium</h1>
+            <p style="margin: 0 0 18px; font: 400 16px/25px Archivo; color: #55605A; text-wrap: pretty;">All 13 sessions and the six-week program. New sessions are added monthly, on the way to 40. Cancel any time in the app.</p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <div style="background: #FFFDF8; border: 1px solid #CFC7B8; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(36,48,42,0.06);">
+                <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                  <div style="font: 400 21px/28px Newsreader; color: #24302A;">Annual, founding rate</div>
+                  <div style="font: 500 17px/24px Archivo; color: #24302A;">$149</div>
+                </div>
+                <div style="margin-top: 6px; font: 400 13px/19px Archivo; color: #55605A;">$12.42 a month, billed once a year. The founding rate stays at $149 for as long as you keep the subscription.</div>
+              </div>
+              <div style="background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 14px; padding: 18px;">
+                <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                  <div style="font: 400 21px/28px Newsreader; color: #24302A;">Monthly</div>
+                  <div style="font: 500 17px/24px Archivo; color: #24302A;">$19</div>
+                </div>
+                <div style="margin-top: 6px; font: 400 13px/19px Archivo; color: #55605A;">Billed monthly. Same content as annual.</div>
+              </div>
+              <div style="background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 14px; padding: 18px;">
+                <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                  <div style="font: 400 21px/28px Newsreader; color: #24302A;">Custom audio</div>
+                  <div style="font: 500 17px/24px Archivo; color: #24302A;">$99</div>
+                </div>
+                <div style="margin-top: 6px; font: 400 13px/19px Archivo; color: #55605A;">One session written and recorded for your situation. Bought separately, no subscription needed.</div>
+              </div>
+            </div>
+
+            <div style="height: 1px; background: #E0DACE; margin: 16px 0 12px;"></div>
+            <div style="font: 400 14px/22px Archivo; color: #55605A;">All sessions are written and recorded by Matthew Tweedie, clinical hypnotherapist, Adelaide. Prices in AUD and include GST.</div>
+          </div>
+          <div style="flex: none; padding: 18px 24px 32px; background: #FFFDF8; border-top: 1px solid #E0DACE;">
+            <button style="width: 100%; height: 52px; border: none; border-radius: 10px; background: #24344D; color: #FBF8F1; font: 500 16px/22px Archivo; cursor: pointer;">Continue at $149 a year</button>
+            <button style="width: 100%; height: 48px; margin-top: 8px; border: none; background: transparent; color: #55605A; font: 400 14px/20px Archivo; cursor: pointer;">Restore a purchase</button>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Paywall. No countdown, no struck-through price, no badge. The annual card is preferred by border weight only.</div>
+      </div>
+
+      <!-- ONBOARDING -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; background: #F5F2EC; border: 1px solid #CFC7B8; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.08); display: flex; flex-direction: column; position: relative;">
+          <div style="position: absolute; width: 340px; height: 280px; right: -90px; top: -60px; border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; background: rgba(36,52,77,0.08); filter: blur(30px);"></div>
+          <div style="position: relative; height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #55605A;"><span>9:41</span><span></span></div>
+          <div style="position: relative; flex: 1; padding: 40px 24px 0; display: flex; flex-direction: column;">
+            <div style="font: 500 13px/18px Archivo; color: #55605A;">Regulated</div>
+            <h1 style="margin: 12px 0 0; font: 300 38px/44px Newsreader; color: #24302A; letter-spacing: -0.015em; text-wrap: pretty;">Feel safe in your own body</h1>
+            <p style="margin: 18px 0 0; font: 400 17px/27px Archivo; color: #55605A; text-wrap: pretty;">Hypnotherapy audio for sleep, stress, anxiety and gut symptoms, recorded by a clinical hypnotherapist. Four sessions are free.</p>
+            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label style="font: 400 13px/18px Archivo; color: #55605A;">Email</label>
+                <div style="height: 52px; border: 1px solid #24344D; box-shadow: 0 0 0 3px rgba(36,52,77,0.12); border-radius: 10px; background: #FFFDF8; display: flex; align-items: center; padding: 0 14px; font: 400 16px/24px Archivo; color: #7E877F;">you@example.com</div>
+              </div>
+              <button style="width: 100%; height: 52px; border: none; border-radius: 10px; background: #24344D; color: #FBF8F1; font: 500 16px/22px Archivo; cursor: pointer;">Email me a sign-in link</button>
+              <div style="font: 400 13px/20px Archivo; color: #7E877F; text-wrap: pretty;">No password. The link signs you in on this phone and stays signed in.</div>
+            </div>
+            <div style="display: flex; gap: 6px; align-items: center; justify-content: center; padding: 28px 0 32px;">
+              <div style="width: 20px; height: 3px; border-radius: 999px; background: #24344D;"></div>
+              <div style="width: 8px; height: 3px; border-radius: 999px; background: #CFC7B8;"></div>
+              <div style="width: 8px; height: 3px; border-radius: 999px; background: #CFC7B8;"></div>
+            </div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Onboarding step 1 of 3 — email, then "what brought you here", then Program or Browse. Sign-in is the same screen without the paragraph.</div>
+      </div>
+
+      <!-- CUSTOM AUDIO -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="width: 390px; height: 844px; background: #F5F2EC; border: 1px solid #CFC7B8; border-radius: 28px; overflow: hidden; box-shadow: 0 6px 20px rgba(36,48,42,0.08); display: flex; flex-direction: column;">
+          <div style="height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font: 500 12px/16px Archivo; color: #55605A;"><span>9:41</span><span>Regulated</span></div>
+          <div style="flex: none; height: 56px; display: flex; align-items: center; padding: 0 12px;">
+            <button style="width: 44px; height: 44px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;" aria-label="Back">
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3l-5 5 5 5" stroke="#55605A" stroke-width="1.4" fill="none" stroke-linecap="round"></path></svg>
+            </button>
+          </div>
+          <div style="flex: 1; overflow: hidden; padding: 0 24px;">
+            <h1 style="margin: 0 0 12px; font: 300 32px/38px Newsreader; color: #24302A; letter-spacing: -0.01em; text-wrap: pretty;">A session made for you</h1>
+            <p style="margin: 0 0 24px; font: 400 16px/25px Archivo; color: #55605A; text-wrap: pretty;">Tell Matthew what you are dealing with. He writes and records a session in your own language, for your situation, and it arrives in your library.</p>
+
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+              <div style="display: flex; gap: 14px;">
+                <div style="width: 28px; height: 28px; flex: none; border-radius: 999px; background: rgba(36,52,77,0.10); color: #24344D; display: flex; align-items: center; justify-content: center; font: 500 13px/18px Archivo;">1</div>
+                <div><div style="font: 400 18px/24px Newsreader; color: #24302A;">A short written brief</div><div style="margin-top: 4px; font: 400 14px/21px Archivo; color: #55605A;">Six questions, about ten minutes. No call needed.</div></div>
+              </div>
+              <div style="display: flex; gap: 14px;">
+                <div style="width: 28px; height: 28px; flex: none; border-radius: 999px; background: rgba(36,52,77,0.10); color: #24344D; display: flex; align-items: center; justify-content: center; font: 500 13px/18px Archivo;">2</div>
+                <div><div style="font: 400 18px/24px Newsreader; color: #24302A;">Written and recorded</div><div style="margin-top: 4px; font: 400 14px/21px Archivo; color: #55605A;">Usually seven days. You will get an email when it is ready.</div></div>
+              </div>
+              <div style="display: flex; gap: 14px;">
+                <div style="width: 28px; height: 28px; flex: none; border-radius: 999px; background: rgba(36,52,77,0.10); color: #24344D; display: flex; align-items: center; justify-content: center; font: 500 13px/18px Archivo;">3</div>
+                <div><div style="font: 400 18px/24px Newsreader; color: #24302A;">Yours to keep</div><div style="margin-top: 4px; font: 400 14px/21px Archivo; color: #55605A;">It stays in your library whether or not you subscribe. One free revision.</div></div>
+              </div>
+            </div>
+
+            <div style="height: 1px; background: #E0DACE; margin: 26px 0 18px;"></div>
+            <div style="background: #FFFDF8; border: 1px solid #E0DACE; border-radius: 14px; padding: 18px; position: relative; overflow: hidden;">
+              <div style="position: absolute; width: 170px; height: 140px; right: -50px; bottom: -50px; border-radius: 54% 46% 60% 40% / 40% 60% 40% 60%; background: rgba(92,74,94,0.12); filter: blur(16px);"></div>
+              <div style="position: relative; font: 400 15px/24px Archivo; color: #55605A; text-wrap: pretty;">Most people order a custom session for something specific: a procedure coming up, a flight, a habit that has not shifted with the library sessions.</div>
+            </div>
+          </div>
+          <div style="flex: none; padding: 18px 24px 32px; background: #FFFDF8; border-top: 1px solid #E0DACE;">
+            <button style="width: 100%; height: 52px; border: none; border-radius: 10px; background: #24344D; color: #FBF8F1; font: 500 16px/22px Archivo; cursor: pointer;">Start a custom session · $99</button>
+            <div style="margin-top: 12px; text-align: center; font: 400 13px/18px Archivo; color: #55605A;">One payment. Brief first, pay before recording.</div>
+          </div>
+        </div>
+        <div style="font: 400 12px/16px Archivo; color: #55605A; width: 390px;">Custom audio order. Numbered steps in the sans, headings in the serif — no icon tiles.</div>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;paletteFocus&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;both&quot;,&quot;navy&quot;,&quot;aubergine&quot;],&quot;default&quot;:&quot;both&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Review&quot;},&quot;dimPreview&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Review&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const focus = this.props.paletteFocus ?? "both";
+    return {
+      showNavy: focus === "both" || focus === "navy",
+      showAubergine: focus === "both" || focus === "aubergine",
+      dimFilter: (this.props.dimPreview ?? false) ? "brightness(0.32) contrast(1.06)" : "none"
+    };
+  }
+}
+</script>
+</body>
+</html>
