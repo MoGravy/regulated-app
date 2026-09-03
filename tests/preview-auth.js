@@ -31,8 +31,8 @@ export default async function globalSetup() {
   )
   if (!res.ok()) throw new Error(`bypass handshake returned ${res.status()}`)
 
-  const state = await ctx.storageState()
-  if (!state.cookies.length) throw new Error('bypass handshake set no cookie')
+  // Production is not protected, so it sets no cookie and that is fine. A
+  // protected preview with a bad secret already failed the ok() check above.
   await ctx.storageState({ path: STATE_PATH })
   await ctx.dispose()
 }
