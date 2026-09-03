@@ -16,6 +16,11 @@ const FROM_EMAIL = process.env.FROM_EMAIL || process.env.VITE_FROM_EMAIL || 'hel
 
 export const config = { api: { bodyParser: false } }
 
+// Stripe moved invoice.subscription under invoice.parent in API 2025-03-31.
+// The webhook destination is pinned newer than that, so both shapes are read.
+const invoiceSubscriptionId = invoice =>
+  invoice.subscription || invoice.parent?.subscription_details?.subscription || null
+
 async function getRawBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = []
@@ -70,23 +75,29 @@ export default async function handler(req, res) {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object
-        if (invoice.subscription) {
+        const subId = invoiceSubscriptionId(event.data.object)
+        if (subId) {
           await supabase
             .from('subscriptions')
             .update({ status: 'past_due' })
-            .eq('stripe_subscription_id', invoice.subscription)
+            .eq('stripe_subscription_id', subId)
         }
         break
       }
 
       case 'invoice.payment_succeeded': {
-        const invoice = event.data.object
-        if (invoice.subscription) {
+        const subId = invoiceSubscriptionId(event.data.object)
+        if (subId) {
+          // A renewal moves the period forward. Access is gated on
+          // current_period_end, so status alone is not enough.
+          const subscription = await stripe.subscriptions.retrieve(subId)
           await supabase
             .from('subscriptions')
-            .update({ status: 'active' })
-            .eq('stripe_subscription_id', invoice.subscription)
+            .update({
+              status: 'active',
+              current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            })
+            .eq('stripe_subscription_id', subId)
         }
         break
       }
