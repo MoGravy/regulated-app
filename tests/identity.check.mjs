@@ -10,8 +10,8 @@ const sb = stub({ good: { email: ' Kat@Example.com ' } })
 assert.equal(await callerEmail({ headers: { authorization: 'Bearer good' }, body: { email: 'other@example.com' } }, sb), 'kat@example.com')
 // A bad token is refused, never downgraded to the body email.
 assert.equal(await callerEmail({ headers: { authorization: 'Bearer nope' }, body: { email: 'other@example.com' } }, sb), null)
-// No token: the body email still works (overlap), normalised.
-assert.equal(await callerEmail({ headers: {}, body: { email: ' Other@Example.com ' } }, sb), 'other@example.com')
+// No token: the body email counts for nothing.
+assert.equal(await callerEmail({ headers: {}, body: { email: ' Other@Example.com ' } }, sb), null)
 // Nothing at all.
 assert.equal(await callerEmail({ headers: {}, body: {} }, sb), null)
 assert.equal(await callerEmail({}, sb), null)

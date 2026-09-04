@@ -75,9 +75,9 @@ export default function Premium() {
   }
 
   // Re-checks the subscription. Signed in, the account decides and the typed
-  // email is ignored. Signed out, the typed email still unlocks (overlap for
-  // customers who bought before sign-in existed) and a sign-in link goes to
-  // it, so the purchase follows them to the next device. Never writes a row.
+  // email is ignored. Signed out, a typed email unlocks nothing: it only gets
+  // a sign-in link, and the app rechecks premium with the session once that
+  // is tapped (useApp does this on auth change). Never writes a row.
   async function handleRestore() {
     const target = authUser?.email || email || userEmail
     if (!target || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
@@ -87,21 +87,22 @@ export default function Premium() {
     setEmailError('')
     setRestoring(true)
     try {
+      if (!authUser) {
+        await sendMagicLink(target)
+        addToast('Check your email for a sign-in link. Tap it to restore your purchase.', 'success', 7000)
+        return
+      }
       const active = await checkSubscription(target)
       if (active) {
         setUserEmail(target)
         setIsPremium(true)
-        if (authUser) addToast('Restored. Everything is unlocked.', 'success')
-        else {
-          await sendMagicLink(target).catch(err => console.error('[Premium] sign-in link failed:', err))
-          addToast('Restored. We emailed you a sign-in link, tap it to keep this on any device.', 'success', 7000)
-        }
+        addToast('Restored. Everything is unlocked.', 'success')
       } else {
         addToast('No active subscription on that email.', 'info')
       }
     } catch (err) {
       console.error('[Premium] restore failed:', err)
-      addToast('Could not check that email. Try again.', 'error')
+      addToast(authUser ? 'Could not check that email. Try again.' : 'Could not send the link. Try again.', 'error')
     } finally {
       setRestoring(false)
     }

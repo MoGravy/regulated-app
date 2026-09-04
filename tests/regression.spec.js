@@ -5,9 +5,8 @@
 import { test, expect } from '@playwright/test'
 import {
   skipOnboarding, enterProgram, watchConsole, expectNoConsoleErrors,
-  noProductionWrites, asPremium, fakeAudio, storage,
+  noProductionWrites, asPremium, fakeAudio, storage, signedIn, FAKE_JWT,
 } from './helpers.js'
-import { SUPABASE_URL } from '../src/config/credentials.js'
 
 // Exactly what live production writes today. Nothing else exists for a
 // returning customer, so this is the real upgrade state.
@@ -185,13 +184,13 @@ test('the paywall refuses a bad email before it opens checkout', async ({ page }
 
 test('restore reports honestly when there is no subscription', async ({ page }) => {
   await skipOnboarding(page)
+  await signedIn(page)
   await page.route(/\/api\/check-subscription/, route => route.fulfill({
     status: 200, contentType: 'application/json', body: '{"active":false}',
   }))
 
   await page.goto('/premium')
   await page.waitForLoadState('networkidle')
-  await page.locator('#premium-email').fill('nobody@example.com')
   await page.getByRole('button', { name: 'Restore a purchase' }).click()
 
   await expect(page.getByText('No active subscription on that email.')).toBeVisible()
@@ -396,29 +395,12 @@ test('a brand new visitor is taken through onboarding and out the other side', a
 // ---------------------------------------------------------------------------
 // Session-keyed premium. Signed in, the account is the identity: the token
 // goes with every premium check and a typed email cannot override it. Signed
-// out, the typed email still restores (overlap) and a sign-in link follows.
+// out, a typed email unlocks nothing: restore only sends a sign-in link.
 // ---------------------------------------------------------------------------
-const AUTH_KEY = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`
-const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url')
-const FAKE_JWT = [
-  b64({ alg: 'HS256', typ: 'JWT' }),
-  b64({ sub: 'u1', email: 'account@example.com', role: 'authenticated', aud: 'authenticated', exp: 4102444800 }),
-  'sig',
-].join('.')
-const FAKE_USER = {
-  id: 'u1', email: 'account@example.com', aud: 'authenticated', role: 'authenticated',
-  app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z',
-}
-
 test('signed in, premium checks carry the session and ignore the typed email', async ({ page }) => {
   await skipOnboarding(page)
   await noProductionWrites(page)
-  await page.addInitScript(([k, t, u]) => {
-    localStorage.setItem(k, JSON.stringify({
-      access_token: t, refresh_token: 'r', token_type: 'bearer',
-      expires_at: 4102444800, expires_in: 3600, user: u,
-    }))
-  }, [AUTH_KEY, FAKE_JWT, FAKE_USER])
+  await signedIn(page)
 
   const checks = []
   await page.route(/\/api\/check-subscription/, route => {
@@ -438,12 +420,15 @@ test('signed in, premium checks carry the session and ignore the typed email', a
   expect(otp, 'a signed-in restore must not send a sign-in link').toBe(false)
 })
 
-test('signed out, restore unlocks on the typed email and sends a sign-in link', async ({ page }) => {
+test('signed out, restore sends a sign-in link and unlocks nothing', async ({ page }) => {
   await skipOnboarding(page)
   await noProductionWrites(page)
-  await page.route(/\/api\/check-subscription/, route => route.fulfill({
-    status: 200, contentType: 'application/json', body: '{"active":true}',
-  }))
+  // Even a server that says yes must not unlock: the client never asks.
+  let checked = false
+  await page.route(/\/api\/check-subscription/, route => {
+    checked = true
+    route.fulfill({ status: 200, contentType: 'application/json', body: '{"active":true}' })
+  })
   const otp = []
   await page.route(/\/auth\/v1\/otp/, route => {
     otp.push(route.request().postDataJSON()?.email)
@@ -455,7 +440,8 @@ test('signed out, restore unlocks on the typed email and sends a sign-in link', 
   await page.locator('#premium-email').fill('buyer@example.com')
   await page.getByRole('button', { name: 'Restore a purchase' }).click()
 
-  await expect(page.getByText(/emailed you a sign-in link/)).toBeVisible()
+  await expect(page.getByText(/Check your email for a sign-in link/)).toBeVisible()
   expect(otp).toEqual(['buyer@example.com'])
-  await expect(page.getByRole('heading', { name: 'You have premium' })).toBeVisible()
+  expect(checked, 'a signed-out restore must not call check-subscription').toBe(false)
+  await expect(page.getByRole('heading', { name: 'You have premium' })).toHaveCount(0)
 })
