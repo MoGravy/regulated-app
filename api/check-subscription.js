@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { callerEmail } from './_identity.js'
 
 // The subscriptions table is RLS-locked, so the browser's public key can never
 // see a row. This answers the one question the app asks, with the same key the
@@ -12,10 +13,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const email = String(req.body?.email || '').toLowerCase().trim()
-  if (!email) return res.status(400).json({ error: 'email required' })
-
   try {
+    const email = await callerEmail(req, supabase)
+    if (!email) return res.status(400).json({ error: 'email required' })
     const { data, error } = await supabase
       .from('subscriptions')
       .select('id')
@@ -25,8 +25,6 @@ export default async function handler(req, res) {
       .limit(1)
       .maybeSingle()
     if (error) throw error
-    // ponytail: email is the app's only identity, same as get-audio-url. Real
-    // sign-in is the next phase; this endpoint then keys on the session user.
     return res.status(200).json({ active: !!data })
   } catch (err) {
     console.error('[check-subscription] error:', JSON.stringify(err, Object.getOwnPropertyNames(err)))

@@ -210,6 +210,16 @@ test.describe('needs /api', () => {
     expect(canplay).toBe('canplay')
   })
 
+  // The premium gates key on the session token when one is sent. A token that
+  // does not verify is refused outright, never downgraded to the typed email.
+  test('a bad session token is refused, not downgraded to the typed email', async ({ request }) => {
+    const res = await request.post('/api/check-subscription', {
+      headers: { Authorization: 'Bearer not-a-real-token' },
+      data: { email: 'anyone@example.com' },
+    })
+    expect(res.status()).toBe(400)
+  })
+
   test('checkout redirects to Stripe — never completes a payment', async ({ page }) => {
     // Subscribing upserts a users row before it calls out, and the server
     // creates a real live-mode Checkout Session. Against a real deployment both

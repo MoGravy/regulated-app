@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { callerEmail } from './_identity.js'
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -20,7 +21,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { sessionId, email } = req.body
+  const { sessionId } = req.body
   if (!sessionId) return res.status(400).json({ error: 'sessionId required' })
 
   try {
@@ -38,14 +39,14 @@ export default async function handler(req, res) {
     // June 2026 outage was a rotated signing key invalidating year-old tokens.
     // Free sessions skip the subscription check; premium requires one.
     if (!session.free) {
-      // Premium: require an active, unexpired subscription for this email.
-      // ponytail: email is the app's only identity (no auth layer) — knowing a
-      // subscriber's email unlocks audio. Upgrade path: real auth (Supabase Auth).
+      // Premium: an active, unexpired subscription for the caller, identified
+      // by their signed-in session when they have one (see _identity.js).
+      const email = await callerEmail(req, supabase)
       if (!email) return res.status(401).json({ error: 'email required' })
       const { data: sub } = await supabase
         .from('subscriptions')
         .select('id')
-        .eq('user_email', String(email).toLowerCase().trim())
+        .eq('user_email', email)
         .eq('status', 'active')
         .gt('current_period_end', new Date().toISOString())
         .maybeSingle()
