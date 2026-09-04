@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
-import { upsertUser, checkSubscription } from '../lib/supabase'
+import { upsertUser, checkSubscription, sendMagicLink } from '../lib/supabase'
 import { stripePromise } from '../lib/stripe'
 import { PROGRAM_APPROVED } from '../config/program'
 import { ANNUAL_FOUNDING_PRICE, MONTHLY_PRICE, CUSTOM_AUDIO_PRICE } from '../config/pricing'
@@ -26,7 +26,7 @@ const PLANS = [
 
 export default function Premium() {
   const navigate = useNavigate()
-  const { isPremium, userEmail, setUserEmail, addToast, setIsPremium } = useApp()
+  const { isPremium, userEmail, setUserEmail, addToast, setIsPremium, authUser } = useApp()
   const [selectedPlan, setSelectedPlan] = useState('annual')
   const [email, setEmail] = useState(userEmail || '')
   const [emailError, setEmailError] = useState('')
@@ -74,10 +74,12 @@ export default function Premium() {
     }
   }
 
-  // Re-checks the subscription against the email that bought it. Read-only —
-  // it never writes a subscription row.
+  // Re-checks the subscription. Signed in, the account decides and the typed
+  // email is ignored. Signed out, the typed email still unlocks (overlap for
+  // customers who bought before sign-in existed) and a sign-in link goes to
+  // it, so the purchase follows them to the next device. Never writes a row.
   async function handleRestore() {
-    const target = email || userEmail
+    const target = authUser?.email || email || userEmail
     if (!target || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(target)) {
       setEmailError('Enter the email you bought with, then restore.')
       return
@@ -89,7 +91,11 @@ export default function Premium() {
       if (active) {
         setUserEmail(target)
         setIsPremium(true)
-        addToast('Restored. Everything is unlocked.', 'success')
+        if (authUser) addToast('Restored. Everything is unlocked.', 'success')
+        else {
+          await sendMagicLink(target).catch(err => console.error('[Premium] sign-in link failed:', err))
+          addToast('Restored. We emailed you a sign-in link, tap it to keep this on any device.', 'success', 7000)
+        }
       } else {
         addToast('No active subscription on that email.', 'info')
       }

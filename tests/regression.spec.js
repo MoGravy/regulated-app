@@ -7,6 +7,7 @@ import {
   skipOnboarding, enterProgram, watchConsole, expectNoConsoleErrors,
   noProductionWrites, asPremium, fakeAudio, storage,
 } from './helpers.js'
+import { SUPABASE_URL } from '../src/config/credentials.js'
 
 // Exactly what live production writes today. Nothing else exists for a
 // returning customer, so this is the real upgrade state.
@@ -390,4 +391,71 @@ test('a brand new visitor is taken through onboarding and out the other side', a
   await page.waitForLoadState('networkidle')
   await expect(page).toHaveURL(/\/$/)
   await expectNoConsoleErrors(errors)
+})
+
+// ---------------------------------------------------------------------------
+// Session-keyed premium. Signed in, the account is the identity: the token
+// goes with every premium check and a typed email cannot override it. Signed
+// out, the typed email still restores (overlap) and a sign-in link follows.
+// ---------------------------------------------------------------------------
+const AUTH_KEY = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`
+const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url')
+const FAKE_JWT = [
+  b64({ alg: 'HS256', typ: 'JWT' }),
+  b64({ sub: 'u1', email: 'account@example.com', role: 'authenticated', aud: 'authenticated', exp: 4102444800 }),
+  'sig',
+].join('.')
+const FAKE_USER = {
+  id: 'u1', email: 'account@example.com', aud: 'authenticated', role: 'authenticated',
+  app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z',
+}
+
+test('signed in, premium checks carry the session and ignore the typed email', async ({ page }) => {
+  await skipOnboarding(page)
+  await noProductionWrites(page)
+  await page.addInitScript(([k, t, u]) => {
+    localStorage.setItem(k, JSON.stringify({
+      access_token: t, refresh_token: 'r', token_type: 'bearer',
+      expires_at: 4102444800, expires_in: 3600, user: u,
+    }))
+  }, [AUTH_KEY, FAKE_JWT, FAKE_USER])
+
+  const checks = []
+  await page.route(/\/api\/check-subscription/, route => {
+    checks.push({ auth: route.request().headers().authorization, body: route.request().postDataJSON() })
+    route.fulfill({ status: 200, contentType: 'application/json', body: '{"active":true}' })
+  })
+  let otp = false
+  await page.route(/\/auth\/v1\/otp/, route => { otp = true; route.fulfill({ status: 200, body: '{}' }) })
+
+  await page.goto('/premium')
+  await expect(page.getByRole('heading', { name: 'You have premium' })).toBeVisible()
+  expect(checks.length).toBeGreaterThan(0)
+  for (const c of checks) {
+    expect(c.auth).toBe(`Bearer ${FAKE_JWT}`)
+    expect(c.body.email).toBe('account@example.com')
+  }
+  expect(otp, 'a signed-in restore must not send a sign-in link').toBe(false)
+})
+
+test('signed out, restore unlocks on the typed email and sends a sign-in link', async ({ page }) => {
+  await skipOnboarding(page)
+  await noProductionWrites(page)
+  await page.route(/\/api\/check-subscription/, route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '{"active":true}',
+  }))
+  const otp = []
+  await page.route(/\/auth\/v1\/otp/, route => {
+    otp.push(route.request().postDataJSON()?.email)
+    route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+  })
+
+  await page.goto('/premium')
+  await page.waitForLoadState('networkidle')
+  await page.locator('#premium-email').fill('buyer@example.com')
+  await page.getByRole('button', { name: 'Restore a purchase' }).click()
+
+  await expect(page.getByText(/emailed you a sign-in link/)).toBeVisible()
+  expect(otp).toEqual(['buyer@example.com'])
+  await expect(page.getByRole('heading', { name: 'You have premium' })).toBeVisible()
 })

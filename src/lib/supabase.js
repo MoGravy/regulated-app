@@ -145,6 +145,13 @@ export async function getCustomOrder(orderId) {
 // Subscription helpers
 // ---------------------------------------------------------------------------
 
+// Bearer header for the signed-in user, or nothing. The API keys premium on
+// this when it is present, so a typed email cannot stand in for an account.
+export async function authHeaders() {
+  const { data } = await supabase.auth.getSession()
+  return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {}
+}
+
 export async function checkSubscription(email) {
   if (!email) return false
 
@@ -152,7 +159,7 @@ export async function checkSubscription(email) {
   // used here always saw zero rows and every subscriber looked unpaid.
   const res = await fetch('/api/check-subscription', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
     body: JSON.stringify({ email }),
   })
   if (!res.ok) throw new Error(`check-subscription responded ${res.status}`)

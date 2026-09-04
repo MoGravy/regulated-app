@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
-import { supabase, trackSessionCompletion, SESSION_COLUMNS, getCachedSession } from '../lib/supabase'
+import { supabase, trackSessionCompletion, SESSION_COLUMNS, getCachedSession, authHeaders } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import { categoryOf } from '../lib/categories'
@@ -92,7 +92,7 @@ export default function SessionPlayer() {
       try {
         const res = await fetch('/api/get-audio-url', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
           body: JSON.stringify({ sessionId: session.id, email: userEmail }),
         })
         if (cancelled) return
