@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { getAllSessions } from '../lib/supabase'
 import { HARDCODED_SESSIONS } from '../lib/hardcodedSessions'
-import { chipStyle } from '../lib/categories'
+import { chipStyle, categoriesOf } from '../lib/categories'
 import SessionRow from '../components/SessionRow'
 
 export default function Sessions() {
@@ -35,16 +35,24 @@ export default function Sessions() {
   }
 
   // Chips come from the library itself, so a new category never needs a code
-  // change. Biggest families first, matching the design's curated order.
-  const counts = sessions.reduce((acc, s) => {
-    if (s.category) acc[s.category] = (acc[s.category] || 0) + 1
-    return acc
-  }, {})
-  const categories = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b))
+  // change. A session appears under its primary category and all of its tags.
+  // Counting is case-insensitive; the first spelling seen becomes the label.
+  const counts = {}
+  const labels = {}
+  for (const s of sessions) {
+    for (const c of categoriesOf(s)) {
+      const k = c.toLowerCase()
+      if (!(k in labels)) labels[k] = c
+      counts[k] = (counts[k] || 0) + 1
+    }
+  }
+  const categories = Object.keys(counts)
+    .sort((a, b) => counts[b] - counts[a] || labels[a].localeCompare(labels[b]))
+    .map(k => labels[k])
 
   const filtered = active === 'All'
     ? sessions
-    : sessions.filter(s => s.category?.toLowerCase() === active.toLowerCase())
+    : sessions.filter(s => categoriesOf(s).some(c => c.toLowerCase() === active.toLowerCase()))
 
   // Unlocked first, locked below — design 1d.
   const unlocked = filtered.filter(s => s.free || isPremium)

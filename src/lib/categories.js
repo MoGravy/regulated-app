@@ -39,3 +39,20 @@ export function chipStyle(category) {
   const { ink } = categoryOf(category)
   return { background: tint(ink, 0.1), border: `1px solid ${tint(ink, 0.22)}`, color: ink }
 }
+
+// Every category a session should appear under: its primary `category` first,
+// then any `tags`. Case-insensitive dedupe, original casing preserved. Safe on
+// rows with no tags, which includes every hardcoded fallback session.
+export function categoriesOf(session) {
+  const out = []
+  const seen = new Set()
+  for (const c of [session?.category, ...(session?.tags || [])]) {
+    const v = String(c || '').trim()
+    if (!v) continue
+    const k = v.toLowerCase()
+    if (seen.has(k)) continue
+    seen.add(k)
+    out.push(v)
+  }
+  return out
+}
