@@ -1,17 +1,9 @@
-// Lightweight analytics — sends events to Supabase
-import { supabase } from './supabase'
-
-export async function trackEvent(name, properties = {}) {
-  try {
-    await supabase.from('analytics_events').insert({
-      event_name: name,
-      properties,
-      created_at: new Date().toISOString(),
-    })
-  } catch {
-    // Non-critical — fail silently
-  }
-}
+// ponytail: analytics went nowhere. The insert targeted an analytics_events
+// table that was never created in production, so every session start and
+// every checkout click produced a 404 in the console. Stripe already records
+// purchases. Call sites stay; give this a real destination if the data is
+// ever wanted.
+export async function trackEvent() {}
 
 export const Events = {
   SESSION_STARTED: 'session_started',
