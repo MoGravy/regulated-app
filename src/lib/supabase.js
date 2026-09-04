@@ -154,12 +154,16 @@ export async function authHeaders() {
 
 export async function checkSubscription(email) {
   if (!email) return false
+  // Signed out, there is nothing to check: the server only trusts a session
+  // token, so a typed email alone can never be premium.
+  const headers = await authHeaders()
+  if (!headers.Authorization) return false
 
   // Server-side: the subscriptions table is RLS-locked, so the public key
   // used here always saw zero rows and every subscriber looked unpaid.
   const res = await fetch('/api/check-subscription', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify({ email }),
   })
   if (!res.ok) throw new Error(`check-subscription responded ${res.status}`)

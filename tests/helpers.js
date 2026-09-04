@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test'
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../src/config/credentials.js'
 
 export const HAS_API = !!process.env.BASE_URL && !process.env.BASE_URL.includes('localhost')
 
@@ -50,16 +51,49 @@ export async function noProductionWrites(page) {
   const attempted = []
   await page.route(/\/rest\/v1\/|\/rpc\//, route => {
     const req = route.request()
-    if (req.method() === 'GET' || req.method() === 'HEAD') return route.continue()
+    if (req.method() === 'GET' || req.method() === 'HEAD') return route.fallback()
     attempted.push(`${req.method()} ${new URL(req.url()).pathname}`)
     route.fulfill({ status: 201, contentType: 'application/json', body: '[]' })
   })
   return attempted
 }
 
-// A premium customer, as the app sees one: an email in localStorage and an
-// active row coming back from the subscriptions check. Nothing touches Stripe.
-export async function asPremium(page, email = 'premium@example.com') {
+// A fake Supabase session, so the app loads signed in as FAKE_USER. The token
+// is never sent anywhere real: tests that use it stub the API routes.
+const AUTH_KEY = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`
+const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url')
+export const FAKE_JWT = [
+  b64({ alg: 'HS256', typ: 'JWT' }),
+  b64({ sub: 'u1', email: 'account@example.com', role: 'authenticated', aud: 'authenticated', exp: 4102444800 }),
+  'sig',
+].join('.')
+export const FAKE_USER = {
+  id: 'u1', email: 'account@example.com', aud: 'authenticated', role: 'authenticated',
+  app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z',
+}
+export async function signedIn(page) {
+  await page.addInitScript(([k, t, u]) => {
+    localStorage.setItem(k, JSON.stringify({
+      access_token: t, refresh_token: 'r', token_type: 'bearer',
+      expires_at: 4102444800, expires_in: 3600, user: u,
+    }))
+  }, [AUTH_KEY, FAKE_JWT, FAKE_USER])
+  // PostgREST would reject the fake token and the library would fall back to
+  // the hardcoded list, so reads go out as the public role and writes stay
+  // local. The token still reaches /api/* routes, which every test stubs.
+  await page.route(/\/rest\/v1\/|\/rpc\//, route => {
+    const req = route.request()
+    if (req.method() === 'GET' || req.method() === 'HEAD') {
+      return route.continue({ headers: { ...req.headers(), authorization: `Bearer ${SUPABASE_ANON_KEY}` } })
+    }
+    route.fulfill({ status: 201, contentType: 'application/json', body: '[]' })
+  })
+}
+
+// A premium customer, as the app sees one: signed in, with an active row
+// coming back from the subscriptions check. Nothing touches Stripe.
+export async function asPremium(page, email = FAKE_USER.email) {
+  await signedIn(page)
   await page.addInitScript(e => {
     localStorage.setItem('regulated_onboarding', 'true')
     localStorage.setItem('regulated_email', JSON.stringify(e))
