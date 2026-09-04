@@ -68,7 +68,7 @@ export async function trackSessionCompletion(sessionId, userEmail, moodBefore, m
 // Premium audio is served via /api/get-audio-url (subscription-checked,
 // 2h signed URL). has_audio is a generated column standing in for the old
 // "!audio_url = coming soon" check.
-export const SESSION_COLUMNS = 'id, title, description, category, duration, free, created_at, preview_url, has_audio'
+export const SESSION_COLUMNS = 'id, title, description, category, duration, free, created_at, preview_url, has_audio, tags'
 
 // Module-level cache: the library is fetched once per page load, not on every
 // tab switch. Cleared by a full reload; fallback results are never cached.
