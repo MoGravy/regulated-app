@@ -82,13 +82,9 @@ vercel dev
 
 ## Deploying to Vercel
 
-```bash
-npm i -g vercel
-vercel login
-vercel --prod
-```
+The Vercel project is linked to the GitHub repo. A push to `main` deploys production; every other branch gets a preview URL on its pull request. Do not run `vercel --prod` by hand.
 
-Then in **Vercel Dashboard → Project → Settings → Environment Variables**, add every variable from `.env.example`.
+In **Vercel Dashboard → Project → Settings → Environment Variables**, add every variable from `.env.example`.
 
 Key ones needed in Vercel (not prefixed with VITE_):
 - `STRIPE_SECRET_KEY`
@@ -101,9 +97,13 @@ Key ones needed in Vercel (not prefixed with VITE_):
 
 ## How to Add New Sessions
 
+Fastest way: `node scripts/add-session.mjs ./anxiety-release.mp3 --title "Anxiety Release" --category Anxiety --duration 20 --description "Brief description"`. It uploads the file, writes the row with the right `audio_url`, and `--dry-run` shows what it would do first. Add `--free true` for a free session.
+
+By hand:
+
 1. Record your MP3 audio file.
-2. Upload to Supabase Storage: **Storage → audio → sessions → Upload file**
-3. Note the file path, e.g. `sessions/anxiety-release.mp3`
+2. Upload to Supabase Storage: **Storage → sessions → Upload file**. The bucket is `sessions` and the file sits at the root of it, not inside a folder.
+3. Copy the file's URL (click the file, then **Copy URL**). It looks like `https://<project>.supabase.co/storage/v1/object/public/sessions/anxiety-release.mp3`.
 4. In **Supabase → Table Editor → sessions**, click Insert Row:
 
 | Field | Value |
@@ -111,12 +111,18 @@ Key ones needed in Vercel (not prefixed with VITE_):
 | title | Anxiety Release |
 | description | Brief description |
 | category | Anxiety |
-| duration | 20 |
+| tags | Optional extra categories, comma separated, e.g. `Sleep, Stress` |
+| duration | 20 (whole minutes, just the number) |
 | free | false |
-| audio_url | `sessions/anxiety-release.mp3` |
-| sort_order | 10 |
+| audio_url | the full URL from step 3 |
 
-The app will immediately serve this session to premium users.
+Things that break it:
+
+- `audio_url` must be the full URL. A bare path like `sessions/anxiety-release.mp3` is rejected by the audio endpoint and the player shows "Audio misconfigured".
+- `duration` is an integer of minutes, not `20:00` or `20 min`.
+- Signed URL expiry does not matter. `api/get-audio-url.js` signs a fresh two hour URL on every play.
+
+Sessions are listed in the order they were created. The app serves the new session to premium users as soon as the row is saved.
 
 ---
 
