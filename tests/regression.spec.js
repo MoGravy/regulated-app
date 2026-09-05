@@ -238,9 +238,8 @@ test('a session played to the end is marked complete and leaves Continue listeni
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
 
   // The silent WAV is half a second, so the end arrives on its own.
-  await expect(page.getByRole('heading', { name: 'And now?' })).toBeVisible({ timeout: 20_000 })
-  await page.getByRole('button', { name: '6 out of 10' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 20_000 })
+  await page.getByRole('button', { name: 'Calmer' }).click()
   await expect(page.getByRole('heading', { name: 'That is done.' })).toBeVisible()
 
   const after = await storage(page)
@@ -331,9 +330,8 @@ test('finishing the day the program is waiting on advances it by exactly one', a
   await page.getByRole('button', { name: /Start today's session/ }).click()
   await page.getByRole('button', { name: 'Start session' }).click()
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
-  await expect(page.getByRole('heading', { name: 'And now?' })).toBeVisible({ timeout: 20_000 })
-  await page.getByRole('button', { name: '7 out of 10' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 20_000 })
+  await page.getByRole('button', { name: 'Calmer' }).click()
   await expect(page.getByRole('heading', { name: 'That is done.' })).toBeVisible()
 
   expect(JSON.parse((await storage(page)).regulated_program_day)).toBe(1)
@@ -349,9 +347,8 @@ test('listening ahead in Browse does not skip a program day', async ({ page }) =
   const AHEAD = 'ca65ecd1-8ade-4a6e-915e-84810f8b26cb'
   await page.goto(`/sessions/${AHEAD}/play`)
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
-  await expect(page.getByRole('heading', { name: 'And now?' })).toBeVisible({ timeout: 20_000 })
-  await page.getByRole('button', { name: '6 out of 10' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 20_000 })
+  await page.getByRole('button', { name: 'Calmer' }).click()
   await expect(page.getByRole('heading', { name: 'That is done.' })).toBeVisible()
 
   const after = await storage(page)

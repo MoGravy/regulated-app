@@ -10,7 +10,7 @@ import MoodTracker from '../components/MoodTracker'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
 import { haptic } from '../lib/haptic'
 
-const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', COMPLETE: 'complete', POST_MOOD: 'post_mood', DONE: 'done' }
+const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', COMPLETE: 'complete', CHECKOUT: 'checkout', DONE: 'done' }
 
 export default function SessionPlayer() {
   const { id } = useParams()
@@ -149,7 +149,7 @@ export default function SessionPlayer() {
   // The completion moment holds for two seconds, then the check-out.
   useEffect(() => {
     if (step !== STEP.COMPLETE) return
-    const t = setTimeout(() => setStep(STEP.POST_MOOD), 2600)
+    const t = setTimeout(() => setStep(STEP.CHECKOUT), 2600)
     return () => clearTimeout(t)
   }, [step])
 
@@ -184,10 +184,14 @@ export default function SessionPlayer() {
     trackEvent(Events.MOOD_TRACKED, { type: 'before', value: mood, session_title: session?.title })
   }
 
-  function handlePostMood(mood) {
+  // Code handoff item 7: one tap, preference language, and the answer travels
+  // as an anonymous event only. The completion row keeps its shape; mood_after
+  // is simply null from here on.
+  function handleCheckOut(answer) {
+    haptic()
     markSessionComplete(session?.id)
-    trackSessionCompletion(null, userEmail, moodBefore, mood)
-    trackEvent(Events.MOOD_TRACKED, { type: 'after', value: mood, session_title: session?.title })
+    trackSessionCompletion(null, userEmail, moodBefore, null)
+    trackEvent(Events.SESSION_CHECKOUT, { answer, session_title: session?.title })
     setStep(STEP.DONE)
     setTimeout(() => setShowCustomPrompt(true), 800)
   }
@@ -327,8 +331,23 @@ export default function SessionPlayer() {
         </div>
       )}
 
-      {step === STEP.POST_MOOD && (
-        <MoodTracker label="And now?" onSubmit={handlePostMood} />
+      {step === STEP.CHECKOUT && (
+        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
+          <h1 style={{ font: '300 32px/38px var(--font-display)', color: 'var(--player-title)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
+            How does your system feel now?
+          </h1>
+          <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {['Calmer', 'About the same', 'Not sure'].map(answer => (
+              <button
+                key={answer}
+                onClick={() => handleCheckOut(answer)}
+                style={{ height: 52, borderRadius: 'var(--r-row)', border: '1px solid var(--player-track)', background: 'transparent', color: 'var(--player-body)', font: '400 16px/22px var(--font-ui)', cursor: 'pointer', textAlign: 'left', padding: '0 18px' }}
+              >
+                {answer}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {step === STEP.DONE && (

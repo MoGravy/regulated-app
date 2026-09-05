@@ -15,5 +15,6 @@ export const Events = {
   PREMIUM_UPGRADE_COMPLETED: 'premium_upgrade_completed',
   MOOD_TRACKED: 'mood_tracked',
   CHECKIN_TAP: 'checkin_tap',
+  SESSION_CHECKOUT: 'session_checkout',
   ONBOARDING_COMPLETED: 'onboarding_completed',
 }
