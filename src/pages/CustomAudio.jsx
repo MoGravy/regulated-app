@@ -4,6 +4,7 @@ import { goBack } from '../lib/back'
 import { trackEvent, Events } from '../lib/analytics'
 import { useApp } from '../hooks/useApp'
 import { stripePromise } from '../lib/stripe'
+import { authHeaders } from '../lib/supabase'
 import CouponField from '../components/CouponField'
 import Texture from '../components/Texture'
 import { CUSTOM_AUDIO_PRICE as PRICE } from '../config/pricing'
@@ -78,7 +79,7 @@ export default function CustomAudio() {
       // webhook creates the confirmed order in the database after payment.
       const res = await fetch('/api/create-checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
           type: 'custom_audio',
           email: form.email,

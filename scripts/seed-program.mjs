@@ -122,6 +122,7 @@ const [program] = await rest('programs?on_conflict=slug', {
     title: map.program.title,
     subtitle: map.program.subtitle,
     approved: map.approved === true,
+    day_zero_session_id: map.day_zero?.session_id || null,
   }]),
 })
 console.log(`program ${program.slug} upserted (approved=${program.approved})`)
@@ -132,6 +133,7 @@ const rows = days.map(d => ({
   day: d.day,
   session_id: d.session_id,
   reading: d.reading || null,
+  entry_track: d.entry_track || null,
 }))
 
 const written = await rest('program_days?on_conflict=program_id,week,day', {

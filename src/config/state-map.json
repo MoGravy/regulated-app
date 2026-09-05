@@ -1,0 +1,33 @@
+{
+  "_note": "The Check-In map. Edit freely: label is the pill, reason is the one line above the matched card(s), sessions are session ids in priority order (1 or 2). Icons are Phosphor names wired in src/components/CheckIn.jsx. No scoring, no history: this file is the whole feature's data.",
+  "wired": {
+    "label": "Wired",
+    "icon": "Lightning",
+    "reason": "For a system that won't switch off",
+    "sessions": ["a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442", "4475ddc0-202f-4775-872b-366e39681932"]
+  },
+  "foggy": {
+    "label": "Foggy",
+    "icon": "CloudFog",
+    "reason": "For when there is nothing left in the tank",
+    "sessions": ["7a875d14-f77e-47e9-8ff3-16d5db08d2e6", "9b728124-eb92-4236-9968-ebd923773367"]
+  },
+  "tense": {
+    "label": "Tense",
+    "icon": "Wind",
+    "reason": "For a body that is holding on",
+    "sessions": ["c2dfc5fe-8a2c-444f-8c9c-f8ae0e3f2a84", "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442"]
+  },
+  "sleep": {
+    "label": "Can't sleep",
+    "icon": "MoonStars",
+    "reason": "For a night that will not settle",
+    "sessions": ["ca65ecd1-8ade-4a6e-915e-84810f8b26cb", "8c7cf64a-0f92-4e97-96ef-3b74f468e1bc"]
+  },
+  "checkin": {
+    "label": "Just checking in",
+    "icon": "HandWaving",
+    "reason": "Your daily reset",
+    "sessions": ["7a875d14-f77e-47e9-8ff3-16d5db08d2e6"]
+  }
+}

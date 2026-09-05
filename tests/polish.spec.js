@@ -54,7 +54,7 @@ for (const [tag, prep] of [['B', async () => {}], ['D', accentD]]) {
       await expect(page.getByRole('heading', { name: /of your practice/ })).toBeVisible({ timeout: 10_000 })
       await page.waitForTimeout(700)
       await shot(page, `${tag}-player-ended`)
-      await expect(page.getByRole('heading', { name: 'And now?' })).toBeVisible({ timeout: 10_000 })
+      await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 10_000 })
       await shot(page, `${tag}-player-checkout`)
     })
   })

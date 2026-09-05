@@ -6,6 +6,16 @@
     "title": "Six weeks",
     "subtitle": "One session a day. Miss a day and the week waits for you."
   },
+  "tracks": [
+    "sleep",
+    "anxiety",
+    "stress"
+  ],
+  "day_zero": {
+    "session_id": null,
+    "session_title": "",
+    "note": "Quick win before Day 1. Empty until Matthew picks it."
+  },
   "weeks": [
     {
       "week": 1,

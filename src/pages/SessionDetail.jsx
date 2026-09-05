@@ -7,6 +7,7 @@ import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import { categoryOf, tint } from '../lib/categories'
 import Texture from '../components/Texture'
 import { haptic } from '../lib/haptic'
+import Waitlist from '../components/Waitlist'
 
 export default function SessionDetail() {
   const { id } = useParams()
@@ -123,11 +124,15 @@ export default function SessionDetail() {
       </div>
 
       <div className="footer-cta footer-cta-lifted">
-        <button className="btn-primary btn-lg" onClick={start} disabled={comingSoon}>
-          {comingSoon ? 'Coming soon' : isLocked ? 'Unlock with premium' : 'Start session'}
-        </button>
+        {comingSoon ? (
+          <Waitlist session={session} />
+        ) : (
+          <button className="btn-primary btn-lg" onClick={start}>
+            {isLocked ? 'Unlock with premium' : 'Start session'}
+          </button>
+        )}
         <div style={{ marginTop: 12, textAlign: 'center' }} className="t-caption">
-          {session.free ? 'Free' : 'Included in premium'} · {session.duration} min
+          {comingSoon ? 'Not recorded yet' : session.free ? 'Free' : 'Included in premium'} · {session.duration} min
         </div>
       </div>
     </div>
