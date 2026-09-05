@@ -223,8 +223,11 @@ export default function SessionPlayer() {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
   }
 
+  // Pop, never push: pushing the session page here left back leading
+  // straight into the player again. A deep link has nothing to pop to.
   function close() {
-    navigate(session ? `/sessions/${session.id}` : '/sessions')
+    if (window.history.state?.idx > 0) return navigate(-1)
+    navigate('/sessions')
   }
 
   // ---------------------------------------------------------------------------
