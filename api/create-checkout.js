@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
+import { annualFreeCheck, ANNUAL_FREE } from './_annualfree.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
@@ -46,7 +47,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const {
+  let {
     type, email, plan,
     couponCode,
     // Custom audio order fields (stored in metadata; webhook creates DB row after payment)
@@ -72,6 +73,12 @@ export default async function handler(req, res) {
       appliedCoupon = await lookupCoupon(couponCode)
       if (!appliedCoupon) {
         return res.status(400).json({ error: 'Invalid or expired coupon code' })
+      }
+      if (appliedCoupon.code === ANNUAL_FREE) {
+        const gate = await annualFreeCheck(req)
+        if (gate.error) return res.status(403).json({ error: gate.error })
+        // The free session belongs to the account that earned it.
+        email = gate.email
       }
       const stripeCoupon = await stripe.coupons.create({
         name: appliedCoupon.code,
