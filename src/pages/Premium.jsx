@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
-import { upsertUser, checkSubscription, sendMagicLink } from '../lib/supabase'
+import { upsertUser, checkSubscription, sendMagicLink, getAllSessions } from '../lib/supabase'
 import { stripePromise } from '../lib/stripe'
 import { PROGRAM_APPROVED } from '../config/program'
 import { haptic } from '../lib/haptic'
-import { ANNUAL_FOUNDING_PRICE, MONTHLY_PRICE, CUSTOM_AUDIO_PRICE } from '../config/pricing'
+import { ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE, LIBRARY_TARGET, MONTHLY_PRICE, CUSTOM_AUDIO_PRICE } from '../config/pricing'
 
 // Three price points, annual first. The design marks the preferred card by
 // border weight only — no badge, no countdown, no struck-through price.
@@ -16,6 +16,8 @@ const PLANS = [
     id: 'annual',
     label: 'Annual, founding rate',
     price: ANNUAL_FOUNDING_PRICE,
+    headline: 'Includes a custom session built for you',
+    guarantee: 'Complete the 6-week program. If you do not feel a difference, full refund.',
     note: `$${(ANNUAL_FOUNDING_PRICE / 12).toFixed(2)} a month, billed once a year. The founding rate stays at $${ANNUAL_FOUNDING_PRICE} for as long as you keep the subscription.`,
   },
   {
@@ -30,6 +32,14 @@ export default function Premium() {
   const navigate = useNavigate()
   const { isPremium, userEmail, setUserEmail, addToast, setIsPremium, authUser } = useApp()
   const [selectedPlan, setSelectedPlan] = useState('annual')
+  // Live count of sessions with audio, for the counter. Null until it lands,
+  // and the line simply waits rather than showing a wrong number.
+  const [withAudio, setWithAudio] = useState(null)
+  useEffect(() => {
+    getAllSessions()
+      .then(rows => setWithAudio(rows.filter(s => s.has_audio).length))
+      .catch(err => console.error('[Premium] getAllSessions failed:', JSON.stringify(err, Object.getOwnPropertyNames(err))))
+  }, [])
   const [email, setEmail] = useState(userEmail || '')
   const [emailError, setEmailError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -151,9 +161,14 @@ export default function Premium() {
           Premium
         </h1>
         <p style={{ margin: '0 0 18px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-          All 13 sessions{PROGRAM_APPROVED ? ' and the six-week program' : ''}. New sessions are added
-          monthly, on the way to 40. Cancel any time.
+          Every session{PROGRAM_APPROVED ? ' and the six-week program' : ''}. New sessions are added
+          monthly. Cancel any time.
         </p>
+        {withAudio !== null && (
+          <p className="t-caption" style={{ margin: '0 0 18px' }} data-testid="library-counter">
+            {withAudio} of {LIBRARY_TARGET} sessions until the price rises to ${ANNUAL_FULL_PRICE}
+          </p>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {PLANS.map(plan => (
@@ -173,9 +188,15 @@ export default function Premium() {
                 <span style={{ font: '400 21px/28px var(--font-display)', color: 'var(--ink)' }}>{plan.label}</span>
                 <span style={{ font: '500 17px/24px var(--font-ui)', color: 'var(--ink)' }}>${plan.price}</span>
               </div>
+              {plan.headline && (
+                <div style={{ marginTop: 6, font: '500 14px/20px var(--font-ui)', color: 'var(--ink)' }}>{plan.headline}</div>
+              )}
               <div style={{ marginTop: 6, font: '400 13px/19px var(--font-ui)', color: 'var(--ink-muted)' }}>
                 {plan.note}
               </div>
+              {plan.guarantee && (
+                <div style={{ marginTop: 8, font: '400 13px/19px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>{plan.guarantee}</div>
+              )}
             </button>
           ))}
 
