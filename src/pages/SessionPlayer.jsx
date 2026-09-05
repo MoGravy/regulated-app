@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import { supabase, trackSessionCompletion, SESSION_COLUMNS, getCachedSession, authHeaders } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
@@ -7,13 +8,14 @@ import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import { categoryOf } from '../lib/categories'
 import MoodTracker from '../components/MoodTracker'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
+import { haptic } from '../lib/haptic'
 
-const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', POST_MOOD: 'post_mood', DONE: 'done' }
+const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', COMPLETE: 'complete', POST_MOOD: 'post_mood', DONE: 'done' }
 
 export default function SessionPlayer() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { userEmail, markSessionComplete, saveProgress } = useApp()
+  const { userEmail, markSessionComplete, saveProgress, completedSessions } = useApp()
 
   const [session, setSession] = useState(null)
   const [audioUrl, setAudioUrl] = useState(null)
@@ -138,11 +140,18 @@ export default function SessionPlayer() {
       if (elapsed >= (duration || 1200)) {
         clearInterval(timerRef.current)
         setIsPlaying(false)
-        setStep(STEP.POST_MOOD)
+        setStep(STEP.COMPLETE)
       }
     }, 500)
     return () => clearInterval(timerRef.current)
   }, [isPlaying, step, duration])
+
+  // The completion moment holds for two seconds, then the check-out.
+  useEffect(() => {
+    if (step !== STEP.COMPLETE) return
+    const t = setTimeout(() => setStep(STEP.POST_MOOD), 2600)
+    return () => clearTimeout(t)
+  }, [step])
 
   // Wake lock — request when playing, release on pause/end/unmount
   useEffect(() => {
@@ -186,6 +195,7 @@ export default function SessionPlayer() {
   function togglePlay() {
     const a = audioRef.current
     if (!a) return
+    haptic()
     if (isPlaying) { a.pause(); setIsPlaying(false) }
     else { a.play().catch(() => {}); setIsPlaying(true) }
   }
@@ -214,15 +224,17 @@ export default function SessionPlayer() {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
   }
 
+  // Pop, never push: pushing the session page here left back leading
+  // straight into the player again. A deep link has nothing to pop to.
   function close() {
-    navigate(session ? `/sessions/${session.id}` : '/sessions')
+    goBack(navigate, '/sessions')
   }
 
   // ---------------------------------------------------------------------------
   if (loadError) {
     return (
       <Shell>
-        <div style={{ margin: 'auto', textAlign: 'center', padding: 32 }}>
+        <div style={{ position: 'relative', margin: 'auto', textAlign: 'center', padding: 32 }}>
           <div style={{ font: '400 21px/28px var(--font-display)', color: 'var(--player-title)' }}>Session not found</div>
           <button
             onClick={() => navigate('/sessions')}
@@ -236,18 +248,27 @@ export default function SessionPlayer() {
   }
 
   if (!session) {
-    return <Shell><div style={{ margin: 'auto' }}><div className="spinner" /></div></Shell>
+    return (
+      <Shell>
+        <div aria-busy="true" style={{ position: 'relative', margin: 'auto 0', padding: '0 32px' }}>
+          <div className="skeleton skeleton-dark" style={{ width: 60, height: 14 }} />
+          <div className="skeleton skeleton-dark" style={{ width: '80%', height: 40, marginTop: 14 }} />
+          <div className="skeleton skeleton-dark" style={{ width: '60%', height: 40, marginTop: 6 }} />
+          <div className="skeleton skeleton-dark" style={{ width: '70%', height: 16, marginTop: 20 }} />
+        </div>
+      </Shell>
+    )
   }
 
   if (audioError) {
     return (
       <Shell>
-        <div style={{ margin: 'auto', textAlign: 'center', padding: 32 }}>
+        <div style={{ position: 'relative', margin: 'auto', textAlign: 'center', padding: 32 }}>
           <div style={{ font: '400 21px/28px var(--font-display)', color: 'var(--player-title)' }}>
-            The audio would not load
+            Take a breath. The audio is not here yet.
           </div>
-          <p style={{ margin: '12px 0 24px', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)' }}>
-            The session is fine. This was the connection. Try again.
+          <p style={{ margin: '12px 0 24px', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)', textWrap: 'pretty' }}>
+            Your session is safe. This is usually the connection. When you are ready, try again.
           </p>
           <button
             onClick={() => { setAudioError(null); setRetry(n => n + 1) }}
@@ -279,7 +300,7 @@ export default function SessionPlayer() {
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onLoadedMetadata={e => { if (Number.isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration) }}
-          onEnded={() => { setIsPlaying(false); setStep(STEP.POST_MOOD) }}
+          onEnded={() => { setIsPlaying(false); setStep(STEP.COMPLETE) }}
         />
       )}
 
@@ -295,6 +316,15 @@ export default function SessionPlayer() {
 
       {step === STEP.PRE_MOOD && (
         <MoodTracker label="Before we start, where are you now?" onSubmit={handlePreMood} optional />
+      )}
+
+      {step === STEP.COMPLETE && (
+        <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px', textAlign: 'center' }}>
+          <div className="bloom" aria-hidden="true" />
+          <h1 className="fade-in" style={{ position: 'relative', font: '300 32px/38px var(--font-display)', color: 'var(--player-title)', animationDelay: '600ms' }}>
+            Day {completedSessions.includes(session.id) ? completedSessions.length : completedSessions.length + 1} of your practice
+          </h1>
+        </div>
       )}
 
       {step === STEP.POST_MOOD && (
@@ -328,6 +358,7 @@ export default function SessionPlayer() {
 
       {step === STEP.PLAYING && (
         <>
+          <div className="player-glow" data-playing={isPlaying} aria-hidden="true" />
           <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
             <div style={{ font: '400 13px/18px var(--font-ui)', color: 'var(--player-faint)' }}>{label}</div>
             <h1 style={{ margin: '10px 0 0', font: '300 36px/43px var(--font-display)', color: 'var(--player-title)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
@@ -387,7 +418,7 @@ export default function SessionPlayer() {
 function Shell({ children }) {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--player-bg)', position: 'relative', display: 'flex', flexDirection: 'column', color: 'var(--player-body)', overflow: 'hidden' }}>
-      <div aria-hidden="true" className="blob blob-a" style={{ position: 'absolute', width: 320, height: 260, left: -60, top: 120, background: 'var(--player-blob-a)', filter: 'blur(40px)' }} />
+      <div aria-hidden="true" className="blob blob-a blob-drift" style={{ position: 'absolute', width: 320, height: 260, left: -60, top: 120, background: 'var(--player-blob-a)', filter: 'blur(40px)' }} />
       <div aria-hidden="true" className="blob blob-b" style={{ position: 'absolute', width: 240, height: 200, right: -50, bottom: 180, background: 'var(--player-blob-b)', filter: 'blur(36px)' }} />
       {children}
     </div>

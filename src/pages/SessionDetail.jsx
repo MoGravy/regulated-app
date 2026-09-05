@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import { supabase, SESSION_COLUMNS, getCachedSession } from '../lib/supabase'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import { categoryOf, tint } from '../lib/categories'
 import Texture from '../components/Texture'
+import { haptic } from '../lib/haptic'
 
 export default function SessionDetail() {
   const { id } = useParams()
@@ -47,7 +49,18 @@ export default function SessionDetail() {
   }
 
   if (!session) {
-    return <div className="page-plain" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+    return (
+      <div className="page-plain" aria-busy="true">
+        <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
+        <div className="skeleton" style={{ height: 240, borderRadius: 0 }} />
+        <div style={{ padding: '20px 24px' }}>
+          <div className="skeleton" style={{ width: 72, height: 26, borderRadius: 'var(--r-pill)' }} />
+          <div className="skeleton" style={{ width: '70%', height: 32, marginTop: 14 }} />
+          <div className="skeleton" style={{ width: '45%', height: 16, marginTop: 8 }} />
+          <div className="skeleton" style={{ height: 72, marginTop: 18 }} />
+        </div>
+      </div>
+    )
   }
 
   const { ink, label, icon: Icon } = categoryOf(session.category)
@@ -63,16 +76,17 @@ export default function SessionDetail() {
   function start() {
     if (comingSoon) return
     if (isLocked) return navigate('/premium')
+    haptic()
     navigate(`/sessions/${session.id}/play`)
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100dvh', background: 'var(--bg)' }}>
-      <div className="status-bar"><span /><span>Regulated</span></div>
+      <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div className="texture" style={{ flex: 'none', height: 240, background: tint(ink, 0.1) }}>
         <Texture ink={ink} variant="header" />
-        <button className="btn-icon" onClick={() => navigate(-1)} aria-label="Back" style={{ position: 'absolute', left: 12, top: 8 }}>
+        <button className="btn-icon" onClick={() => goBack(navigate, '/sessions')} aria-label="Back" style={{ position: 'absolute', left: 12, top: 8 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M10 3l-5 5 5 5" stroke="var(--ink)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
           </svg>

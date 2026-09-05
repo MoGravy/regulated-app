@@ -22,10 +22,6 @@ function LockGlyph() {
   )
 }
 
-function StopGlyph() {
-  return <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--ink-faint)' }} />
-}
-
 // ponytail: module-level singleton — one preview plays at a time app-wide
 let stopActivePreview = null
 
@@ -33,6 +29,7 @@ export default function SessionRow({ session }) {
   const navigate = useNavigate()
   const { completedSessions, isPremium, progress } = useApp()
   const [previewing, setPreviewing] = useState(false)
+  const [ended, setEnded] = useState(false)
   const audioRef = useRef(null)
 
   useEffect(() => () => audioRef.current?.pause(), [])
@@ -68,7 +65,12 @@ export default function SessionRow({ session }) {
     const audio = new Audio(session.preview_url)
     audioRef.current = audio
     stopActivePreview = () => { audio.pause(); setPreviewing(false) }
-    audio.onended = () => { audioRef.current = null; stopActivePreview = null; setPreviewing(false) }
+    // The last second fades out, then the meta line crossfades to the ask.
+    audio.ontimeupdate = () => { const left = audio.duration - audio.currentTime; if (left < 1) audio.volume = Math.max(0, left) }
+    audio.onended = () => {
+      audioRef.current = null; stopActivePreview = null; setPreviewing(false)
+      setEnded(true); setTimeout(() => setEnded(false), 4000)
+    }
     audio.play().catch(() => setPreviewing(false))
     setPreviewing(true)
   }
@@ -99,7 +101,7 @@ export default function SessionRow({ session }) {
           aria-label={previewing ? `Stop preview of ${session.title}` : `Play 30 second preview of ${session.title}`}
           style={{ background: 'transparent', cursor: 'pointer' }}
         >
-          {previewing ? <StopGlyph /> : <LockGlyph />}
+          {previewing ? <span className="bars" style={{ color: ink }}><span /><span /><span /></span> : <LockGlyph />}
         </button>
       ) : (
         <div
@@ -114,8 +116,8 @@ export default function SessionRow({ session }) {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="row-title">{session.title}</div>
-        <div className="row-meta">
-          {meta}{isCompleted && !inProgress ? ' · Done' : ''}
+        <div className="row-meta fade-in" key={ended ? 'ask' : 'meta'} style={ended ? { color: ink } : undefined}>
+          {ended ? 'Unlock the full session' : `${meta}${isCompleted && !inProgress ? ' · Done' : ''}`}
         </div>
         {inProgress && (
           <div className="track" style={{ marginTop: 7 }}>

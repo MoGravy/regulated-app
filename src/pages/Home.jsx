@@ -8,6 +8,7 @@ import { programUnlocked, programAt, programWeeks } from '../config/program'
 import DayDots from '../components/DayDots'
 import SessionRow from '../components/SessionRow'
 import Texture from '../components/Texture'
+import { haptic } from '../lib/haptic'
 
 function greeting() {
   const h = new Date().getHours()
@@ -75,9 +76,10 @@ export default function Home() {
 
   return (
     <div className="page">
-      <div className="status-bar"><span /><span>Regulated</span></div>
+      <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
-      <div className="page-content" style={{ paddingTop: 8 }}>
+      <div className="page-content" style={{ paddingTop: 8, position: 'relative' }}>
+        <Texture ink="#24344D" variant="page" drift />
         <div className="t-caption">{whenLabel()}</div>
         <h1 style={{ margin: '4px 0 20px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em' }}>
           {greeting()}
@@ -165,7 +167,7 @@ function ResumeCard({ resume, onPlay }) {
         <button
           className="btn-play"
           style={{ width: 52, height: 52 }}
-          onClick={onPlay}
+          onClick={() => { haptic(); onPlay() }}
           aria-label={`Resume ${session.title}`}
         >
           <svg width="15" height="18" viewBox="0 0 15 18" aria-hidden="true">
@@ -290,7 +292,7 @@ function Today({ day, session, week, doneCount, finished, navigate }) {
             <button
               className="btn-play"
               style={{ width: 56, height: 56 }}
-              onClick={() => navigate(`/sessions/${session.id}`)}
+              onClick={() => { haptic(); navigate(`/sessions/${session.id}`) }}
               aria-label={`Start today's session, ${session.title}`}
             >
               <svg width="17" height="20" viewBox="0 0 17 20" aria-hidden="true">

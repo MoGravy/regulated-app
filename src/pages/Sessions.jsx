@@ -11,6 +11,7 @@ export default function Sessions() {
   const [params, setParams] = useSearchParams()
   const [sessions, setSessions] = useState(HARDCODED_SESSIONS)
   const [loading, setLoading] = useState(true)
+  const [offline, setOffline] = useState(false)
 
   const active = params.get('category') || 'All'
 
@@ -29,6 +30,7 @@ export default function Sessions() {
     } catch (err) {
       console.error('[Sessions] getAllSessions threw — keeping hardcoded fallback:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
       setSessions(HARDCODED_SESSIONS)
+      setOffline(!navigator.onLine)
     } finally {
       setLoading(false)
     }
@@ -65,7 +67,7 @@ export default function Sessions() {
 
   return (
     <div className="page">
-      <div className="status-bar"><span /><span>Regulated</span></div>
+      <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div style={{ padding: '8px 20px 12px', maxWidth: 480, margin: '0 auto' }}>
         <h1 style={{ margin: '0 0 14px', font: '300 30px/36px var(--font-display)' }}>Library</h1>
@@ -97,14 +99,23 @@ export default function Sessions() {
       </div>
 
       <div className="page-content">
+        {offline && (
+          <div className="card-flat fade-in" style={{ marginBottom: 12 }}>
+            <div className="t-title">You are offline</div>
+            <p className="t-caption" style={{ marginTop: 4 }}>Nothing is lost. The library comes back with the connection.</p>
+            <button className="btn-ghost" style={{ height: 40, justifyContent: 'flex-start' }} onClick={() => { setOffline(false); setLoading(true); loadSessions() }}>Try again</button>
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
           {unlocked.map(s => <SessionRow key={s.id} session={s} />)}
           {locked.map(s => <SessionRow key={s.id} session={s} />)}
         </div>
 
         {!loading && !filtered.length && (
-          <div className="t-caption" style={{ padding: '32px 0', textAlign: 'center' }}>
-            Nothing in {active} yet.
+          <div className="fade-in" style={{ padding: '32px 0', textAlign: 'center' }}>
+            <div className="t-title">Nothing here yet</div>
+            <p className="t-caption" style={{ marginTop: 6 }}>New sessions arrive monthly. Everything else is one tap away.</p>
+            <button className="btn-ghost" onClick={() => select('All')}>Show everything</button>
           </div>
         )}
       </div>

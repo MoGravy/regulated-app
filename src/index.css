@@ -162,9 +162,7 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
 /* ---------------------------------------------------------------------------
    Buttons — 48px kit, 52px page CTA, 44px minimum touch target
    --------------------------------------------------------------------------- */
-.btn-primary,
-.btn-secondary,
-.btn-neutral {
+.btn-primary {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -174,33 +172,14 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
   border-radius: var(--r-row);
   font: 500 15px/20px var(--font-ui);
   cursor: pointer;
-  transition: background var(--t-press), border-color var(--t-press);
-}
-
-.btn-primary {
+  transition: background var(--t-press), transform var(--t-press);
   border: none;
   background: var(--accent);
   color: var(--on-accent);
 }
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
 
-.btn-secondary {
-  border: 1px solid var(--accent);
-  background: transparent;
-  color: var(--accent);
-}
-.btn-secondary:hover:not(:disabled) { background: var(--accent-soft); }
-
-.btn-neutral {
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink);
-}
-.btn-neutral:hover:not(:disabled) { background: var(--sunk); }
-
-.btn-primary:disabled,
-.btn-secondary:disabled,
-.btn-neutral:disabled {
+.btn-primary:disabled {
   background: var(--sunk);
   border-color: transparent;
   color: var(--ink-disabled);
@@ -223,7 +202,7 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
   color: var(--ink-muted);
   font: 400 14px/20px var(--font-ui);
   cursor: pointer;
-  transition: color var(--t-press);
+  transition: color var(--t-press), transform var(--t-press);
 }
 .btn-ghost:hover { color: var(--ink); }
 
@@ -250,9 +229,8 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
   border-radius: var(--r-pill);
   background: var(--control);
   cursor: pointer;
-  transition: transform var(--t-press);
+  transition: transform var(--t-press), box-shadow var(--t-press);
 }
-.btn-play:active { transform: scale(0.96); }
 
 /* Footer that pins a CTA over the content */
 .footer-cta {
@@ -286,7 +264,7 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
   color: var(--ink-muted);
   font: 400 14px/20px var(--font-ui);
   cursor: pointer;
-  transition: background var(--t-enter), color var(--t-enter);
+  transition: background var(--t-enter), color var(--t-enter), transform var(--t-press);
 }
 
 .segmented-item[aria-selected='true'] {
@@ -313,8 +291,11 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
   font: 400 13px/18px var(--font-ui);
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--t-enter), color var(--t-enter);
+  position: relative;
+  transition: background var(--t-enter), color var(--t-enter), transform var(--t-press);
 }
+/* 34px chip, 44px hit area */
+.chip::after { content: ""; position: absolute; inset: -5px 0; }
 
 .chip-all[aria-pressed='true'] {
   background: var(--ink);
@@ -344,7 +325,7 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
   border: 1px solid var(--line);
   border-radius: var(--r-row);
   cursor: pointer;
-  transition: border-color var(--t-enter);
+  transition: border-color var(--t-enter), transform var(--t-press), box-shadow var(--t-press);
 }
 
 .row-progress { border-color: var(--line-strong); }
@@ -466,7 +447,7 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Texture — two soft organic masses, blurred, never animated */
+/* Texture: two soft organic masses, blurred. Still by default; `drift` breathes. */
 .texture { position: relative; overflow: hidden; }
 .texture > .blob { position: absolute; pointer-events: none; }
 .blob-a { border-radius: 50% 50% 46% 54% / 60% 40% 60% 40%; }
@@ -507,33 +488,61 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
 .toast-info    { color: var(--ink); }
 
 /* ---------------------------------------------------------------------------
-   Modal sheet
+   Motion. Every animation here dies under prefers-reduced-motion (tokens.css).
    --------------------------------------------------------------------------- */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(36, 48, 42, 0.32);
-  z-index: 500;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
 
-.modal-sheet {
-  background: var(--surface);
-  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
-  padding: 24px 24px calc(24px + var(--safe-bottom));
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--e3);
-}
+/* Press: every tappable thing sinks a little. Class rules above carry the
+   transition; this catches the inline-styled buttons too. */
+button, [role='button'] { transition: transform var(--t-press), box-shadow var(--t-press); }
+button:active:not(:disabled),
+[role='button']:active:not([aria-disabled='true']) { transform: scale(0.98); box-shadow: none; }
 
-.modal-handle {
-  width: 36px;
-  height: 4px;
-  background: var(--line-strong);
-  border-radius: 2px;
-  margin: 0 auto 20px;
+/* Screen change: a fade, never a hard cut. Opacity only, so fixed chrome
+   inside the wrapper keeps the viewport as its containing block. */
+.screen { flex: 1; min-height: 0; display: flex; flex-direction: column; animation: screen-in 200ms ease-out both; }
+@keyframes screen-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Home hero breathing: barely there, transform only, 12s loop. */
+.blob-drift { animation: drift 12s ease-in-out infinite alternate; will-change: transform; }
+@keyframes drift { to { transform: translate(8px, -10px) scale(1.05); } }
+
+/* Player glow: a slow radial pulse at six breaths a minute. Sits behind the
+   title, pauses with the audio. */
+.player-glow {
+  position: absolute; left: 50%; top: 38%; width: 420px; height: 420px;
+  margin: -210px 0 0 -210px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, var(--control) 0%, transparent 62%);
+  opacity: 0.14; animation: breathe 10s ease-in-out infinite; will-change: transform, opacity;
 }
+.player-glow[data-playing='false'] { animation-play-state: paused; }
+@keyframes breathe { 50% { transform: scale(1.12); opacity: 0.24; } }
+
+/* Completion bloom: one soft ripple in the control colour. */
+.bloom {
+  position: absolute; left: 50%; top: 42%; width: 120px; height: 120px; margin: -60px 0 0 -60px;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, var(--control) 0%, transparent 68%);
+  animation: bloom 1.8s ease-out both;
+}
+@keyframes bloom { from { transform: scale(0.2); opacity: 0.6; } to { transform: scale(4); opacity: 0; } }
+
+/* Crossfade in: swapped copy, the completion line, anything that replaces
+   rather than moves. Key the element to retrigger. */
+.fade-in { animation: fade-in 400ms ease-out both; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Three-bar waveform for a playing preview, in the card accent. */
+.bars { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
+.bars > span { width: 3px; border-radius: 1px; background: currentColor; animation: bar 0.9s ease-in-out infinite; }
+.bars > span:nth-child(2) { animation-delay: 0.2s; }
+.bars > span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bar { 0%, 100% { height: 4px; } 50% { height: 14px; } }
+
+/* Skeleton shimmer on the light base. Never a spinner mid-layout. */
+.skeleton {
+  border-radius: var(--r-row);
+  background: linear-gradient(90deg, var(--sunk) 25%, var(--surface) 50%, var(--sunk) 75%);
+  background-size: 200% 100%; animation: shimmer 1.4s linear infinite;
+}
+.skeleton-dark { background: linear-gradient(90deg, var(--player-track) 25%, var(--player-blob-a) 50%, var(--player-track) 75%); background-size: 200% 100%; }
+@keyframes shimmer { to { background-position: -200% 0; } }

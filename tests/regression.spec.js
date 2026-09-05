@@ -445,3 +445,30 @@ test('signed out, restore sends a sign-in link and unlocks nothing', async ({ pa
   expect(checked, 'a signed-out restore must not call check-subscription').toBe(false)
   await expect(page.getByRole('heading', { name: 'You have premium' })).toHaveCount(0)
 })
+
+test('closing the player goes back, and back from there leaves the session', async ({ page }) => {
+  await skipOnboarding(page)
+  await fakeAudio(page, 30)
+  await page.goto('/')
+  await page.goto('/sessions')
+  await page.locator('.row:not(.row-locked)').first().click()
+  await expect(page).toHaveURL(/\/sessions\/[^/]+$/)
+  await page.getByRole('button', { name: /start session/i }).click()
+  await expect(page).toHaveURL(/\/play$/)
+  await page.getByRole('button', { name: 'Close player' }).click()
+  await expect(page).toHaveURL(/\/sessions\/[^/]+$/)
+  await page.getByRole('button', { name: 'Back' }).click()
+  await expect(page).toHaveURL(/\/sessions$/)
+})
+
+test('a reloaded session page still has a way out, and the wordmark goes home', async ({ page }) => {
+  await skipOnboarding(page)
+  await page.goto('/sessions')
+  const href = await page.locator('.row:not(.row-locked)').first().click().then(() => page.url())
+  await page.goto(href)   // fresh load, no history behind it
+  await page.getByRole('button', { name: 'Back' }).click()
+  await expect(page).toHaveURL(/\/sessions$/)
+  await page.goto(href)
+  await page.getByRole('link', { name: 'Home' }).click()
+  await expect(page).toHaveURL(/\/$/)
+})
