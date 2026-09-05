@@ -7,6 +7,7 @@ import { categoryOf, tint, chipStyle } from '../lib/categories'
 import { programUnlocked, programAt, programWeeks } from '../config/program'
 import DayDots from '../components/DayDots'
 import SessionRow from '../components/SessionRow'
+import CheckIn from '../components/CheckIn'
 import Texture from '../components/Texture'
 import { haptic } from '../lib/haptic'
 
@@ -123,6 +124,8 @@ export default function Home() {
             <ResumeCard resume={resume} onPlay={() => navigate(`/sessions/${resume.session.id}`)} />
           </>
         )}
+
+        {!programMode && <CheckIn sessions={sessions} />}
 
         {!programMode && !!families.length && (
           <>
