@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { annualFreeCheck, ANNUAL_FREE } from './_annualfree.js'
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -29,6 +30,11 @@ export default async function handler(req, res) {
 
   if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) {
     return res.status(400).json({ valid: false, error: 'This coupon has reached its usage limit' })
+  }
+
+  if (coupon.code === ANNUAL_FREE) {
+    const gate = await annualFreeCheck(req)
+    if (gate.error) return res.status(403).json({ valid: false, error: gate.error })
   }
 
   return res.status(200).json({

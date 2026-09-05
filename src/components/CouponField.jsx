@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { authHeaders } from '../lib/supabase'
 
 export default function CouponField({ onApply, onRemove, appliedCoupon }) {
   const [code, setCode] = useState('')
@@ -14,7 +15,7 @@ export default function CouponField({ onApply, onRemove, appliedCoupon }) {
     try {
       const res = await fetch('/api/validate-coupon', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({ code: trimmed }),
       })
       const data = await res.json()

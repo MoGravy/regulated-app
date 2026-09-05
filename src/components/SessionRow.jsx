@@ -45,7 +45,6 @@ export default function SessionRow({ session }) {
   const minsLeft = inProgress ? Math.max(1, Math.round((saved.duration - saved.position) / 60)) : 0
 
   function handleClick() {
-    if (isComingSoon) return
     if (isLocked) return navigate('/premium')
     navigate(`/sessions/${session.id}`)
   }
@@ -86,12 +85,10 @@ export default function SessionRow({ session }) {
   return (
     <div
       role="button"
-      tabIndex={isComingSoon ? -1 : 0}
-      aria-disabled={isComingSoon || undefined}
       onClick={handleClick}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick() } }}
       className={`row ${isLocked || isComingSoon ? 'row-locked' : ''} ${inProgress ? 'row-progress' : ''}`}
-      style={{ opacity: isComingSoon ? 0.65 : 1, cursor: isComingSoon ? 'default' : 'pointer' }}
+      style={{ opacity: isComingSoon ? 0.65 : 1, cursor: 'pointer' }}
     >
       {canPreview ? (
         <button
