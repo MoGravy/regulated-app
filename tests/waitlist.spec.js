@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { skipOnboarding, noProductionWrites } from './helpers.js'
+import { skipOnboarding, noProductionWrites, HAS_API } from './helpers.js'
 
 test.use({ viewport: { width: 380, height: 820 } })
 
@@ -31,4 +31,19 @@ test('a session without audio takes an email for the waitlist', async ({ page })
   expect(calls).toHaveLength(1)
   expect(calls[0].email).toBe('test@example.com')
   expect(page.url()).toContain(calls[0].session_id)
+})
+
+// Live checks against a deployed preview: both endpoints answer, and the
+// ANNUALFREE gate turns away a caller with no bearer before anything else.
+test('deployed: waitlist rejects an unknown session, ANNUALFREE rejects the signed out', async ({ page }) => {
+  test.skip(!HAS_API, 'needs a deployed API')
+  const w = await page.request.post('/api/waitlist', {
+    data: { session_id: '00000000-0000-0000-0000-000000000000', email: 'nobody@example.com' },
+  })
+  expect(w.status()).toBe(404)
+  const c = await page.request.post('/api/validate-coupon', { data: { code: 'ANNUALFREE' } })
+  const body = await c.json()
+  expect([403, 404]).toContain(c.status())
+  expect(body.valid).toBe(false)
+  console.log('validate-coupon ANNUALFREE signed out ->', c.status(), body.error)
 })
