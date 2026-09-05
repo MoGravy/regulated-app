@@ -21,7 +21,7 @@ export default function Program() {
 
   return (
     <div className="page">
-      <div className="status-bar"><Back onClick={() => navigate('/')} /><span>Regulated</span></div>
+      <div className="status-bar"><Back onClick={() => navigate('/')} /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div className="page-content" style={{ paddingTop: 8 }}>
         <h1 style={{ margin: '0 0 6px', font: '300 30px/36px var(--font-display)' }}>
@@ -146,7 +146,7 @@ function Back({ onClick }) {
 function ComingSoon({ onBack }) {
   return (
     <div className="page">
-      <div className="status-bar"><Back onClick={onBack} /><span>Regulated</span></div>
+      <div className="status-bar"><Back onClick={onBack} /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
       <div className="page-content" style={{ paddingTop: 8 }}>
         <h1 style={{ margin: '0 0 6px', font: '300 30px/36px var(--font-display)' }}>{PROGRAM_MAP.program.title}</h1>
         <p style={{ margin: '0 0 20px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
 import { upsertUser, checkSubscription, sendMagicLink } from '../lib/supabase'
@@ -113,7 +114,7 @@ export default function Premium() {
   if (isPremium) {
     return (
       <div className="page">
-        <div className="status-bar"><span /><span>Regulated</span></div>
+        <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
         <div className="page-content-wide" style={{ paddingTop: 8 }}>
           <h1 style={{ margin: '0 0 10px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em' }}>
             You have premium
@@ -135,10 +136,10 @@ export default function Premium() {
 
   return (
     <div className="page">
-      <div className="status-bar"><span /><span>Regulated</span></div>
+      <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 480, margin: '0 auto' }}>
-        <button className="btn-icon" onClick={() => navigate(-1)} aria-label="Close">
+        <button className="btn-icon" onClick={() => goBack(navigate)} aria-label="Close">
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
             <path d="M2 2l10 10M12 2L2 12" stroke="var(--ink-muted)" strokeWidth="1.4" strokeLinecap="round" />
           </svg>

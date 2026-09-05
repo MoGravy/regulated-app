@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { goBack } from '../lib/back'
 import { trackEvent, Events } from '../lib/analytics'
 import { useApp } from '../hooks/useApp'
 import { stripePromise } from '../lib/stripe'
@@ -111,7 +112,7 @@ export default function CustomAudio() {
     }
   }
 
-  if (step === 'intro') return <CustomAudioIntro onStart={() => setStep('form')} onBack={() => navigate(-1)} />
+  if (step === 'intro') return <CustomAudioIntro onStart={() => setStep('form')} onBack={() => goBack(navigate)} />
 
   return (
     <div className="page animate-fade-in">
@@ -389,7 +390,7 @@ function CustomAudioIntro({ onStart, onBack }) {
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg)' }}>
-      <div className="status-bar"><span /><span>Regulated</span></div>
+      <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
         <button className="btn-icon" onClick={onBack} aria-label="Back">

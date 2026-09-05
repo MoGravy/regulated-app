@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import Texture from '../components/Texture'
 import { sendMagicLink, signInWithPassword, signUpWithPassword } from '../lib/supabase'
@@ -84,7 +85,7 @@ export default function SignIn() {
       <div className="status-bar" style={{ position: 'relative' }}><span /><span /></div>
 
       <div style={{ position: 'relative', height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
-        <button className="btn-icon" onClick={() => navigate(-1)} aria-label="Back">
+        <button className="btn-icon" onClick={() => goBack(navigate)} aria-label="Back">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M10 3l-5 5 5 5" stroke="var(--ink-muted)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
           </svg>

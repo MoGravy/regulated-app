@@ -460,3 +460,15 @@ test('closing the player goes back, and back from there leaves the session', asy
   await page.getByRole('button', { name: 'Back' }).click()
   await expect(page).toHaveURL(/\/sessions$/)
 })
+
+test('a reloaded session page still has a way out, and the wordmark goes home', async ({ page }) => {
+  await skipOnboarding(page)
+  await page.goto('/sessions')
+  const href = await page.locator('.row:not(.row-locked)').first().click().then(() => page.url())
+  await page.goto(href)   // fresh load, no history behind it
+  await page.getByRole('button', { name: 'Back' }).click()
+  await expect(page).toHaveURL(/\/sessions$/)
+  await page.goto(href)
+  await page.getByRole('link', { name: 'Home' }).click()
+  await expect(page).toHaveURL(/\/$/)
+})

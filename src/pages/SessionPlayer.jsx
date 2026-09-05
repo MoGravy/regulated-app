@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import { supabase, trackSessionCompletion, SESSION_COLUMNS, getCachedSession, authHeaders } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
@@ -226,8 +227,7 @@ export default function SessionPlayer() {
   // Pop, never push: pushing the session page here left back leading
   // straight into the player again. A deep link has nothing to pop to.
   function close() {
-    if (window.history.state?.idx > 0) return navigate(-1)
-    navigate('/sessions')
+    goBack(navigate, '/sessions')
   }
 
   // ---------------------------------------------------------------------------

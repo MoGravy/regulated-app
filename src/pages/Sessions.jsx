@@ -67,7 +67,7 @@ export default function Sessions() {
 
   return (
     <div className="page">
-      <div className="status-bar"><span /><span>Regulated</span></div>
+      <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div style={{ padding: '8px 20px 12px', maxWidth: 480, margin: '0 auto' }}>
         <h1 style={{ margin: '0 0 14px', font: '300 30px/36px var(--font-display)' }}>Library</h1>

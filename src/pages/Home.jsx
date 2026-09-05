@@ -76,7 +76,7 @@ export default function Home() {
 
   return (
     <div className="page">
-      <div className="status-bar"><span /><span>Regulated</span></div>
+      <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div className="page-content" style={{ paddingTop: 8, position: 'relative' }}>
         <Texture ink="#24344D" variant="page" drift />
