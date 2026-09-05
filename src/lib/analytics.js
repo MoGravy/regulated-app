@@ -1,9 +1,18 @@
-// ponytail: analytics went nowhere. The insert targeted an analytics_events
-// table that was never created in production, so every session start and
-// every checkout click produced a 404 in the console. Stripe already records
-// purchases. Call sites stay; give this a real destination if the data is
-// ever wanted.
-export async function trackEvent() {}
+// Code handoff item 6. Fire and forget to api/track, which writes one
+// anonymous row per event. Never awaited by callers; a failure is logged
+// and the screen carries on.
+export function trackEvent(name, props = {}) {
+  try {
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, props }),
+      keepalive: true,
+    }).catch(err => console.warn('[track]', name, err?.message))
+  } catch (err) {
+    console.warn('[track]', name, err?.message)
+  }
+}
 
 export const Events = {
   SESSION_STARTED: 'session_started',
