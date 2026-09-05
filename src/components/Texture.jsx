@@ -1,7 +1,7 @@
 import { tint } from '../lib/categories'
 
-// Two soft organic masses at 8-16 percent of the category ink, blurred, never
-// animated. Texture is the only decoration in the system — design 1a.
+// Two soft organic masses at 8-16 percent of the category ink, blurred. Still
+// unless `drift` is set, which breathes them over 12s (home hero only). Texture is the only decoration in the system — design 1a.
 // Geometry per variant is lifted from the boards it appears on.
 const VARIANTS = {
   card:   [{ w: 200, h: 150, right: -60, top: -50, a: 0.14, blur: 16, shape: 'blob-a' }],
@@ -14,14 +14,14 @@ const VARIANTS = {
   page:   [{ w: 340, h: 280, right: -90, top: -60, a: 0.08, blur: 30, shape: 'blob-a' }],
 }
 
-export default function Texture({ ink, variant = 'card' }) {
+export default function Texture({ ink, variant = 'card', drift = false }) {
   return (
     <>
       {VARIANTS[variant].map((b, i) => (
         <div
           key={i}
           aria-hidden="true"
-          className={`blob ${b.shape}`}
+          className={`blob ${b.shape}${drift ? ' blob-drift' : ''}`}
           style={{
             position: 'absolute',
             width: b.w,

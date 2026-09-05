@@ -5,6 +5,7 @@ import { trackEvent, Events } from '../lib/analytics'
 import { upsertUser, checkSubscription, sendMagicLink } from '../lib/supabase'
 import { stripePromise } from '../lib/stripe'
 import { PROGRAM_APPROVED } from '../config/program'
+import { haptic } from '../lib/haptic'
 import { ANNUAL_FOUNDING_PRICE, MONTHLY_PRICE, CUSTOM_AUDIO_PRICE } from '../config/pricing'
 
 // Three price points, annual first. The design marks the preferred card by
@@ -41,6 +42,7 @@ export default function Premium() {
       return
     }
     setEmailError('')
+    haptic()
     setLoading(true)
     trackEvent(Events.PREMIUM_UPGRADE_STARTED, { plan: selectedPlan })
 

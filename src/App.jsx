@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AppProvider } from './hooks/useApp'
 import Navigation from './components/Navigation'
 import Toast from './components/Toast'
@@ -24,9 +24,12 @@ export default function App() {
 }
 
 function AppShell() {
+  // Keyed on the path so every screen change fades in (index.css .screen).
+  const { pathname } = useLocation()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100dvh' }}>
       <Toast />
+      <div className="screen" key={pathname}>
       <Routes>
         <Route path="/welcome" element={<Onboarding />} />
         <Route path="/signin" element={<SignIn />} />
@@ -40,6 +43,7 @@ function AppShell() {
         <Route path="/success" element={<Success />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </div>
     </div>
   )
 }
