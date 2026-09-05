@@ -87,8 +87,10 @@ test('paywall renders all three price points', async ({ page }) => {
   await expect(cards.filter({ hasText: 'Monthly' })).toContainText('$19')
   await expect(cards.filter({ hasText: 'Custom audio' })).toContainText('$99')
 
-  // The design rules these out explicitly.
-  await expect(page.getByText('$199')).toHaveCount(0)
+  // No struck-through price: the full price appears once, in the counter line.
+  await expect(page.getByText('$199')).toHaveCount(1)
+  await expect(page.getByTestId('library-counter')).toContainText('$199')
+  await expect(page.locator('s, del')).toHaveCount(0)
   await expect(page.getByText(/founding member/i)).toHaveCount(0)
 })
 
