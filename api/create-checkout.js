@@ -1,6 +1,7 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { annualFreeCheck, ANNUAL_FREE } from './_annualfree.js'
+import { normalEmail } from './_identity.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
@@ -27,16 +28,20 @@ async function lookupCoupon(code) {
   if (coupon.max_uses !== null && coupon.used_count >= coupon.max_uses) return null
   return coupon
 }
-// APP_URL for Stripe success/cancel redirects.
-// Priority: explicit env var → request Origin header → Vercel preview fallback.
-// Using the request Origin means redirects always land on the same domain the
-// user is browsing from, even across preview/production deployments.
+// Where Stripe sends the customer after checkout. APP_URL wins. Without it,
+// the request's Origin is used only when it is this app: production, or the
+// Vercel deployment serving this request (so previews still come back to
+// themselves). Any other Origin gets production, so another site cannot make
+// a real checkout that lands the customer on its own page after paying.
+const PRODUCTION_URL = 'https://regulatedapp.co'
 function getAppUrl(req) {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, '')
-  if (req.headers.origin) return req.headers.origin.replace(/\/$/, '')
-  // Effectively dead: browser POSTs always send Origin. Kept as a safe last
-  // resort for non-browser callers, pointed at production not a stale preview.
-  return 'https://regulatedapp.co'
+  const origin = (req.headers.origin || '').replace(/\/$/, '')
+  const own = [PRODUCTION_URL, 'https://www.regulatedapp.co',
+    process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
+    process.env.VERCEL_BRANCH_URL && `https://${process.env.VERCEL_BRANCH_URL}`,
+  ].filter(Boolean)
+  return own.includes(origin) ? origin : PRODUCTION_URL
 }
 
 export default async function handler(req, res) {
@@ -53,6 +58,9 @@ export default async function handler(req, res) {
     // Custom audio order fields (stored in metadata; webhook creates DB row after payment)
     pattern, trigger, desiredState, affirmations,
   } = req.body
+  // Stored and matched lowercase. The premium check compares the signed-in
+  // address, which Supabase keeps lowercase, so "Jane@x.com" must not be kept.
+  email = email ? normalEmail(email) : undefined
   // NOTE: price and discount values are never read from the client. Price is a
   // server constant; discounts come from the coupons table via lookupCoupon().
 
@@ -170,6 +178,6 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('Stripe checkout error:', err)
-    return res.status(500).json({ error: err.message })
+    return res.status(500).json({ error: 'Could not start checkout. Please try again.' })
   }
 }

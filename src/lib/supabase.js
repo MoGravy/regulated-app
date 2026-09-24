@@ -58,10 +58,8 @@ export async function trackSessionCompletion(sessionId, userEmail, moodBefore, m
 
   const { error } = await supabase.from('session_completions').insert(payload)
   if (error) console.error('[Supabase] trackSessionCompletion error:', error)
-
-  if (userEmail) {
-    await supabase.rpc('increment_completed_sessions', { p_email: userEmail })
-  }
+  // The increment_completed_sessions call that stood here was a database
+  // no-op. Migration 007 takes the public role's access to it away.
 }
 
 // Safe column list for client reads — audio_url deliberately excluded.

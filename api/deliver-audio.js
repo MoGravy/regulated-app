@@ -7,6 +7,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { timingSafeEqual, createHash } from 'node:crypto'
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -15,15 +16,21 @@ const supabase = createClient(
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM_EMAIL = process.env.FROM_EMAIL || process.env.VITE_FROM_EMAIL || 'hello@regulatedapp.co'
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'change-this-secret'
+// No fallback. The old default was printed in this public repo, so a missing
+// ADMIN_SECRET left the endpoint open to anyone. Now it stays shut.
+const ADMIN_SECRET = process.env.ADMIN_SECRET || ''
 const APP_URL = process.env.APP_URL || process.env.VITE_APP_URL || 'https://regulatedapp.co'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const { orderId, audioPath, secret } = req.body
+  const { orderId, audioPath, secret } = req.body || {}
 
-  if (secret !== ADMIN_SECRET) {
+  if (!ADMIN_SECRET) {
+    console.error('deliver-audio: ADMIN_SECRET is not set, refusing every call')
+    return res.status(503).json({ error: 'Delivery is not configured' })
+  }
+  if (!secretMatches(secret)) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
@@ -72,8 +79,21 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error('deliver-audio error:', err)
-    return res.status(500).json({ error: err.message })
+    return res.status(500).json({ error: 'Delivery failed. Check the function log.' })
   }
+}
+
+// Same-length digests, compared in constant time, so response timing says
+// nothing about how much of a guess was right.
+function secretMatches(given) {
+  const digest = v => createHash('sha256').update(String(v ?? '')).digest()
+  return timingSafeEqual(digest(given), digest(ADMIN_SECRET))
+}
+
+// The order text is whatever the customer typed. Escaped before it goes into
+// the email HTML, and a missing field is an empty string, not a crash.
+function escapeHtml(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 }
 
 function deliveryEmail(downloadUrl, order) {
@@ -91,9 +111,9 @@ function deliveryEmail(downloadUrl, order) {
 
     <div style="background:#1A3A4A;border:1px solid rgba(126,207,192,0.15);border-radius:16px;padding:24px;margin-bottom:24px;">
       <div style="font-size:13px;font-weight:700;color:#7ECFC0;letter-spacing:0.08em;margin-bottom:12px;">YOUR ORDER</div>
-      <div style="font-size:14px;color:#8BA9B5;margin-bottom:6px;"><strong style="color:#F0F4F6">Pattern:</strong> ${order.pattern.substring(0, 120)}${order.pattern.length > 120 ? '…' : ''}</div>
-      <div style="font-size:14px;color:#8BA9B5;margin-bottom:6px;"><strong style="color:#F0F4F6">Trigger:</strong> ${order.trigger}</div>
-      <div style="font-size:14px;color:#8BA9B5;"><strong style="color:#F0F4F6">Desired state:</strong> ${order.desired_state}</div>
+      <div style="font-size:14px;color:#8BA9B5;margin-bottom:6px;"><strong style="color:#F0F4F6">Pattern:</strong> ${escapeHtml(String(order.pattern ?? '').substring(0, 120))}${String(order.pattern ?? '').length > 120 ? '…' : ''}</div>
+      <div style="font-size:14px;color:#8BA9B5;margin-bottom:6px;"><strong style="color:#F0F4F6">Trigger:</strong> ${escapeHtml(order.trigger)}</div>
+      <div style="font-size:14px;color:#8BA9B5;"><strong style="color:#F0F4F6">Desired state:</strong> ${escapeHtml(order.desired_state)}</div>
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">

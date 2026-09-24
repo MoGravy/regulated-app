@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { callerEmail } from './_identity.js'
+import { callerEmail, activeSubscriptions } from './_identity.js'
 
 // The subscriptions table is RLS-locked, so the browser's public key can never
 // see a row. This answers the one question the app asks, with the same key the
@@ -16,16 +16,8 @@ export default async function handler(req, res) {
   try {
     const email = await callerEmail(req, supabase)
     if (!email) return res.status(400).json({ error: 'email required' })
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('id')
-      .eq('user_email', email)
-      .eq('status', 'active')
-      .gt('current_period_end', new Date().toISOString())
-      .limit(1)
-      .maybeSingle()
-    if (error) throw error
-    return res.status(200).json({ active: !!data })
+    const subs = await activeSubscriptions(supabase, email)
+    return res.status(200).json({ active: subs.length > 0 })
   } catch (err) {
     console.error('[check-subscription] error:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
     return res.status(500).json({ error: 'Internal error' })
