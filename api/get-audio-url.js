@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { callerEmail } from './_identity.js'
+import { callerEmail, activeSubscriptions } from './_identity.js'
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -43,15 +43,10 @@ export default async function handler(req, res) {
       // by their signed-in session when they have one (see _identity.js).
       const email = await callerEmail(req, supabase)
       if (!email) return res.status(401).json({ error: 'email required' })
-      const { data: sub } = await supabase
-        .from('subscriptions')
-        .select('id')
-        .eq('user_email', email)
-        .eq('status', 'active')
-        .gt('current_period_end', new Date().toISOString())
-        .maybeSingle()
-
-      if (!sub) return res.status(403).json({ error: 'Active subscription required' })
+      // Any number of active rows is fine. maybeSingle() used to error on two
+      // (monthly then annual), and the error read as "not subscribed".
+      const subs = await activeSubscriptions(supabase, email)
+      if (!subs.length) return res.status(403).json({ error: 'Active subscription required' })
     }
 
     const path = storagePath(session.audio_url)

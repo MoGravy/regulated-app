@@ -1,6 +1,7 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { normalEmail } from './_identity.js'
 import { CUSTOM_AUDIO_PRICE, ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE } from '../src/config/pricing.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -50,16 +51,21 @@ export default async function handler(req, res) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object
-        const { type, order_id, user_email, plan, coupon_code, discount_applied } = session.metadata || {}
+        const { type, plan, coupon_code, discount_applied } = session.metadata || {}
+        // Lowercase, so the premium check finds it. Checkouts started before
+        // create-checkout normalised the address still carry it as typed.
+        const user_email = normalEmail(session.metadata?.user_email)
 
+        let created = false
         if (type === 'custom_audio') {
-          await handleCustomAudioPayment(session, user_email, coupon_code, discount_applied)
+          created = await handleCustomAudioPayment(session, user_email, coupon_code, discount_applied)
         } else if (type === 'subscription') {
-          await handleSubscriptionPayment(session, user_email, plan, coupon_code, discount_applied)
+          created = await handleSubscriptionPayment(session, user_email, plan, coupon_code, discount_applied)
         }
 
-        // Increment coupon used_count if a code was applied
-        if (coupon_code) {
+        // Count a coupon once per purchase. A Stripe redelivery finds the row
+        // already there (created is false) and must not count it again.
+        if (coupon_code && created) {
           await supabase.rpc('increment_coupon_usage', { p_code: coupon_code })
         }
         break
@@ -140,7 +146,7 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
     if (insertError.code === '23505') {
       // Duplicate Stripe event redelivery — row already exists, nothing to do
       console.log('[webhook] custom_orders: duplicate stripe_session_id, skipping insert')
-      return
+      return false
     }
     console.error('[webhook] custom_orders insert failed:', JSON.stringify(insertError))
     throw new Error(`custom_orders insert failed: ${insertError.message}`)
@@ -153,12 +159,13 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
 
   // Send confirmation email only after the order is recorded
   const dueDateStr = dueDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-  await resend.emails.send({
+  await sendEmail({
     from: `Matthew at Regulated <${FROM_EMAIL}>`,
     to: userEmail,
     subject: "Your custom audio is in progress 🎧",
     html: customAudioConfirmationEmail(dueDateStr),
   })
+  return true
 }
 
 async function handleSubscriptionPayment(session, userEmail, plan, couponCode, discountApplied) {
@@ -181,7 +188,7 @@ async function handleSubscriptionPayment(session, userEmail, plan, couponCode, d
   if (insertError) {
     if (insertError.code === '23505') {
       console.log('[webhook] subscriptions: duplicate stripe_subscription_id, skipping insert')
-      return
+      return false
     }
     console.error('[webhook] subscriptions insert failed:', JSON.stringify(insertError))
     throw new Error(`subscriptions insert failed: ${insertError.message}`)
@@ -193,12 +200,25 @@ async function handleSubscriptionPayment(session, userEmail, plan, couponCode, d
     .upsert({ email: userEmail, updated_at: new Date().toISOString() }, { onConflict: 'email' })
 
   // Send welcome email
-  await resend.emails.send({
+  await sendEmail({
     from: `Matthew at Regulated <${FROM_EMAIL}>`,
     to: userEmail,
     subject: "Welcome to Regulated Premium ✦",
     html: premiumWelcomeEmail(),
   })
+  return true
+}
+
+// The row is already written when this runs. A failed email must not fail the
+// webhook: Stripe's retry would find the row, stop early, and neither resend
+// the email nor count the coupon. Logged instead, so it can be sent by hand.
+async function sendEmail(message) {
+  try {
+    const { error } = await resend.emails.send(message)
+    if (error) throw error
+  } catch (err) {
+    console.error('[webhook] email not sent:', message.subject, JSON.stringify(err, Object.getOwnPropertyNames(err)))
+  }
 }
 
 // --- Email templates ---

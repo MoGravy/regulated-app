@@ -160,10 +160,9 @@ create policy "Service role full access to subscriptions"
   on public.subscriptions for all
   using (auth.role() = 'service_role');
 
--- Allow anon to check own subscription by email (for frontend isPremium check)
-create policy "Anon can read own subscription"
-  on public.subscriptions for select
-  using (true);  -- RLS applied; email filter done in query
+-- No anon read policy on subscriptions. An earlier version of this file had
+-- one with using (true), which exposes every subscriber's row to the public
+-- key. The app checks premium through /api/check-subscription instead.
 
 -- Users: service role full access
 create policy "Service role full access to users"
