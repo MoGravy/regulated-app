@@ -10,11 +10,23 @@
 --    executable by everyone by default, so anyone holding the public key could
 --    call it over /rpc and run a partner code past its max_uses. Only the
 --    webhook calls it, with the service role, which keeps its access.
-revoke execute on function public.increment_coupon_usage(text) from public, anon, authenticated;
-grant  execute on function public.increment_coupon_usage(text) to service_role;
+--    Guarded: on 2026-09-25 Stripe showed seven ANNUALFREE redemptions while
+--    coupons.used_count was still 0, so the function may not exist in
+--    production at all. A bare revoke would then stop this whole script.
+do $$
+begin
+  if to_regprocedure('public.increment_coupon_usage(text)') is not null then
+    revoke execute on function public.increment_coupon_usage(text) from public, anon, authenticated;
+    grant  execute on function public.increment_coupon_usage(text) to service_role;
+  else
+    raise notice 'increment_coupon_usage(text) does not exist: coupon uses are not being counted';
+  end if;
 
--- 2. increment_completed_sessions is a no-op the browser no longer calls.
-revoke execute on function public.increment_completed_sessions(text) from public, anon, authenticated;
+  -- 2. increment_completed_sessions is a no-op the browser no longer calls.
+  if to_regprocedure('public.increment_completed_sessions(text)') is not null then
+    revoke execute on function public.increment_completed_sessions(text) from public, anon, authenticated;
+  end if;
+end $$;
 
 -- 3. The original schema file created a subscriptions policy with
 --    using (true): every row readable with the public key. If production has
