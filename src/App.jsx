@@ -12,6 +12,7 @@ import Success from './pages/Success'
 import Onboarding from './pages/Onboarding'
 import Program from './pages/Program'
 import SignIn from './pages/SignIn'
+import AccountDeletion from './pages/AccountDeletion'
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ function AppShell() {
       <Routes>
         <Route path="/welcome" element={<Onboarding />} />
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/delete-account" element={<AccountDeletion />} />
         <Route path="/" element={<><Home /><Navigation /></>} />
         <Route path="/program" element={<><Program /><Navigation /></>} />
         <Route path="/sessions" element={<><Sessions /><Navigation /></>} />

@@ -278,6 +278,9 @@ function AccountBlock() {
       >
         Sign out
       </button>
+      <button className="btn-ghost" onClick={() => navigate('/delete-account')}>
+        Request account deletion
+      </button>
     </div>
   )
 }

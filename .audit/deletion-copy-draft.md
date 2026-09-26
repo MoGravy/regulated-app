@@ -1,6 +1,6 @@
 # Regulated deletion page copy draft
 
-Status: source draft only. Do not publish until the deletion path works and legal retention wording is reviewed.
+Status: superseded source draft. The implemented local screen uses the signed-in web path and verified GLM wording recorded in `deletion-request-design.md`. Do not publish this older email-based draft.
 
 Authoring receipt: OpenCode Go `opencode-go/glm-5.3`, session `ses_f235374d9ffeB1ue5eZ6duV8O3`. The exported session confirms provider `opencode-go` and model `glm-5.3`. Edited with Matthew's humanizer, the Hermes humanizer and unslop.
 
