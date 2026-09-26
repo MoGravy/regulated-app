@@ -31,8 +31,6 @@ export default function SessionPlayer() {
   const [showCustomPrompt, setShowCustomPrompt] = useState(false)
 
   const audioRef = useRef(null)
-  const startRef = useRef(null)
-  const timerRef = useRef(null)
   const wakeLockRef = useRef(null)
   const progressRef = useRef({ id: null, position: 0, duration: 0 })
 
@@ -131,22 +129,6 @@ export default function SessionPlayer() {
     audioRef.current.play().catch(() => {})
   }, [step, audioUrl])
 
-  useEffect(() => {
-    if (!isPlaying || step !== STEP.PLAYING) return
-    startRef.current = Date.now() - currentTime * 1000
-    clearInterval(timerRef.current)
-    timerRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startRef.current) / 1000
-      setCurrentTime(elapsed)
-      if (elapsed >= (duration || 1200)) {
-        clearInterval(timerRef.current)
-        setIsPlaying(false)
-        setStep(STEP.COMPLETE)
-      }
-    }, 500)
-    return () => clearInterval(timerRef.current)
-  }, [isPlaying, step, duration])
-
   // The completion moment holds for two seconds, then the check-out.
   useEffect(() => {
     if (step !== STEP.COMPLETE) return
@@ -202,7 +184,7 @@ export default function SessionPlayer() {
     if (!a) return
     haptic()
     if (isPlaying) { a.pause(); setIsPlaying(false) }
-    else { a.play().catch(() => {}); setIsPlaying(true) }
+    else a.play().catch(() => {})
   }
 
   function skip(secs) {
@@ -211,7 +193,6 @@ export default function SessionPlayer() {
     const next = Math.max(0, Math.min(a.currentTime + secs, duration))
     a.currentTime = next
     setCurrentTime(next)
-    startRef.current = Date.now() - next * 1000
   }
 
   function seek(e) {
@@ -221,7 +202,6 @@ export default function SessionPlayer() {
     if (!Number.isFinite(t)) return
     setCurrentTime(t)
     if (audioRef.current) audioRef.current.currentTime = t
-    startRef.current = Date.now() - t * 1000
   }
 
   function fmt(seconds) {
@@ -304,6 +284,7 @@ export default function SessionPlayer() {
           preload="auto"
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          onTimeUpdate={e => setCurrentTime(e.currentTarget.currentTime)}
           onLoadedMetadata={e => { if (Number.isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration) }}
           onEnded={() => { setIsPlaying(false); setStep(STEP.COMPLETE) }}
         />

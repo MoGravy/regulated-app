@@ -251,6 +251,25 @@ test('a session played to the end is marked complete and leaves Continue listeni
   expect(writes.join(',')).toContain('session_completions')
 })
 
+test('a stalled audio file does not finish the session', async ({ page }) => {
+  await noProductionWrites(page)
+  await fakeAudio(page)
+  await skipOnboarding(page)
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.play = function () {
+      this.dispatchEvent(new Event('play'))
+      return Promise.resolve()
+    }
+  })
+
+  await page.goto(`/sessions/${FREE_ID}/play`)
+  await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+  await page.waitForTimeout(1500)
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toHaveCount(0)
+})
+
 test('a part-played session shows up in Continue listening', async ({ page }) => {
   await noProductionWrites(page)
   await fakeAudio(page, 60)
@@ -260,9 +279,8 @@ test('a part-played session shows up in Continue listening', async ({ page }) =>
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible({ timeout: 20_000 })
 
-  // The player's clock is its own, not the audio element's, so the position has
-  // to be moved through the control the user would actually press. Wait for the
-  // real duration first, or the 15 seconds lands under the resume threshold.
+  // Move through the control the user would press. Wait for the real duration,
+  // or the 15 seconds lands under the resume threshold.
   await page.waitForFunction(() => {
     const a = document.querySelector('audio')
     return a && Number.isFinite(a.duration) && a.duration > 50
