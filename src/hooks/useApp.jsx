@@ -25,9 +25,8 @@ export function AppProvider({ children }) {
   const [toasts, setToasts] = useState([])
   const [authUser, setAuthUser] = useState(null)
 
-  // Auth is additive. Signed out, everything below behaves exactly as it did
-  // before phase 3: the localStorage email still drives the premium check.
-  // Signed in, the verified address takes over as that email.
+  // A signed-in account owns premium access. Keep the old email only for
+  // pre-filling forms, not for deciding access.
   useEffect(() => {
     let live = true
 
@@ -54,13 +53,15 @@ export function AppProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    if (userEmail) {
-      // A failed check leaves the flag alone: a flaky network must not demote
-      // a paying customer on reload.
-      checkSubscription(userEmail).then(setIsPremium).catch(err =>
-        console.error('[useApp] subscription check failed:', err))
+    let live = true
+    setIsPremium(false)
+    if (authUser?.id) {
+      checkSubscription(authUser.email).then(active => {
+        if (live) setIsPremium(active)
+      }).catch(err => console.error('[useApp] subscription check failed:', err))
     }
-  }, [userEmail])
+    return () => { live = false }
+  }, [authUser?.id, authUser?.email])
 
   // Signing out drops the local email too, otherwise premium would survive a
   // sign-out. "Restore a purchase" on the You tab gets it back.

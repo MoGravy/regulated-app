@@ -12,6 +12,10 @@
     "test:preview": "playwright test --reporter=list"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/ios": "8.5.2",
     "@phosphor-icons/react": "^2.1.10",
     "@stripe/stripe-js": "^4.4.0",
     "@supabase/supabase-js": "^2.45.4",
@@ -20,6 +24,7 @@
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.2",
     "@playwright/test": "^1.62.1",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",

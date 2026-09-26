@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
+import { apiUrl } from '../lib/apiUrl'
 
 export default function Success() {
   const navigate = useNavigate()
@@ -27,7 +28,7 @@ export default function Success() {
     let cancelled = false
     async function verify() {
       try {
-        const res = await fetch(`/api/verify-session?session_id=${sessionId}`)
+        const res = await fetch(apiUrl(`/api/verify-session?session_id=${sessionId}`))
         if (!res.ok) throw new Error(`verify-session responded ${res.status}`)
         const data = await res.json()
         if (cancelled) return
@@ -48,11 +49,6 @@ export default function Success() {
         if (cancelled) return
         console.error('[Success] verify-session failed:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
         setVerifyState('failed')
-        // Network failure ≠ unpaid: Stripe only redirects here after payment,
-        // and the webhook is the server-side source of truth. Don't strand a
-        // paying customer without their premium flag — audio access is
-        // independently gated server-side, so this is safe to set.
-        if (type === 'subscription' && sessionId) setIsPremium(true)
       }
     }
     verify()

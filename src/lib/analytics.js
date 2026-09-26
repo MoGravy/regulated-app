@@ -1,9 +1,11 @@
+import { apiUrl } from './apiUrl'
+
 // Code handoff item 6. Fire and forget to api/track, which writes one
 // anonymous row per event. Never awaited by callers; a failure is logged
 // and the screen carries on.
 export function trackEvent(name, props = {}) {
   try {
-    fetch('/api/track', {
+    fetch(apiUrl('/api/track'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, props }),

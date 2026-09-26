@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../hooks/useApp'
+import { apiUrl } from '../lib/apiUrl'
 
 // "Notify me when this session is ready", for a session with no audio yet.
 // Sits where the Start button would be. The row is written server-side.
@@ -12,7 +13,7 @@ export default function Waitlist({ session }) {
     e.preventDefault()
     setState('busy')
     try {
-      const res = await fetch('/api/waitlist', {
+      const res = await fetch(apiUrl('/api/waitlist'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: session.id, email: email.trim() }),

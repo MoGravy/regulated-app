@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
@@ -21,6 +21,16 @@ export default function SignIn() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    function showLinkError() {
+      sessionStorage.removeItem('regulated_auth_error')
+      setError('That did not work. Try again.')
+    }
+    if (sessionStorage.getItem('regulated_auth_error')) showLinkError()
+    window.addEventListener('regulated-auth-link-error', showLinkError)
+    return () => window.removeEventListener('regulated-auth-link-error', showLinkError)
+  }, [])
 
   if (authUser) {
     return (

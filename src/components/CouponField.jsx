@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { authHeaders } from '../lib/supabase'
+import { apiUrl } from '../lib/apiUrl'
 
 export default function CouponField({ onApply, onRemove, appliedCoupon }) {
   const [code, setCode] = useState('')
@@ -13,7 +14,7 @@ export default function CouponField({ onApply, onRemove, appliedCoupon }) {
     setError('')
 
     try {
-      const res = await fetch('/api/validate-coupon', {
+      const res = await fetch(apiUrl('/api/validate-coupon'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({ code: trimmed }),

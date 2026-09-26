@@ -9,6 +9,7 @@ import { categoryOf } from '../lib/categories'
 import MoodTracker from '../components/MoodTracker'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
 import { haptic } from '../lib/haptic'
+import { apiUrl } from '../lib/apiUrl'
 
 const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', COMPLETE: 'complete', CHECKOUT: 'checkout', DONE: 'done' }
 
@@ -92,7 +93,7 @@ export default function SessionPlayer() {
     setAudioError(null)
     async function resolveUrl() {
       try {
-        const res = await fetch('/api/get-audio-url', {
+        const res = await fetch(apiUrl('/api/get-audio-url'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
           body: JSON.stringify({ sessionId: session.id, email: userEmail }),

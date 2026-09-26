@@ -8,6 +8,7 @@ import { authHeaders } from '../lib/supabase'
 import CouponField from '../components/CouponField'
 import Texture from '../components/Texture'
 import { CUSTOM_AUDIO_PRICE as PRICE } from '../config/pricing'
+import { apiUrl } from '../lib/apiUrl'
 
 export default function CustomAudio() {
   const navigate = useNavigate()
@@ -77,7 +78,7 @@ export default function CustomAudio() {
       // Send all order details to the backend — no Supabase call needed here.
       // The serverless function embeds the fields in Stripe metadata, and the
       // webhook creates the confirmed order in the database after payment.
-      const res = await fetch('/api/create-checkout', {
+      const res = await fetch(apiUrl('/api/create-checkout'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({

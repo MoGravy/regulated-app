@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { HARDCODED_SESSIONS } from './hardcodedSessions'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/credentials'
+import { apiUrl } from './apiUrl'
+import { Capacitor } from '@capacitor/core'
+import { NATIVE_AUTH_REDIRECT } from './nativeAuthUrl'
 
 // ---------------------------------------------------------------------------
 // Key inspection helper
@@ -37,6 +40,7 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+      flowType: Capacitor.isNativePlatform() ? 'pkce' : 'implicit',
     },
   }
 )
@@ -161,7 +165,7 @@ export async function checkSubscription(email) {
 
   // Server-side: the subscriptions table is RLS-locked, so the public key
   // used here always saw zero rows and every subscriber looked unpaid.
-  const res = await fetch('/api/check-subscription', {
+  const res = await fetch(apiUrl('/api/check-subscription'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify({ email }),
@@ -200,7 +204,7 @@ export async function getAudioSignedUrl(path) {
 export async function sendMagicLink(email) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.origin },
+    options: { emailRedirectTo: Capacitor.isNativePlatform() ? NATIVE_AUTH_REDIRECT : window.location.origin },
   })
   if (error) throw error
 }
@@ -215,7 +219,7 @@ export async function signUpWithPassword(email, password) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: window.location.origin },
+    options: { emailRedirectTo: Capacitor.isNativePlatform() ? NATIVE_AUTH_REDIRECT : window.location.origin },
   })
   if (error) throw error
   // A null session means the project is set to confirm the address first.

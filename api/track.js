@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { setNativeCors } from './_native-cors.js'
 
 // Code handoff item 6. One anonymous row per event. The name has to be one
 // the app defines, and props keep only short plain values, so nothing
@@ -15,6 +16,7 @@ const NAMES = new Set([
 ])
 
 export default async function handler(req, res) {
+  setNativeCors(req, res)
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
   const { name, props } = req.body || {}

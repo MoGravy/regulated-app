@@ -8,6 +8,7 @@ import { stripePromise } from '../lib/stripe'
 import { PROGRAM_APPROVED } from '../config/program'
 import { haptic } from '../lib/haptic'
 import { ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE, LIBRARY_TARGET, MONTHLY_PRICE, CUSTOM_AUDIO_PRICE } from '../config/pricing'
+import { apiUrl } from '../lib/apiUrl'
 
 // Three price points, annual first. The design marks the preferred card by
 // border weight only — no badge, no countdown, no struck-through price.
@@ -61,7 +62,7 @@ export default function Premium() {
       setUserEmail(email)
       await upsertUser(email)
 
-      const res = await fetch('/api/create-checkout', {
+      const res = await fetch(apiUrl('/api/create-checkout'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'subscription', plan: selectedPlan, email }),

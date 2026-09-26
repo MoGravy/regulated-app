@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { setNativeCors } from './_native-cors.js'
 
 // Code handoff item 8. "Notify me when this session is ready" on a session
 // with no audio yet. One row per (session, email); the confirmation is tagged
@@ -12,6 +13,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM_EMAIL = process.env.FROM_EMAIL || process.env.VITE_FROM_EMAIL || 'hello@regulatedapp.co'
 
 export default async function handler(req, res) {
+  setNativeCors(req, res)
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 

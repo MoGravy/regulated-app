@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
-import { callerEmail } from './_identity.js'
+import { callerUser } from './_identity.js'
+import { hasPremiumAccess } from './_access.js'
+import { setNativeCors } from './_native-cors.js'
 
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
@@ -18,6 +20,7 @@ function storagePath(audioUrl) {
 }
 
 export default async function handler(req, res) {
+  setNativeCors(req, res)
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -39,19 +42,12 @@ export default async function handler(req, res) {
     // June 2026 outage was a rotated signing key invalidating year-old tokens.
     // Free sessions skip the subscription check; premium requires one.
     if (!session.free) {
-      // Premium: an active, unexpired subscription for the caller, identified
-      // by their signed-in session when they have one (see _identity.js).
-      const email = await callerEmail(req, supabase)
-      if (!email) return res.status(401).json({ error: 'email required' })
-      const { data: sub } = await supabase
-        .from('subscriptions')
-        .select('id')
-        .eq('user_email', email)
-        .eq('status', 'active')
-        .gt('current_period_end', new Date().toISOString())
-        .maybeSingle()
-
-      if (!sub) return res.status(403).json({ error: 'Active subscription required' })
+      // Premium: verified access for the caller's signed-in account.
+      const user = await callerUser(req, supabase)
+      if (!user) return res.status(401).json({ error: 'Sign in required' })
+      if (!await hasPremiumAccess(supabase, user)) {
+        return res.status(403).json({ error: 'Active subscription required' })
+      }
     }
 
     const path = storagePath(session.audio_url)
