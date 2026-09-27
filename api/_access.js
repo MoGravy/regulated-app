@@ -6,6 +6,7 @@ export async function hasPremiumAccess(supabase, user, now = new Date()) {
     .from('store_entitlements')
     .select('id')
     .eq('account_id', user.id)
+    .eq('environment', 'production')
     .in('status', ['active', 'grace'])
     .gt('expires_at', cutoff)
     .limit(1)

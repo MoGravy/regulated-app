@@ -23,12 +23,12 @@ const user = { id: 'account-a', email: 'a@example.com' }
 
 test('only this account gets a verified unexpired store entitlement', async () => {
   const db = database({ store_entitlements: [
-    { id: 1, account_id: 'account-b', status: 'active', expires_at: '2026-10-01T00:00:00Z' },
-    { id: 2, account_id: 'account-a', status: 'revoked', expires_at: '2026-10-01T00:00:00Z' },
+    { id: 1, account_id: 'account-b', environment: 'production', status: 'active', expires_at: '2026-10-01T00:00:00Z' },
+    { id: 2, account_id: 'account-a', environment: 'production', status: 'revoked', expires_at: '2026-10-01T00:00:00Z' },
   ] })
   assert.equal(await hasPremiumAccess(db, user, now), false)
   db.from = database({ store_entitlements: [
-    { id: 3, account_id: 'account-a', status: 'active', expires_at: '2026-10-01T00:00:00Z' },
+    { id: 3, account_id: 'account-a', environment: 'production', status: 'active', expires_at: '2026-10-01T00:00:00Z' },
   ] }).from
   assert.equal(await hasPremiumAccess(db, user, now), true)
 })
@@ -42,8 +42,27 @@ test('an active legacy Stripe subscription still grants access', async () => {
 
 test('expired purchases do not grant access', async () => {
   const db = database({
-    store_entitlements: [{ id: 5, account_id: 'account-a', status: 'active', expires_at: '2026-09-25T00:00:00Z' }],
+    store_entitlements: [{ id: 5, account_id: 'account-a', environment: 'production', status: 'active', expires_at: '2026-09-25T00:00:00Z' }],
     subscriptions: [{ id: 6, user_email: 'a@example.com', status: 'active', current_period_end: '2026-09-25T00:00:00Z' }],
   })
   assert.equal(await hasPremiumAccess(db, user, now), false)
+})
+
+test('sandbox purchases do not grant production access', async () => {
+  const db = database({ store_entitlements: [
+    { id: 7, account_id: 'account-a', environment: 'sandbox', status: 'active', expires_at: '2026-10-01T00:00:00Z' },
+  ] })
+  assert.equal(await hasPremiumAccess(db, user, now), false, 'Sandbox must not unlock production')
+})
+
+test('sandbox purchase does not block a valid legacy Stripe subscription', async () => {
+  const db = database({
+    store_entitlements: [
+      { id: 8, account_id: 'account-a', environment: 'sandbox', status: 'active', expires_at: '2026-10-01T00:00:00Z' },
+    ],
+    subscriptions: [
+      { id: 9, user_email: 'a@example.com', status: 'active', current_period_end: '2026-10-01T00:00:00Z' },
+    ],
+  })
+  assert.equal(await hasPremiumAccess(db, user, now), true)
 })
