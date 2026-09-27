@@ -16,7 +16,7 @@ function validCount(count) {
 
 async function countRows(client, table, column, value, method = 'eq') {
   const { count } = await read(table, () => client.from(table)
-    .select('id', { count: 'exact', head: true })[method](column, value))
+    .select(column, { count: 'exact', head: true })[method](column, value))
   if (!validCount(count)) throw unavailable(table)
   return count
 }
@@ -76,7 +76,7 @@ export async function inventoryDeletion(client, requestId) {
       'private_media_ownership', 'unmapped_data', 'retention_decision',
     ],
   }
-  for (const [table, column] of [['profiles', 'id'], ['user_progress', 'user_id'], ['store_entitlements', 'account_id']]) {
+  for (const [table, column] of [['profiles', 'id'], ['user_progress', 'user_id'], ['store_entitlements', 'account_id'], ['revenuecat_sync_state', 'account_id']]) {
     report.accountCounts[table] = await countRows(client, table, column, user.id)
   }
 

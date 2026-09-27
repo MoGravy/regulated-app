@@ -16,6 +16,7 @@ function fixture(options = {}) {
     profiles: [{ id: accountId, email: 'untrusted@example.test' }, { id: 'account-2' }],
     user_progress: [{ id: 'p1', user_id: accountId }, { id: 'p2', user_id: 'account-2' }],
     store_entitlements: [{ id: 'e1', account_id: accountId, external_id: 'private provider identifier' }],
+    revenuecat_sync_state: [{ account_id: accountId, generation: 3 }, { account_id: 'account-2', generation: 2 }],
     users: [{ id: 'u1', email: email.toLowerCase() }, { id: 'u2', email: 'other@example.test' }],
     session_completions: [{ id: 'c1', user_email: email.toUpperCase(), mood_before: 3 }],
     subscriptions: [{ id: 's1', user_email: email.toLowerCase(), stripe_customer_id: 'private customer identifier' }],
@@ -68,7 +69,7 @@ function fixture(options = {}) {
           assert.equal(query.columns, 'id,account_id')
           response = { data: filtered[0] || null }
         } else if (query.settings.head) {
-          assert.equal(query.columns, 'id')
+          assert.equal(query.columns, query.column)
           assert.equal(query.settings.count, 'exact')
           response = { count: filtered.length, data: null }
         } else {
@@ -93,7 +94,7 @@ function fixture(options = {}) {
 
 const normal = fixture()
 const report = await inventoryDeletion(normal.client, requestId)
-assert.deepEqual(report.accountCounts, { profiles: 1, user_progress: 1, store_entitlements: 1 })
+assert.deepEqual(report.accountCounts, { profiles: 1, user_progress: 1, store_entitlements: 1, revenuecat_sync_state: 1 })
 assert.deepEqual(report.legacyCandidateCounts, { users: 1, session_completions: 1, subscriptions: 1, session_waitlist: 1, custom_orders: 4 })
 assert.deepEqual(report.mediaReferences, [
   { orderId: 'o1', referenceKind: 'storage-path', ownership: 'unverified' },
@@ -147,7 +148,7 @@ const special = fixture({ user: { email: specialEmail }, tables: { users: [{ id:
 assert.equal((await inventoryDeletion(special.client, requestId)).legacyCandidateCounts.users, 1)
 assert.equal(special.trace.find(q => q.method === 'ilike').value, String.raw`percent\%under\_score\\@example.test`)
 
-for (const table of ['profiles', 'user_progress', 'store_entitlements', 'users', 'session_completions', 'subscriptions', 'session_waitlist', 'custom_orders']) {
+for (const table of ['profiles', 'user_progress', 'store_entitlements', 'revenuecat_sync_state', 'users', 'session_completions', 'subscriptions', 'session_waitlist', 'custom_orders']) {
   await rejected({ respond: (q, r) => q.table === table ? { error: { message: privateText } } : r }, table)
   await rejected({ respond: (q, r) => q.table === table ? { ...r, count: null } : r }, table)
 }
