@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { supabase, checkSubscription, ensureProfile, signOutUser } from '../lib/supabase'
+import { setBillingAccount } from '../lib/nativeBilling'
 import { programAt } from '../config/program'
 
 const AppContext = createContext(null)
@@ -59,6 +60,7 @@ export function AppProvider({ children }) {
       authRevision.current++
       if (accountId.current !== (user?.id ?? null)) setIsPremium(false)
       accountId.current = user?.id ?? null
+      void setBillingAccount(accountId.current).catch(() => {})
       setAuthUser(user ? { ...user } : null)
       if (user?.email) {
         setUserEmail(user.email)
@@ -76,6 +78,7 @@ export function AppProvider({ children }) {
     return () => {
       live = false
       providerLive.current = false
+      void setBillingAccount(null).catch(() => {})
       premiumRevision.current++
       sub.subscription.unsubscribe()
     }
@@ -91,6 +94,7 @@ export function AppProvider({ children }) {
     authRevision.current++
     premiumRevision.current++
     accountId.current = null
+    void setBillingAccount(null).catch(() => {})
     setAuthUser(null)
     setUserEmail(null)
     setIsPremium(false)

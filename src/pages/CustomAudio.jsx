@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { trackEvent, Events } from '../lib/analytics'
 import { useApp } from '../hooks/useApp'
-import { stripePromise } from '../lib/stripe'
+import { Capacitor } from '@capacitor/core'
 import { authHeaders } from '../lib/supabase'
 import CouponField from '../components/CouponField'
 import Texture from '../components/Texture'
@@ -71,6 +71,7 @@ export default function CustomAudio() {
   }
 
   async function handleCheckout() {
+    if (Capacitor.isNativePlatform()) return
     setLoading(true)
     try {
       setUserEmail(form.email)
@@ -103,6 +104,7 @@ export default function CustomAudio() {
       if (url) {
         window.location.href = url
       } else {
+        const { stripePromise } = await import('../lib/stripe')
         const stripe = await stripePromise
         const { error } = await stripe.redirectToCheckout({ sessionId })
         if (error) throw error

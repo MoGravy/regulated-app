@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AppProvider } from './hooks/useApp'
 import Navigation from './components/Navigation'
@@ -40,9 +41,9 @@ function AppShell() {
         <Route path="/sessions" element={<><Sessions /><Navigation /></>} />
         <Route path="/sessions/:id" element={<SessionDetail />} />
         <Route path="/sessions/:id/play" element={<SessionPlayer />} />
-        <Route path="/custom" element={<CustomAudio />} />
+        <Route path="/custom" element={Capacitor.isNativePlatform() ? <Navigate to="/premium" replace /> : <CustomAudio />} />
         <Route path="/premium" element={<><Premium /><Navigation /></>} />
-        <Route path="/success" element={<Success />} />
+        <Route path="/success" element={Capacitor.isNativePlatform() ? <Navigate to="/premium" replace /> : <Success />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </div>

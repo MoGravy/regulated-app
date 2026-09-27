@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
 import { upsertUser, sendMagicLink, getAllSessions } from '../lib/supabase'
-import { stripePromise } from '../lib/stripe'
+import { Capacitor } from '@capacitor/core'
 import { PROGRAM_APPROVED } from '../config/program'
 import { haptic } from '../lib/haptic'
 import { ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE, LIBRARY_TARGET, MONTHLY_PRICE, CUSTOM_AUDIO_PRICE } from '../config/pricing'
+import { billingAvailable, loadPackages, purchase, restore } from '../lib/nativeBilling'
+import billingCopy from '../content/billing.json'
 import { apiUrl } from '../lib/apiUrl'
 
 // Three price points, annual first. The design marks the preferred card by
@@ -30,6 +32,10 @@ const PLANS = [
 ]
 
 export default function Premium() {
+  return Capacitor.isNativePlatform() ? <NativePremium /> : <WebPremium />
+}
+
+function WebPremium() {
   const navigate = useNavigate()
   const { isPremium, userEmail, setUserEmail, addToast, refreshPremium, authUser } = useApp()
   const [selectedPlan, setSelectedPlan] = useState('annual')
@@ -49,6 +55,7 @@ export default function Premium() {
   const selected = PLANS.find(p => p.id === selectedPlan) || PLANS[0]
 
   async function handleSubscribe() {
+    if (Capacitor.isNativePlatform()) return
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setEmailError('Enter the email you want the subscription on.')
       return
@@ -77,6 +84,7 @@ export default function Premium() {
       if (url) {
         window.location.href = url
       } else {
+        const { stripePromise } = await import('../lib/stripe')
         const stripe = await stripePromise
         const { error } = await stripe.redirectToCheckout({ sessionId })
         if (error) throw error
@@ -246,9 +254,6 @@ export default function Premium() {
   )
 }
 
-// Signing in is optional everywhere. Nothing on this screen, or any other,
-// requires it — a signed-out visitor keeps the email-and-restore flow that
-// shipped before phase 3.
 function AccountBlock() {
   const navigate = useNavigate()
   const { authUser, signOut, addToast } = useApp()
@@ -295,5 +300,86 @@ function CustomAudioCard({ onClick }) {
         One session written and recorded for your situation. Bought separately, no subscription needed.
       </div>
     </button>
+  )
+}
+
+function NativePremium() {
+  const { authUser, isPremium, refreshPremium } = useApp()
+  const navigate = useNavigate()
+  const viewRevision = useRef(0)
+  const [options, setOptions] = useState([])
+  const [selected, setSelected] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  useEffect(() => {
+    let live = true
+    viewRevision.current++
+    setBusy(false)
+    setOptions([])
+    setSelected('')
+    setMessage('')
+    if (authUser?.id) {
+      loadPackages(authUser.id).then(result => {
+        if (!live || result.status !== 'ready') return
+        setOptions(result.packages)
+        setSelected(result.packages[0].id)
+      }).catch(() => { if (live) setMessage(billingCopy.unavailable) })
+    }
+    return () => { live = false; viewRevision.current++ }
+  }, [authUser?.id])
+
+  useEffect(() => {
+    let live = true
+    let listener
+    import('@capacitor/app').then(({ App }) => App.addListener('appStateChange', ({ isActive }) => {
+      if (live && isActive) void refreshPremium().catch(() => {})
+    })).then(handle => { if (live) listener = handle; else void handle.remove() })
+    return () => { live = false; void listener?.remove() }
+  }, [refreshPremium])
+
+  async function complete(restoring) {
+    if (busy || !authUser?.id) return
+    const captured = viewRevision.current
+    const current = () => captured === viewRevision.current
+    setBusy(true)
+    setMessage(billingCopy.verifying)
+    try {
+      const result = restoring ? await restore(authUser.id) : await purchase(authUser.id, selected)
+      if (!current()) return
+      if (result.status === 'stale' || result.status === 'canceled') { setMessage(''); return }
+      if (result.status === 'pending') { setMessage(billingCopy.paymentPending); return }
+      const active = await refreshPremium()
+      if (!current()) return
+      if (active === null) { setMessage(''); return }
+      setMessage(active ? 'Restored. Everything is unlocked.' : billingCopy.verificationPending)
+    } catch {
+      if (!current()) return
+      setMessage(restoring ? billingCopy.restoreError : billingCopy.purchaseError)
+    } finally { if (current()) setBusy(false) }
+  }
+
+  return (
+    <div className="page readable-page">
+      <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
+      <div className="page-content-wide">
+        <h1>{isPremium ? 'You have premium' : 'Premium'}</h1>
+        {!authUser ? <button className="btn-primary btn-lg" onClick={() => navigate('/signin')}>{billingCopy.signIn}</button> : <>
+          {!isPremium && <>
+            <div className="premium-options">{options.map(option => (
+              <button key={option.id} className={`card ${selected === option.id ? 'card-current' : ''}`} disabled={busy} aria-pressed={selected === option.id} onClick={() => setSelected(option.id)}>
+                <span>{option.title}</span> <span>{option.price} {option.period === 'P1M' ? 'a month' : 'a year'}</span>
+              </button>
+            ))}</div>
+            <button className="btn-primary btn-lg" disabled={busy || !options.length} onClick={() => complete(false)}>{billingCopy.subscribe}</button>
+            {options.length > 0 && <p>{billingCopy.recurring}</p>}
+          </>}
+          {isPremium && <button className="btn-primary btn-lg" onClick={() => navigate('/sessions')}>Go to the library</button>}
+          <button className="btn-ghost" disabled={busy || !billingAvailable()} onClick={() => complete(true)}>Restore a purchase</button>
+          <a className="btn-ghost" href={Capacitor.getPlatform() === 'ios' ? 'https://apps.apple.com/account/subscriptions' : 'https://play.google.com/store/account/subscriptions'}>{billingCopy.manage}</a>
+        </>}
+        <p role="status">{message}</p>
+        <AccountBlock />
+      </div>
+    </div>
   )
 }

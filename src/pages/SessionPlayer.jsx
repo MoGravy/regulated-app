@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { goBack } from '../lib/back'
@@ -308,7 +309,7 @@ function SessionAttempt({ id }) {
             >
               Back to the library
             </button>
-            {showCustomPrompt && (
+            {showCustomPrompt && !Capacitor.isNativePlatform() && (
               <button
                 onClick={() => navigate('/custom')}
                 style={{ height: 48, borderRadius: 'var(--r-row)', border: '1px solid var(--player-track)', background: 'transparent', color: 'var(--player-muted)', font: '400 14px/20px var(--font-ui)', cursor: 'pointer' }}
