@@ -39,7 +39,7 @@ Matthew handles account sign-in, identity checks, legal agreements, developer fe
 
 ## Remaining work and gates
 
-1. Finish native store purchases, restoration and server verification, then test the real store flows. Store products and signing depend on account access. The billing provider is not yet configured.
+1. Finish native store purchases, restoration and server verification, then test the real store flows. RevenueCat SDK13.6.1 is installed and both native debug builds pass, but purchases are not configured. Store products and signing depend on account access. See revenuecat-sdk-todo.md for the verified dependency checkpoint.
 2. Finish deletion fulfillment, record ownership, provider handling and retention decisions. Migrations remain unapplied. Do not activate the request flow as a completed deletion service.
 3. Complete privacy/support/deletion pages and declarations from verified facts. The live privacy route remains unresolved. The private draft is outside this public repository.
 4. Verify hosted native authentication and CORS, real-device audio, and the iPad app on Apple silicon Mac. The separate iOS audio test passed after the owner-approved narrow safety-hook exception. Its report and limitations are in `~/AgentWorkspace/regulated-device-check/ios-audio-harness`.
