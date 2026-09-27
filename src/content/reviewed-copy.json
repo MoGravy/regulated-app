@@ -1,0 +1,91 @@
+{
+  "sessions": {
+    "7a875d14-f77e-47e9-8ff3-16d5db08d2e6": {
+      "title": "Deep sleep relaxation",
+      "description": "Guided relaxation for settling down at the end of the day."
+    },
+    "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442": {
+      "title": "Relaxation for daily stress",
+      "description": "Guided relaxation for moments of everyday stress or overwhelm."
+    },
+    "ca65ecd1-8ade-4a6e-915e-84810f8b26cb": {
+      "title": "Gut and stress relaxation",
+      "description": "Guided relaxation on the topic of gut wellbeing and stress."
+    },
+    "e184e81c-8163-46eb-8a00-9ef74f727ab4": {
+      "title": "Daily relaxation",
+      "description": "A short, free guided relaxation you can return to on any day."
+    },
+    "p001-anxiety-release": {
+      "title": "Relaxation for anxious moments",
+      "description": "Guided relaxation for moments of worry or anxious feelings."
+    },
+    "p002-deep-focus": {
+      "title": "Deep focus",
+      "description": "Guided relaxation on the topic of focus."
+    },
+    "p003-confidence": {
+      "title": "Relaxation for confidence",
+      "description": "Guided relaxation on the topic of confidence and self-worth."
+    },
+    "p004-grief": {
+      "title": "Grief and loss",
+      "description": "Guided relaxation on the topic of grief and loss."
+    },
+    "p005-panic": {
+      "title": "Relaxation for stressful moments",
+      "description": "Guided relaxation for a quiet pause during everyday stress."
+    },
+    "p006-morning": {
+      "title": "Morning relaxation",
+      "description": "A short guided relaxation for the start of the day."
+    },
+    "p007-relationship": {
+      "title": "Relaxation for relationships",
+      "description": "Guided relaxation on the topic of everyday relationships."
+    }
+  },
+  "ui": {
+    "onboarding_heading": "Welcome to guided relaxation",
+    "onboarding_intro": "A guided audio library for general wellbeing. Free sessions are included, and premium sessions are available with a subscription.",
+    "onboarding_reason_help": "Take a moment to reflect on what brings you here today.",
+    "onboarding_library": "Free sessions can be listened to without a payment card. Premium sessions are included with a subscription.",
+    "latest_sessions": "Recently added",
+    "added_year": "Added",
+    "audio_unavailable": "Audio is not available for this session yet.",
+    "score_low": "Very unsettled",
+    "score_high": "Very settled",
+    "score_prompt": "How settled do you feel right now? Pick a number from 1 to 10.",
+    "score_bands": [
+      "Very unsettled",
+      "A bit unsettled",
+      "Somewhat settled",
+      "Very settled"
+    ],
+    "custom_personalized": "Your custom audio is written from what you share in the brief.",
+    "custom_trigger_example": "e.g. winding down after a demanding day, or easing nerves before a big meeting",
+    "custom_access": "Your custom audio is delivered by email with a download link. Save your own copy for later listening.",
+    "custom_use": "Save the audio file so you can listen again.",
+    "premium_available": "Your subscription includes the premium sessions currently available in the library. Custom audio purchased separately remains separate from your subscription.",
+    "premium_intro": "Choose monthly or annual access to the premium sessions currently included in the library.",
+    "account_signin": "Sign in to use your subscription on another device. Listening progress is not synced between devices.",
+    "signin_device": "Sign in on this device with your account details to use your verified subscription access here.",
+    "signin_progress": "Your listening progress is saved on this device. Audio is streamed, so an internet connection is needed to listen.",
+    "purchase_active": "Your subscription is verified and active on this account.",
+    "restore_active": "Your subscription access has been restored on this account.",
+    "payment_pending_title": "Checking your purchase",
+    "payment_pending_body": "We are checking your payment. Please wait a moment.",
+    "payment_failed_title": "Could not confirm your payment",
+    "payment_failed_body": "We could not confirm this payment. Contact info@matthewtweediehypnosis.com.au for help.",
+    "payment_confirmed_title": "Payment verified",
+    "payment_confirmed_body": "Your purchase has been verified as paid. Sign in with the account used to purchase to check your access.",
+    "custom_confirmed_title": "Custom audio order received",
+    "custom_confirmed_body": "Your custom audio order has been received and verified. Your audio is expected within 7 days, and the download link will arrive separately by email.",
+    "custom_delivery_help": "Custom audio is delivered by email as a downloadable file. If you need help with delivery, contact info@matthewtweediehypnosis.com.au.",
+    "annual_custom_help": "The annual plan includes one custom audio, redeemable once per account.",
+    "program_pending": "This program is being prepared.",
+    "waitlist_help": "Register your interest in this session.",
+    "wellbeing_note": "These sessions are guided relaxation for general wellbeing. They are not a diagnosis or treatment for any condition. For health concerns, please speak with a qualified health professional.",
+    "listening_safety": "Listen somewhere safe where you can relax, not while driving or doing anything that needs your attention. Stop if you feel uncomfortable."
+  }
+}

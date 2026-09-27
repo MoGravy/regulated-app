@@ -1,3 +1,4 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { goBack } from '../lib/back'
@@ -105,13 +106,13 @@ export default function SignIn() {
       <div className="entry-content" style={{ position: 'relative', flex: 'var(--entry-flex, 1)', padding: '24px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 'var(--form-width, 480px)', margin: '0 auto', width: '100%' }}>
         <div style={{ font: '500 13px/18px var(--font-ui)', color: 'var(--ink-muted)' }}>Regulated</div>
         <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>
-          Feel safe in your own body
+          {ui.onboarding_heading}
         </h1>
 
         {sent ? (
           <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
             <p style={{ margin: 0, font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              Check {email}. The link signs you in on this phone and stays signed in.
+              Check {email}. {ui.signin_device}
             </p>
             <button className="btn-ghost" onClick={() => setSent(false)}>Use a different email</button>
           </div>
@@ -161,8 +162,8 @@ export default function SignIn() {
 
             <div style={{ font: '400 13px/20px var(--font-ui)', color: 'var(--ink-faint)', textWrap: 'pretty' }}>
               {mode === 'link'
-                ? 'No password. The link signs you in on this phone and stays signed in.'
-                : 'Your password only unlocks this account. Sessions stay on the device either way.'}
+                ? ui.signin_device
+                : ui.signin_progress}
             </div>
 
             <button

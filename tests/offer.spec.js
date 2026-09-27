@@ -1,19 +1,22 @@
 import { test, expect } from '@playwright/test'
 import { skipOnboarding, noProductionWrites } from './helpers.js'
+import { ui } from '../src/content/reviewedCopy.js'
 import { HARDCODED_SESSIONS } from '../src/lib/hardcodedSessions.js'
 
 test.use({ viewport: { width: 380, height: 820 } })
 
 // Code handoff item 5. The counter is a live count, so the number is checked
 // against the library rather than pinned.
-test('pricing shows the custom session, the guarantee, and a live counter', async ({ page }) => {
+test('pricing shows the custom session and a live counter without an unapproved refund promise', async ({ page }) => {
   await skipOnboarding(page)
   await noProductionWrites(page)
+  await page.route(/\/rest\/v1\/|\/rpc\/|\/auth\/v1\//, route => route.fulfill({ status: 200, json: HARDCODED_SESSIONS }))
   await page.goto('/premium')
 
   const annual = page.locator('.card', { hasText: 'Annual, founding rate' })
   await expect(annual).toContainText('Includes a custom session built for you')
-  await expect(annual).toContainText('Complete the 6-week program. If you do not feel a difference, full refund.')
+  await expect(annual).not.toContainText('full refund')
+  await expect(page.getByText(ui.premium_intro, { exact: true })).toBeVisible()
 
   const counter = page.getByTestId('library-counter')
   await expect(counter).toHaveText(/^\d+ of 40 sessions until the price rises to A\$199$/)

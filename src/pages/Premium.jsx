@@ -1,3 +1,4 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { goBack } from '../lib/back'
@@ -5,7 +6,6 @@ import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
 import { upsertUser, sendMagicLink, getAllSessions } from '../lib/supabase'
 import { Capacitor } from '@capacitor/core'
-import { PROGRAM_APPROVED } from '../config/program'
 import { haptic } from '../lib/haptic'
 import { ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE, LIBRARY_TARGET, MONTHLY_PRICE, CUSTOM_AUDIO_PRICE } from '../config/pricing'
 import { billingAvailable, loadPackages, purchase, restore } from '../lib/nativeBilling'
@@ -20,7 +20,6 @@ const PLANS = [
     label: 'Annual, founding rate',
     price: ANNUAL_FOUNDING_PRICE,
     headline: 'Includes a custom session built for you',
-    guarantee: 'Complete the 6-week program. If you do not feel a difference, full refund.',
     note: `A$${(ANNUAL_FOUNDING_PRICE / 12).toFixed(2)} a month, billed once a year. The founding rate stays at A$${ANNUAL_FOUNDING_PRICE} for as long as you keep the subscription.`,
   },
   {
@@ -117,7 +116,7 @@ function WebPremium() {
       const active = await refreshPremium()
       if (active === null) return
       if (active) {
-        addToast('Restored. Everything is unlocked.', 'success')
+        addToast(ui.restore_active, 'success')
       } else {
         addToast('No active subscription on that email.', 'info')
       }
@@ -138,7 +137,7 @@ function WebPremium() {
             You have premium
           </h1>
           <p style={{ margin: '0 0 24px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-            Every session is unlocked, including everything added from here.
+            {ui.premium_available}
           </p>
           <button className="btn-primary btn-lg" onClick={() => navigate('/sessions')}>
             Go to the library
@@ -169,8 +168,7 @@ function WebPremium() {
           Premium
         </h1>
         <p style={{ margin: '0 0 18px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-          Every session{PROGRAM_APPROVED ? ' and the six-week program' : ''}. New sessions are added
-          monthly. Cancel any time.
+          {ui.premium_intro}
         </p>
         {withAudio !== null && (
           <p className="t-caption" style={{ margin: '0 0 18px' }} data-testid="library-counter">
@@ -202,9 +200,7 @@ function WebPremium() {
               <div style={{ marginTop: 6, font: '400 13px/19px var(--font-ui)', color: 'var(--ink-muted)' }}>
                 {plan.note}
               </div>
-              {plan.guarantee && (
-                <div style={{ marginTop: 8, font: '400 13px/19px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>{plan.guarantee}</div>
-              )}
+
             </button>
           ))}
 
@@ -237,7 +233,7 @@ function WebPremium() {
         <AccountBlock />
 
         <div style={{ font: '400 14px/22px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-          All sessions are written and recorded by Matthew Tweedie, clinical hypnotherapist, Adelaide.
+          {ui.wellbeing_note}
         </div>
         <div style={{ height: 24 }} />
       </div>
@@ -262,7 +258,7 @@ function AccountBlock() {
     return (
       <div style={{ margin: '4px 0 18px' }}>
         <button className="btn-ghost" onClick={() => navigate('/signin')}>
-          Sign in to keep this across devices
+          {ui.account_signin}
         </button>
       </div>
     )
@@ -351,7 +347,7 @@ function NativePremium() {
       const active = await refreshPremium()
       if (!current()) return
       if (active === null) { setMessage(''); return }
-      setMessage(active ? 'Restored. Everything is unlocked.' : billingCopy.verificationPending)
+      setMessage(active ? (restoring ? ui.restore_active : ui.purchase_active) : billingCopy.verificationPending)
     } catch {
       if (!current()) return
       setMessage(restoring ? billingCopy.restoreError : billingCopy.purchaseError)

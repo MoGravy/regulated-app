@@ -1,3 +1,4 @@
+import { reviewedSession, ui } from '../content/reviewedCopy.js'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { goBack } from '../lib/back'
@@ -27,7 +28,7 @@ export default function SessionDetail() {
     supabase.from('sessions').select(SESSION_COLUMNS).eq('id', trimmed).single()
       .then(({ data, error }) => {
         if (cancelled) return
-        if (data && !error) return setSession(data)
+        if (data && !error) return setSession(reviewedSession(data))
         console.warn('[SessionDetail] DB fetch failed:', JSON.stringify(error), '— trying fallback')
         const fallback = HARDCODED_SESSIONS_BY_ID[trimmed]
         if (fallback) setSession(fallback)
@@ -111,7 +112,7 @@ export default function SessionDetail() {
           {session.title}
         </h1>
         <div className="t-caption">
-          {session.duration} minutes · Matthew Tweedie{year ? ` · recorded ${year}` : ''}
+          {session.duration} minutes · Matthew Tweedie{year ? ` · ${ui.added_year} ${year}` : ''}
         </div>
 
         {session.description && (
@@ -120,6 +121,8 @@ export default function SessionDetail() {
           </p>
         )}
 
+        <p className="t-caption" style={{ marginTop: 18 }}>{ui.wellbeing_note}</p>
+        <p className="t-caption">{ui.listening_safety}</p>
         <div style={{ height: 24 }} />
       </div>
 
@@ -132,7 +135,7 @@ export default function SessionDetail() {
           </button>
         )}
         <div style={{ marginTop: 12, textAlign: 'center' }} className="t-caption">
-          {comingSoon ? 'Not recorded yet' : session.free ? 'Free' : 'Included in premium'} · {session.duration} min
+          {comingSoon ? ui.audio_unavailable : session.free ? 'Free' : 'Included in premium'} · {session.duration} min
         </div>
       </div>
     </div>

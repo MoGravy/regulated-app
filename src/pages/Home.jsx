@@ -1,3 +1,4 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
@@ -145,7 +146,7 @@ export default function Home() {
 
         {!programMode && newest && (
           <>
-            <div className="t-section" style={{ margin: '26px 0 10px' }}>New this month</div>
+            <div className="t-section" style={{ margin: '26px 0 10px' }}>{ui.latest_sessions}</div>
             <SessionRow session={newest} />
           </>
         )}

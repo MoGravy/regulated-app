@@ -1,3 +1,4 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
@@ -42,11 +43,10 @@ export default function Onboarding() {
         {step === 0 && (
           <>
             <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>
-              Feel safe in your own body
+              {ui.onboarding_heading}
             </h1>
             <p style={{ margin: '18px 0 0', font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              Hypnotherapy audio for sleep, stress, anxiety and gut symptoms, recorded by a clinical
-              hypnotherapist. Four sessions are free.
+              {ui.onboarding_intro}
             </p>
 
             <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -83,7 +83,7 @@ export default function Onboarding() {
               What brought you here?
             </h1>
             <p style={{ margin: '18px 0 0', font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              It points you at the right session first. You can change it later.
+              {ui.onboarding_reason_help}
             </p>
 
             <div style={{ marginTop: 32, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -113,7 +113,7 @@ export default function Onboarding() {
               Start with the library
             </h1>
             <p style={{ margin: '18px 0 0', font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              Four sessions are free, no card needed. The six-week program opens once it is ready.
+              {ui.onboarding_library}
             </p>
 
             <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14 }}>

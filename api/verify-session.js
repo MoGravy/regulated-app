@@ -1,3 +1,4 @@
+import { receiptStatus } from './_checkout-receipt.js'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -15,8 +16,7 @@ export default async function handler(req, res) {
   try {
     const session = await stripe.checkout.sessions.retrieve(session_id)
     return res.status(200).json({
-      status: session.payment_status,
-      customer_email: session.customer_email,
+      status: receiptStatus(session) || 'unconfirmed',
       type: session.metadata?.type,
       plan: session.metadata?.plan,
     })

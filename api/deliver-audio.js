@@ -1,3 +1,4 @@
+import { ui } from '../src/content/reviewedCopy.js'
 /**
  * Called by Matthew (or an admin script) after uploading a custom audio to Supabase Storage.
  * POST /api/deliver-audio
@@ -86,7 +87,7 @@ function deliveryEmail(downloadUrl, order) {
     <div style="text-align:center;margin-bottom:32px;">
       <div style="font-size:48px;margin-bottom:12px;">🎧</div>
       <h1 style="color:#F0F4F6;font-size:26px;font-weight:800;margin:0 0 8px;">Your audio is ready.</h1>
-      <p style="color:#8BA9B5;font-size:16px;margin:0;">Built specifically for your pattern.</p>
+      <p style="color:#8BA9B5;font-size:16px;margin:0;">${ui.custom_personalized}</p>
     </div>
 
     <div style="background:#1A3A4A;border:1px solid rgba(126,207,192,0.15);border-radius:16px;padding:24px;margin-bottom:24px;">
@@ -106,10 +107,9 @@ function deliveryEmail(downloadUrl, order) {
     <div style="background:#1A3A4A;border:1px solid rgba(126,207,192,0.15);border-radius:16px;padding:20px;margin-bottom:24px;">
       <div style="font-size:13px;font-weight:700;color:#F0F4F6;margin-bottom:8px;">How to get the most from this</div>
       <ul style="color:#8BA9B5;font-size:14px;line-height:1.8;padding-left:18px;margin:0;">
-        <li>Listen with headphones in a quiet space</li>
-        <li>Don't try to analyse — just receive</li>
-        <li>Listen daily for 21 days for deepest impact</li>
-        <li>Notice what shifts in your body, not just your thoughts</li>
+        <li>${ui.listening_safety}</li>
+        <li>${ui.custom_use}</li>
+        <li>${ui.wellbeing_note}</li>
       </ul>
     </div>
 

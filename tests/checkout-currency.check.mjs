@@ -1,3 +1,4 @@
+import { ui } from '../src/content/reviewedCopy.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import vm from 'node:vm'
@@ -21,7 +22,7 @@ async function call(body, options = {}) {
     return { select() { return this }, eq() { return this }, async single() { return { data: { code: 'FIXTURE', active: true, max_uses: null, discount_type: options.percentage ? 'percentage' : 'fixed', discount_amount: 10 } } } }
   } }
   const context = vm.createContext({
-    CURRENCY, CUSTOM_AUDIO_PRICE_CENTS, ANNUAL_FOUNDING_PRICE_CENTS, MONTHLY_PRICE_CENTS,
+    ui, CURRENCY, CUSTOM_AUDIO_PRICE_CENTS, ANNUAL_FOUNDING_PRICE_CENTS, MONTHLY_PRICE_CENTS,
     process: { env: options.missingConfig ? {} : { STRIPE_PRICE_ANNUAL: 'fixture-annual', STRIPE_PRICE_MONTHLY: 'fixture-monthly' } },
     Stripe: class { constructor() { return stripe } },
     createClient: () => database,
@@ -40,6 +41,7 @@ const custom = await call({ type: 'custom_audio', email: 'fixture@example.test',
 assert.equal(custom.status, 200)
 assert.equal(custom.calls.checkouts[0].line_items[0].price_data.currency, 'aud')
 assert.equal(custom.calls.checkouts[0].line_items[0].price_data.unit_amount, 9900)
+assert.equal(custom.calls.checkouts[0].line_items[0].price_data.product_data.description, ui.custom_personalized)
 assert.equal(custom.calls.coupons[0].currency, 'aud')
 assert.equal(custom.calls.coupons[0].amount_off, 1000)
 assert.equal(custom.calls.prices.length, 0)

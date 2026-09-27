@@ -1,3 +1,4 @@
+import { ui } from '../src/content/reviewedCopy.js'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { annualFreeCheck, ANNUAL_FREE } from './_annualfree.js'
@@ -125,7 +126,7 @@ export default async function handler(req, res) {
               unit_amount: CUSTOM_AUDIO_PRICE_CENTS,
               product_data: {
                 name: 'Custom Audio Session',
-                description: 'Personalized nervous system regulation audio — delivered within 7 days',
+                description: ui.custom_personalized,
                 images: [`${appUrl}/og-image.jpg`],
               },
             },

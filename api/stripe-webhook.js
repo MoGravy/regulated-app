@@ -1,7 +1,8 @@
+import { receiptStatus } from './_checkout-receipt.js'
+import { ui } from '../src/content/reviewedCopy.js'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
-import { CUSTOM_AUDIO_PRICE, ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE } from '../src/config/pricing.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -48,8 +49,10 @@ export default async function handler(req, res) {
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object
+        if (!receiptStatus(session)) break
         const { type, order_id, user_email, plan, coupon_code, discount_applied } = session.metadata || {}
 
         if (type === 'custom_audio') {
@@ -152,12 +155,11 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
     .upsert({ email: userEmail, updated_at: new Date().toISOString() }, { onConflict: 'email' })
 
   // Send confirmation email only after the order is recorded
-  const dueDateStr = dueDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   await resend.emails.send({
     from: `Matthew at Regulated <${FROM_EMAIL}>`,
     to: userEmail,
     subject: "Your custom audio is in progress 🎧",
-    html: customAudioConfirmationEmail(dueDateStr),
+    html: customAudioConfirmationEmail(),
   })
 }
 
@@ -197,13 +199,13 @@ async function handleSubscriptionPayment(session, userEmail, plan, couponCode, d
     from: `Matthew at Regulated <${FROM_EMAIL}>`,
     to: userEmail,
     subject: "Welcome to Regulated Premium ✦",
-    html: premiumWelcomeEmail(),
+    html: premiumWelcomeEmail(plan),
   })
 }
 
 // --- Email templates ---
 
-function customAudioConfirmationEmail(dueDate) {
+function customAudioConfirmationEmail() {
   return `
 <!DOCTYPE html>
 <html>
@@ -213,29 +215,17 @@ function customAudioConfirmationEmail(dueDate) {
     <div style="text-align:center;margin-bottom:32px;">
       <div style="font-size:48px;margin-bottom:12px;">🎯</div>
       <h1 style="color:#F0F4F6;font-size:26px;font-weight:800;margin:0 0 8px;">Order confirmed.</h1>
-      <p style="color:#8BA9B5;font-size:16px;margin:0;">Your custom audio is now in production.</p>
+      <p style="color:#8BA9B5;font-size:16px;margin:0;">${ui.custom_confirmed_body}</p>
     </div>
 
     <div style="background:#1A3A4A;border:1px solid rgba(126,207,192,0.15);border-radius:16px;padding:24px;margin-bottom:24px;">
       <div style="font-size:13px;font-weight:700;color:#7ECFC0;letter-spacing:0.08em;margin-bottom:16px;">WHAT HAPPENS NEXT</div>
-      ${[
-        ['🎙️', 'Recording begins', 'Matthew reviews your intake and starts building your session'],
-        ['✂️', 'Production', 'Your audio is recorded, edited, and mixed to professional quality'],
-        ['📬', `Delivery by ${dueDate}`, 'Audio delivered directly to this email address'],
-        ['♾️', 'Yours forever', 'Download and replay whenever you need it'],
-      ].map(([icon, title, detail]) => `
-        <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">
-          <span style="font-size:20px;flex-shrink:0">${icon}</span>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:#F0F4F6;margin-bottom:2px">${title}</div>
-            <div style="font-size:13px;color:#8BA9B5">${detail}</div>
-          </div>
-        </div>
-      `).join('')}
+      <p style="font-size:14px;color:#8BA9B5">${ui.custom_personalized}</p>
+      <p style="font-size:14px;color:#8BA9B5">${ui.custom_access}</p>
     </div>
 
     <p style="color:#8BA9B5;font-size:14px;line-height:1.7;margin-bottom:20px;">
-      In the meantime, jump into the free sessions in the app to start building your regulation baseline. The custom audio will layer on top of the foundation you build now.
+      ${ui.wellbeing_note}
     </p>
 
     <div style="text-align:center;margin-bottom:32px;">
@@ -254,7 +244,7 @@ function customAudioConfirmationEmail(dueDate) {
   `
 }
 
-function premiumWelcomeEmail() {
+function premiumWelcomeEmail(plan) {
   return `
 <!DOCTYPE html>
 <html>
@@ -264,25 +254,13 @@ function premiumWelcomeEmail() {
     <div style="text-align:center;margin-bottom:32px;">
       <div style="font-size:48px;margin-bottom:12px;">✦</div>
       <h1 style="color:#F0F4F6;font-size:26px;font-weight:800;margin:0 0 8px;">Welcome to Regulated Premium.</h1>
-      <p style="color:#8BA9B5;font-size:16px;margin:0;">Every session in the library is now unlocked. New sessions added every week.</p>
+      <p style="color:#8BA9B5;font-size:16px;margin:0;">${ui.payment_confirmed_body}</p>
     </div>
 
     <div style="background:#1A3A4A;border:1px solid rgba(126,207,192,0.15);border-radius:16px;padding:24px;margin-bottom:24px;">
       <div style="font-size:13px;font-weight:700;color:#7ECFC0;letter-spacing:0.08em;margin-bottom:16px;">YOUR ACCESS INCLUDES</div>
-      ${[
-        ['🎧', '13 sessions and growing', 'Every session in the library is now unlocked. New sessions added regularly.'],
-        ['🎯', 'Built for your pattern', 'Sleep, anxiety, gut, habits, confidence — each session targets a specific nervous system pattern.'],
-        ['🎙️', 'One free custom audio (annual)', `Order a session built for your exact trigger and outcome. Use code ANNUALFREE at checkout — normally $${CUSTOM_AUDIO_PRICE}, free for you.`],
-        ['🔒', 'Founding price locked for life', `Your $${ANNUAL_FOUNDING_PRICE}/year rate never rises, even when the library hits 40 sessions and the price goes to $${ANNUAL_FULL_PRICE}.`],
-      ].map(([icon, title, detail]) => `
-        <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">
-          <span style="font-size:20px;flex-shrink:0">${icon}</span>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:#F0F4F6;margin-bottom:2px">${title}</div>
-            <div style="font-size:13px;color:#8BA9B5">${detail}</div>
-          </div>
-        </div>
-      `).join('')}
+      <p style="font-size:14px;color:#8BA9B5">${ui.premium_available}</p>
+      ${plan === 'annual' ? `<p style="font-size:14px;color:#8BA9B5">${ui.annual_custom_help} ANNUALFREE</p>` : ''}
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">

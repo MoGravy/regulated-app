@@ -1,3 +1,5 @@
+import { reviewedSession } from '../content/reviewedCopy.js'
+
 // Emergency fallback metadata only — used when Supabase is unreachable.
 // No audio URLs live here: all playback resolves through /api/get-audio-url.
 
@@ -102,7 +104,7 @@ export const HARDCODED_SESSIONS = [
     description: 'Identify and dissolve the nervous system patterns driving relationship struggles.',
     audio_url: null,
   },
-]
+].map(reviewedSession)
 
 export const HARDCODED_SESSIONS_BY_ID = Object.fromEntries(
   HARDCODED_SESSIONS.map(s => [s.id, s])

@@ -1,3 +1,4 @@
+import { reviewedSession, ui } from '../content/reviewedCopy.js'
 import { Capacitor } from '@capacitor/core'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -67,8 +68,8 @@ function SessionAttempt({ id }) {
       if (cancelled) return
 
       if (data && !error) {
-        setSession(data)
-        trackEvent(Events.SESSION_STARTED, { session_title: data.title })
+        setSession(reviewedSession(data))
+        trackEvent(Events.SESSION_STARTED, { session_title: reviewedSession(data).title })
         return
       }
 
@@ -227,10 +228,10 @@ function SessionAttempt({ id }) {
       <Shell>
         <div className="player-content" style={{ position: 'relative', margin: 'auto', textAlign: 'center', padding: 32 }}>
           <div style={{ font: '400 21px/28px var(--font-display)', color: 'var(--player-title)' }}>
-            Take a breath. The audio is not here yet.
+            Audio could not be loaded
           </div>
           <p style={{ margin: '12px 0 24px', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)', textWrap: 'pretty' }}>
-            Your session is safe. This is usually the connection. When you are ready, try again.
+            When you are ready, try again.
           </p>
           <button
             onClick={() => { setAudioError(null); setRetry(n => n + 1) }}
@@ -280,7 +281,7 @@ function SessionAttempt({ id }) {
       {step === STEP.CHECKOUT && (
         <div className="player-content" style={{ position: 'relative', flex: 'var(--player-flex, 1)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
           <h1 style={{ font: '300 32px/38px var(--font-display)', color: 'var(--player-title)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
-            How does your system feel now?
+            {ui.score_prompt.split('?')[0]}?
           </h1>
           <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {['Calmer', 'About the same', 'Not sure'].map(answer => (
@@ -330,7 +331,7 @@ function SessionAttempt({ id }) {
               {session.title}
             </h1>
             <p style={{ margin: '16px 0 0', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)', maxWidth: 300, textWrap: 'pretty' }}>
-              Lie down. Let the audio do the work. If you fall asleep, that is fine.
+              {ui.listening_safety}
             </p>
           </div>
 

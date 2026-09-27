@@ -1,3 +1,4 @@
+import { reviewedSession } from '../content/reviewedCopy.js'
 import { createClient } from '@supabase/supabase-js'
 import { HARDCODED_SESSIONS } from './hardcodedSessions'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/credentials'
@@ -95,8 +96,8 @@ export async function getAllSessions() {
     return HARDCODED_SESSIONS
   }
   console.log('[Sessions] ✓', data.length, 'sessions from Supabase')
-  allSessionsCache = data
-  return data
+  allSessionsCache = data.map(reviewedSession)
+  return allSessionsCache
 }
 
 export async function getSessions() {
