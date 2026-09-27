@@ -19,7 +19,7 @@ const PLANS = [
     price: ANNUAL_FOUNDING_PRICE,
     headline: 'Includes a custom session built for you',
     guarantee: 'Complete the 6-week program. If you do not feel a difference, full refund.',
-    note: `$${(ANNUAL_FOUNDING_PRICE / 12).toFixed(2)} a month, billed once a year. The founding rate stays at $${ANNUAL_FOUNDING_PRICE} for as long as you keep the subscription.`,
+    note: `A$${(ANNUAL_FOUNDING_PRICE / 12).toFixed(2)} a month, billed once a year. The founding rate stays at A$${ANNUAL_FOUNDING_PRICE} for as long as you keep the subscription.`,
   },
   {
     id: 'monthly',
@@ -166,7 +166,7 @@ export default function Premium() {
         </p>
         {withAudio !== null && (
           <p className="t-caption" style={{ margin: '0 0 18px' }} data-testid="library-counter">
-            {withAudio} of {LIBRARY_TARGET} sessions until the price rises to ${ANNUAL_FULL_PRICE}
+            {withAudio} of {LIBRARY_TARGET} sessions until the price rises to A${ANNUAL_FULL_PRICE}
           </p>
         )}
 
@@ -186,7 +186,7 @@ export default function Premium() {
             >
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                 <span style={{ font: '400 21px/28px var(--font-display)', color: 'var(--ink)' }}>{plan.label}</span>
-                <span style={{ font: '500 17px/24px var(--font-ui)', color: 'var(--ink)' }}>${plan.price}</span>
+                <span style={{ font: '500 17px/24px var(--font-ui)', color: 'var(--ink)' }}>A${plan.price}</span>
               </div>
               {plan.headline && (
                 <div style={{ marginTop: 6, font: '500 14px/20px var(--font-ui)', color: 'var(--ink)' }}>{plan.headline}</div>
@@ -236,7 +236,7 @@ export default function Premium() {
 
       <div className="footer-cta" style={{ maxWidth: 'var(--content-width, 480px)', margin: '0 auto', width: '100%', background: 'transparent', borderTop: 'none', padding: '0 var(--footer-inline, 24px) 24px' }}>
         <button className="btn-primary btn-lg" onClick={handleSubscribe} disabled={loading}>
-          {loading ? 'Opening checkout…' : `Continue at $${selected.price} ${selected.id === 'annual' ? 'a year' : 'a month'}`}
+          {loading ? 'Opening checkout…' : `Continue at A$${selected.price} ${selected.id === 'annual' ? 'a year' : 'a month'}`}
         </button>
         <button className="btn-ghost" onClick={handleRestore} disabled={restoring}>
           {restoring ? 'Checking…' : 'Restore a purchase'}
@@ -289,7 +289,7 @@ function CustomAudioCard({ onClick }) {
     <button onClick={onClick} className="card" style={{ textAlign: 'left', cursor: 'pointer', boxShadow: 'none', padding: 18, width: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <span style={{ font: '400 21px/28px var(--font-display)', color: 'var(--ink)' }}>Custom audio</span>
-        <span style={{ font: '500 17px/24px var(--font-ui)', color: 'var(--ink)' }}>${CUSTOM_AUDIO_PRICE}</span>
+        <span style={{ font: '500 17px/24px var(--font-ui)', color: 'var(--ink)' }}>A${CUSTOM_AUDIO_PRICE}</span>
       </div>
       <div style={{ marginTop: 6, font: '400 13px/19px var(--font-ui)', color: 'var(--ink-muted)' }}>
         One session written and recorded for your situation. Bought separately, no subscription needed.

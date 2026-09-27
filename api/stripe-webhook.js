@@ -245,7 +245,7 @@ function customAudioConfirmationEmail(dueDate) {
     </div>
 
     <p style="color:#4A7080;font-size:12px;line-height:1.6;text-align:center;">
-      Questions? Reply to this email or contact hello@regulatedapp.co<br>
+      Questions? Reply to this email or contact info@matthewtweediehypnosis.com.au<br>
       <a href="https://regulatedapp.co/unsubscribe" style="color:#4A7080">Unsubscribe</a>
     </p>
   </div>
@@ -292,7 +292,7 @@ function premiumWelcomeEmail() {
     </div>
 
     <p style="color:#4A7080;font-size:12px;line-height:1.6;text-align:center;">
-      Questions? Reply to this email or contact hello@regulatedapp.co<br>
+      Questions? Reply to this email or contact info@matthewtweediehypnosis.com.au<br>
       <a href="https://regulatedapp.co/unsubscribe" style="color:#4A7080">Unsubscribe</a>
     </p>
   </div>

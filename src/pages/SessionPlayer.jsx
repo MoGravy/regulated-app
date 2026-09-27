@@ -313,7 +313,7 @@ function SessionAttempt({ id }) {
                 onClick={() => navigate('/custom')}
                 style={{ height: 48, borderRadius: 'var(--r-row)', border: '1px solid var(--player-track)', background: 'transparent', color: 'var(--player-muted)', font: '400 14px/20px var(--font-ui)', cursor: 'pointer' }}
               >
-                A session made for you · ${CUSTOM_AUDIO_PRICE}
+                A session made for you · A${CUSTOM_AUDIO_PRICE}
               </button>
             )}
           </div>

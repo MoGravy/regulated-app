@@ -52,7 +52,7 @@ test('guest restore keeps its magic link and guest checkout keeps its submitted 
   await expect(page.getByText(/Check your email for a sign-in link/)).toBeVisible()
   expect(links).toEqual(['guest@example.test'])
   await expect(page.getByRole('heading', { name: 'You have premium' })).toHaveCount(0)
-  await page.getByRole('button', { name: /Continue at \$/ }).click()
+  await page.getByRole('button', { name: /Continue at A\$/ }).click()
   await expect(page).toHaveURL(/\/mock-checkout$/)
   expect(checkouts).toEqual([{ type: 'subscription', plan: 'annual', email: 'guest@example.test' }])
 })
@@ -197,7 +197,7 @@ test('a premium customer sees no locked rows and no paywall', async ({ page }) =
   await page.goto('/premium')
   await page.waitForLoadState('networkidle')
   await expect(page.getByRole('heading', { name: 'You have premium' })).toBeVisible()
-  await expect(page.getByRole('button', { name: /Continue at \$/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Continue at A\$/ })).toHaveCount(0)
   await expectNoConsoleErrors(errors)
 })
 
@@ -225,7 +225,7 @@ test('the paywall refuses a bad email before it opens checkout', async ({ page }
   await page.goto('/premium')
   await page.waitForLoadState('networkidle')
   await page.locator('#premium-email').fill('nope')
-  await page.getByRole('button', { name: /Continue at \$/ }).click()
+  await page.getByRole('button', { name: /Continue at A\$/ }).click()
 
   await expect(page.getByRole('alert')).toContainText('Enter the email')
   expect(checkout, 'a malformed address reached create-checkout').toBe(false)

@@ -246,7 +246,7 @@ test.describe('needs /api', () => {
       route.abort()
     })
 
-    await page.getByRole('button', { name: /continue at \$149/i }).click()
+    await page.getByRole('button', { name: /continue at A\$149/i }).click()
     await expect.poll(() => stripeUrl, { timeout: 20_000 }).toContain('checkout.stripe.com')
   })
 })

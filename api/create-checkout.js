@@ -10,7 +10,7 @@ const supabase = createClient(
 )
 
 // Custom audio price is server-authoritative. The client never sends an amount.
-import { CUSTOM_AUDIO_PRICE_CENTS } from '../src/config/pricing.js'
+import { CUSTOM_AUDIO_PRICE_CENTS, CURRENCY, ANNUAL_FOUNDING_PRICE_CENTS, MONTHLY_PRICE_CENTS } from '../src/config/pricing.js'
 
 // Look up a coupon code in the coupons table — same rules as /api/validate-coupon.
 // Returns the coupon row, or null if the code is missing/inactive/expired/exhausted.
@@ -63,6 +63,27 @@ export default async function handler(req, res) {
   const appUrl = getAppUrl(req)
 
   try {
+    let resolvedPriceId
+    if (type === 'subscription') {
+      if (plan !== 'annual' && plan !== 'monthly') {
+        return res.status(400).json({ error: 'Invalid subscription plan' })
+      }
+      resolvedPriceId = plan === 'annual'
+        ? process.env.STRIPE_PRICE_ANNUAL
+        : process.env.STRIPE_PRICE_MONTHLY
+      if (!resolvedPriceId) {
+        console.error(`[checkout] STRIPE_PRICE_${(plan || 'UNKNOWN').toUpperCase()} env var not set`)
+        return res.status(500).json({ error: 'Subscription price not configured. Contact support.' })
+      }
+      const price = await stripe.prices.retrieve(resolvedPriceId)
+      const amount = plan === 'annual' ? ANNUAL_FOUNDING_PRICE_CENTS : MONTHLY_PRICE_CENTS
+      const interval = plan === 'annual' ? 'year' : 'month'
+      if (price?.active !== true || price.currency !== CURRENCY || price.type !== 'recurring' ||
+          price.unit_amount !== amount || price.recurring?.interval !== interval || price.recurring?.interval_count !== 1) {
+        return res.status(500).json({ error: 'Subscription price not configured. Contact support.' })
+      }
+    }
+
     // Build Stripe discount object from the coupons table — client-sent discount
     // values are ignored. An invalid/expired code is a hard error rather than a
     // silent full-price charge: the client validated it moments ago, so a miss
@@ -84,7 +105,7 @@ export default async function handler(req, res) {
         name: appliedCoupon.code,
         ...(appliedCoupon.discount_type === 'percentage'
           ? { percent_off: appliedCoupon.discount_amount }
-          : { amount_off: Math.round(appliedCoupon.discount_amount * 100), currency: 'usd' }
+          : { amount_off: Math.round(appliedCoupon.discount_amount * 100), currency: CURRENCY }
         ),
         duration: 'once',
         max_redemptions: 1,
@@ -100,7 +121,7 @@ export default async function handler(req, res) {
         line_items: [
           {
             price_data: {
-              currency: 'usd',
+              currency: CURRENCY,
               unit_amount: CUSTOM_AUDIO_PRICE_CENTS,
               product_data: {
                 name: 'Custom Audio Session',
@@ -132,17 +153,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url, sessionId: session.id })
 
     } else if (type === 'subscription') {
-      // Price IDs live in Vercel env vars — never trust the client to send them.
-      // To update pricing: change STRIPE_PRICE_ANNUAL / STRIPE_PRICE_MONTHLY in Vercel.
-      const resolvedPriceId = plan === 'annual'
-        ? process.env.STRIPE_PRICE_ANNUAL
-        : process.env.STRIPE_PRICE_MONTHLY
-
-      if (!resolvedPriceId) {
-        console.error(`[checkout] STRIPE_PRICE_${(plan || 'UNKNOWN').toUpperCase()} env var not set`)
-        return res.status(500).json({ error: 'Subscription price not configured. Contact support.' })
-      }
-
       // allow_promotion_codes lets customers enter codes (e.g. ANNUALFREE) on
       // Stripe's hosted page — no programmatic coupon handling needed here.
       const session = await stripe.checkout.sessions.create({

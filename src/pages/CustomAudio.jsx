@@ -149,7 +149,7 @@ export default function CustomAudio() {
           ))}
           <div className="divider" />
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--ink)' }}>${PRICE}</span>
+            <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--ink)' }}>A${PRICE}</span>
             <span style={{ fontSize: 14, color: 'var(--ink-faint)' }}>one-time · 7-day turnaround</span>
           </div>
         </div>
@@ -309,11 +309,11 @@ export default function CustomAudio() {
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   {appliedCoupon && (
                     <span style={{ fontSize: 15, color: 'var(--ink-faint)', textDecoration: 'line-through' }}>
-                      ${PRICE}
+                      A${PRICE}
                     </span>
                   )}
                   <span style={{ fontSize: 24, fontWeight: 800, color: appliedCoupon ? 'var(--cat-habits)' : 'var(--accent)' }}>
-                    ${finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)}
+                    A${finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -339,7 +339,7 @@ export default function CustomAudio() {
                 {loading ? (
                   <><span className="spinner" />Redirecting to payment…</>
                 ) : (
-                  <>Pay ${finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)} → Get My Custom Audio</>
+                  <>Pay A${finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)} → Get My Custom Audio</>
                 )}
               </button>
               <button
@@ -439,7 +439,7 @@ function CustomAudioIntro({ onStart, onBack }) {
 
       <div className="footer-cta">
         <button className="btn-primary btn-lg" onClick={onStart}>
-          Start a custom session · ${PRICE}
+          Start a custom session · A${PRICE}
         </button>
         <div style={{ marginTop: 12, textAlign: 'center' }} className="t-caption">
           One payment. Brief first, pay before recording.
