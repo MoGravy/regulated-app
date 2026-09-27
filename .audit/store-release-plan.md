@@ -18,7 +18,7 @@ Build from live `main` at `98a65b8` in this worktree. Keep the unfinished educat
 
 1. Confirm Apple developer membership and the business that owns both store accounts. Finish account setup with Matthew for identity checks, legal agreements and payments.
 2. Record the current app's login, data, purchase and audio paths. Compare each path with current store rules. Capture the live baseline before editing.
-3. Add a working privacy route and account deletion path. Draft website wording through exact OpenCode Go GLM 5.3 and the installed humanizer passes. Have a legal reviewer check the privacy and health claims before publication.
+3. Add a working privacy route and account deletion path. Draft website wording through exact OpenCode Go GLM 5.3 and the installed humanizer passes. Verify privacy and health claims against the app and current store requirements. Resolve genuine business-policy choices with Matthew before publication.
 4. Package the app for iOS and Android. Test API calls, sign-in links and background audio with lock screen controls on real devices. Test the iPad build on an Apple silicon Mac.
 5. Offer store billing for digital subscriptions inside the store apps. Verify purchases on the server before granting access. Keep existing Stripe subscribers working. Remove Stripe purchase paths from store builds where store rules require it.
 6. Prepare icons, screenshots, listing text, support details, age ratings, privacy and health forms, and reviewer test access. Test all store flows with fake users.
@@ -26,7 +26,7 @@ Build from live `main` at `98a65b8` in this worktree. Keep the unfinished educat
 
 ## Human actions
 
-Matthew handles account sign-in, identity checks, legal agreements, developer fees and payment details. He confirms which legal entity owns Regulated. He approves final privacy and health claims after legal review, and helps recruit any Google test users. The rest stays in this worktree until verified.
+Matthew handles account sign-in, identity checks, legal agreements, developer fees and payment details. The company, AUD prices, support email and 13+ audience are confirmed. He supplies genuine business-policy decisions and helps recruit Google test users if required. Ask only when a concrete owner-only step is available. Work stays in this worktree until verified.
 
 ## Verified progress, 27 September 2026
 
@@ -39,7 +39,7 @@ Matthew handles account sign-in, identity checks, legal agreements, developer fe
 
 ## Remaining work and gates
 
-1. Finish native store purchases, restoration and server verification, then test the real store flows. RevenueCat SDK13.6.1 is installed and both native debug builds pass, but purchases are not configured. Store products and signing depend on account access. See revenuecat-sdk-todo.md for the verified dependency checkpoint.
+1. Finish server verification and real store configuration, then test actual purchase, renewal, cancellation, refund, restoration and account switching. RevenueCat SDK13.6.1 and the native client are locally verified in commits49c369f and0b88878. Billing remains disabled. Native custom purchase and the annual included-custom benefit still need implementation. Store products and signing depend on account access. See revenuecat-sdk-todo.md and native-billing-todo.md.
 2. Finish deletion fulfillment, record ownership, provider handling and retention decisions. Migrations remain unapplied. Do not activate the request flow as a completed deletion service.
 3. Complete privacy/support/deletion pages and declarations from verified facts. The live privacy route remains unresolved. The private draft is outside this public repository.
 4. Verify hosted native authentication and CORS, real-device audio, and the iPad app on Apple silicon Mac. The separate iOS audio test passed after the owner-approved narrow safety-hook exception. Its report and limitations are in `~/AgentWorkspace/regulated-device-check/ios-audio-harness`.
