@@ -45,7 +45,7 @@ Matthew handles account sign-in, identity checks, legal agreements, developer fe
 2. Finish deletion fulfillment, record ownership, provider handling and retention decisions. Migrations remain unapplied. Do not activate the request flow as a completed deletion service.
 3. Complete privacy/support/deletion pages and declarations from verified facts. The live privacy route remains unresolved. The private draft is outside this public repository.
 4. Verify hosted native authentication and CORS, real-device audio, and the iPad app on Apple silicon Mac. The separate iOS audio test passed after the owner-approved narrow safety-hook exception. Its report and limitations are in `~/AgentWorkspace/regulated-device-check/ios-audio-harness`.
-5. Finish app icons, store screenshots, review access, listing forms and signing. Icon drafts are prepared outside the repository but are not installed.
+5. Finish Android launcher icons, store screenshots, review access, listing forms and signing. The prepared Apple icon now replaces the placeholder and passes an unsigned simulator build with verified iPhone/iPad icon references. See apple-icon.md. Android assets and the Google feature graphic remain unfinished.
 6. Submit only after the full verification path passes, then resolve store review findings and verify public listings.
 
 Evidence and exact account state live in `~/quill/MEMORY.md` and the linked vault note `Regulated store submission 2026-09-26`. Build and screenshot evidence is under `~/AgentWorkspace/regulated-device-check`. No production deployment or store submission has occurred.
