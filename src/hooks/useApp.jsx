@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { supabase, checkSubscription, ensureProfile, signOutUser } from '../lib/supabase'
 import { programAt } from '../config/program'
@@ -25,51 +25,76 @@ export function AppProvider({ children }) {
   const [toasts, setToasts] = useState([])
   const [authUser, setAuthUser] = useState(null)
 
-  // A signed-in account owns premium access. Keep the old email only for
-  // pre-filling forms, not for deciding access.
+  const accountId = useRef(null)
+  const premiumRevision = useRef(0)
+  const authRevision = useRef(0)
+  const providerLive = useRef(false)
+
+  const refreshPremium = useCallback(async () => {
+    const expectedAccountId = accountId.current
+    const revision = ++premiumRevision.current
+    const current = () => providerLive.current &&
+      revision === premiumRevision.current && accountId.current === expectedAccountId
+    try {
+      const active = expectedAccountId ? await checkSubscription(expectedAccountId) : false
+      if (!current()) return null
+      setIsPremium(active)
+      return active
+    } catch (error) {
+      if (!current()) return null
+      setIsPremium(false)
+      throw error
+    }
+  }, [])
+
   useEffect(() => {
     let live = true
+    const initialRevision = authRevision.current
+    providerLive.current = true
 
     function adopt(session) {
       if (!live) return
       const user = session?.user ?? null
-      setAuthUser(user)
+      premiumRevision.current++
+      authRevision.current++
+      if (accountId.current !== (user?.id ?? null)) setIsPremium(false)
+      accountId.current = user?.id ?? null
+      setAuthUser(user ? { ...user } : null)
       if (user?.email) {
         setUserEmail(user.email)
         ensureProfile(user)
       }
     }
 
-    supabase.auth.getSession().then(({ data }) => adopt(data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => adopt(session))
+    supabase.auth.getSession().then(({ data }) => {
+      if (initialRevision === authRevision.current) adopt(data.session)
+    }).catch(() => { if (initialRevision === authRevision.current) adopt(null) })
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      adopt(session)
+    })
 
     return () => {
       live = false
+      providerLive.current = false
+      premiumRevision.current++
       sub.subscription.unsubscribe()
     }
-    // setUserEmail is a fresh closure every render; re-running this would tear
-    // down the auth listener on every state change.
+    // setUserEmail changes each render; the auth listener must stay mounted.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    let live = true
-    setIsPremium(false)
-    if (authUser?.id) {
-      checkSubscription(authUser.email).then(active => {
-        if (live) setIsPremium(active)
-      }).catch(err => console.error('[useApp] subscription check failed:', err))
-    }
-    return () => { live = false }
-  }, [authUser?.id, authUser?.email])
+    refreshPremium().catch(() => console.error('[useApp] subscription check failed'))
+  }, [authUser, refreshPremium])
 
-  // Signing out drops the local email too, otherwise premium would survive a
-  // sign-out. "Restore a purchase" on the You tab gets it back.
   async function signOut() {
-    await signOutUser()
+    authRevision.current++
+    premiumRevision.current++
+    accountId.current = null
     setAuthUser(null)
     setUserEmail(null)
     setIsPremium(false)
+    await signOutUser()
   }
 
   function markSessionComplete(sessionId) {
@@ -125,7 +150,7 @@ export function AppProvider({ children }) {
       userEmail, setUserEmail,
       completedSessions, markSessionComplete,
       progress, saveProgress, lastInProgress,
-      isPremium, setIsPremium,
+      isPremium, refreshPremium,
       authUser, signOut,
       onboardingDone, setOnboardingDone,
       mode, setMode,

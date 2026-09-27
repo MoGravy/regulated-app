@@ -8,7 +8,7 @@ import { apiUrl } from '../lib/apiUrl'
 export default function Success() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const { setIsPremium } = useApp()
+  const { refreshPremium } = useApp()
 
   const type = params.get('type') // 'subscription' | 'custom_audio'
   const plan = params.get('plan') // 'annual' | 'monthly' | null — display hint only
@@ -40,7 +40,7 @@ export default function Success() {
         setVerified(data)
         setVerifyState('confirmed')
         if (data.type === 'subscription') {
-          setIsPremium(true)
+          refreshPremium().catch(() => console.error('[Success] subscription check failed'))
           trackEvent(Events.PREMIUM_UPGRADE_COMPLETED)
         } else {
           trackEvent(Events.CUSTOM_AUDIO_ORDER_COMPLETED)
@@ -53,7 +53,7 @@ export default function Success() {
     }
     verify()
     return () => { cancelled = true }
-  }, [sessionId])
+  }, [sessionId, refreshPremium])
 
   // Gate the reward code strictly on the verified backend result — never on the
   // URL's plan param.

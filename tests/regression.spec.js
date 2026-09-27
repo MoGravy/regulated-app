@@ -8,23 +8,53 @@ import {
   noProductionWrites, asPremium, fakeAudio, storage, signedIn, FAKE_JWT,
 } from './helpers.js'
 
-test('a signed-out paid checkout return does not grant premium access', async ({ page }) => {
+for (const account of ['signed-out', 'wrong-account']) {
+  test(`a ${account} paid checkout return does not grant premium access`, async ({ page }) => {
+    await skipOnboarding(page)
+    if (account === 'wrong-account') await signedIn(page)
+    await page.route(/\/rest\/v1\/|\/rpc\/|\/auth\/v1\//, route => route.fulfill({
+      status: 200, contentType: 'application/json', body: '[]',
+    }))
+    await page.route('**/api/**', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: '{"active":false}',
+    }))
+    await page.route('**/api/verify-session?*', route => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ status: 'paid', type: 'subscription', plan: 'annual' }),
+    }))
+    await page.goto('/success?type=subscription&plan=annual&session_id=test-checkout')
+    await expect(page.getByText('ANNUALFREE', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Go Home', exact: true }).click()
+    await page.getByRole('button', { name: 'You', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'You have premium', exact: true })).toHaveCount(0)
+  })
+}
+
+test('guest restore keeps its magic link and guest checkout keeps its submitted email', async ({ page }) => {
   await skipOnboarding(page)
   await page.route(/\/rest\/v1\/|\/rpc\/|\/auth\/v1\//, route => route.fulfill({
     status: 200, contentType: 'application/json', body: '[]',
   }))
-  await page.route('**/api/**', route => route.fulfill({
-    status: 200, contentType: 'application/json', body: '{}',
-  }))
-  await page.route('**/api/verify-session?*', route => route.fulfill({
-    status: 200, contentType: 'application/json',
-    body: JSON.stringify({ status: 'paid', type: 'subscription', plan: 'annual' }),
-  }))
-  await page.goto('/success?type=subscription&plan=annual&session_id=test-checkout')
-  await expect(page.getByText('ANNUALFREE', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: 'Go Home', exact: true }).click()
-  await page.getByRole('button', { name: 'You', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'You have premium', exact: true })).toHaveCount(0)
+  await page.route('**/api/**', route => route.fulfill({ status: 200, body: '{}' }))
+  const links = [], checkouts = []
+  await page.route('**/auth/v1/otp*', route => {
+    links.push(route.request().postDataJSON().email)
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+  })
+  await page.route('**/api/create-checkout', route => {
+    checkouts.push(route.request().postDataJSON())
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ url: '/mock-checkout' }) })
+  })
+  await page.route('**/mock-checkout', route => route.fulfill({ body: 'Mock checkout' }))
+  await page.goto('/premium')
+  await page.locator('#premium-email').fill('guest@example.test')
+  await page.getByRole('button', { name: 'Restore a purchase' }).click()
+  await expect(page.getByText(/Check your email for a sign-in link/)).toBeVisible()
+  expect(links).toEqual(['guest@example.test'])
+  await expect(page.getByRole('heading', { name: 'You have premium' })).toHaveCount(0)
+  await page.getByRole('button', { name: /Continue at \$/ }).click()
+  await expect(page).toHaveURL(/\/mock-checkout$/)
+  expect(checkouts).toEqual([{ type: 'subscription', plan: 'annual', email: 'guest@example.test' }])
 })
 
 // Exactly what live production writes today. Nothing else exists for a

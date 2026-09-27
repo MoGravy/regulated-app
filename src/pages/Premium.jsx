@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
-import { upsertUser, checkSubscription, sendMagicLink, getAllSessions } from '../lib/supabase'
+import { upsertUser, sendMagicLink, getAllSessions } from '../lib/supabase'
 import { stripePromise } from '../lib/stripe'
 import { PROGRAM_APPROVED } from '../config/program'
 import { haptic } from '../lib/haptic'
@@ -31,7 +31,7 @@ const PLANS = [
 
 export default function Premium() {
   const navigate = useNavigate()
-  const { isPremium, userEmail, setUserEmail, addToast, setIsPremium, authUser } = useApp()
+  const { isPremium, userEmail, setUserEmail, addToast, refreshPremium, authUser } = useApp()
   const [selectedPlan, setSelectedPlan] = useState('annual')
   // Live count of sessions with audio, for the counter. Null until it lands,
   // and the line simply waits rather than showing a wrong number.
@@ -106,10 +106,9 @@ export default function Premium() {
         addToast('Check your email for a sign-in link. Tap it to restore your purchase.', 'success', 7000)
         return
       }
-      const active = await checkSubscription(target)
+      const active = await refreshPremium()
+      if (active === null) return
       if (active) {
-        setUserEmail(target)
-        setIsPremium(true)
         addToast('Restored. Everything is unlocked.', 'success')
       } else {
         addToast('No active subscription on that email.', 'info')

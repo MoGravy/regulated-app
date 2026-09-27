@@ -156,23 +156,23 @@ export async function authHeaders() {
   return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {}
 }
 
-export async function checkSubscription(email) {
-  if (!email) return false
-  // Signed out, there is nothing to check: the server only trusts a session
-  // token, so a typed email alone can never be premium.
-  const headers = await authHeaders()
-  if (!headers.Authorization) return false
+export async function checkSubscription(expectedAccountId) {
+  const { data, error } = await supabase.auth.getSession()
+  if (error) throw error
+  const session = data?.session
+  if (!expectedAccountId || session?.user?.id !== expectedAccountId || !session.access_token) {
+    throw new Error('Subscription account does not match the signed-in session')
+  }
 
-  // Server-side: the subscriptions table is RLS-locked, so the public key
-  // used here always saw zero rows and every subscriber looked unpaid.
   const res = await fetch(apiUrl('/api/check-subscription'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify({ email }),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+    body: JSON.stringify({ email: session.user.email }),
   })
   if (!res.ok) throw new Error(`check-subscription responded ${res.status}`)
-  const { active } = await res.json()
-  return !!active
+  const result = await res.json()
+  if (typeof result?.active !== 'boolean') throw new Error('Invalid subscription response')
+  return result.active
 }
 
 // ---------------------------------------------------------------------------
