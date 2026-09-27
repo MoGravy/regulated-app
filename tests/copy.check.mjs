@@ -21,7 +21,7 @@ for (const id of ['unknown-session', 'toString', '__proto__']) {
 assert.deepEqual(unreviewedSessionIds(HARDCODED_SESSIONS), [])
 for (const row of HARDCODED_SESSIONS) assert.equal(HARDCODED_SESSIONS_BY_ID[row.id].title, reviewedSession(row).title)
 assert.equal(HARDCODED_SESSIONS.filter(row => row.free).length, 4)
-assert.equal(HARDCODED_SESSIONS.filter(row => row.has_audio).length, 4)
+assert.equal(HARDCODED_SESSIONS.filter(row => row.has_audio).length, 14)
 
 async function apiModule(file, expose = '') {
   const result = await build({

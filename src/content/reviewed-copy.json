@@ -1,48 +1,60 @@
 {
   "sessions": {
-    "7a875d14-f77e-47e9-8ff3-16d5db08d2e6": {
-      "title": "Deep sleep relaxation",
-      "description": "Guided relaxation for settling down at the end of the day."
+    "0d099a17-84cc-44f9-8034-2e87d408592f": {
+      "title": "Following through on goals",
+      "description": "A session exploring what helps you follow through on the things that matter to you."
     },
-    "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442": {
-      "title": "Relaxation for daily stress",
-      "description": "Guided relaxation for moments of everyday stress or overwhelm."
+    "fa09cacb-e58a-4520-aa10-73f010f864d2": {
+      "title": "Body scan",
+      "description": "A session focused on body awareness and tension."
+    },
+    "9a49ad21-2649-4785-bac1-280d912b6bbd": {
+      "title": "Chocolate cravings",
+      "description": "A session focused on cravings for chocolate and the habits around them."
+    },
+    "98e92ec4-792b-4f87-a86b-4201e128f6ae": {
+      "title": "Working with anxiety",
+      "description": "A session exploring anxious thoughts and feelings and how they show up in daily life."
+    },
+    "7a875d14-f77e-47e9-8ff3-16d5db08d2e6": {
+      "title": "A daily pause",
+      "description": "A short session focused on taking a pause in your day."
     },
     "ca65ecd1-8ade-4a6e-915e-84810f8b26cb": {
-      "title": "Gut and stress relaxation",
-      "description": "Guided relaxation on the topic of gut wellbeing and stress."
+      "title": "Preparing for sleep",
+      "description": "A session focused on winding down at the end of the day before bed."
+    },
+    "c2dfc5fe-8a2c-444f-8c9c-f8ae0e3f2a84": {
+      "title": "Physical discomfort",
+      "description": "A session exploring physical discomfort and how you relate to it."
+    },
+    "9b728124-eb92-4236-9968-ebd923773367": {
+      "title": "Exercise motivation",
+      "description": "A session focused on motivation for exercise and moving your body."
     },
     "e184e81c-8163-46eb-8a00-9ef74f727ab4": {
-      "title": "Daily relaxation",
-      "description": "A short, free guided relaxation you can return to on any day."
+      "title": "The gut and mind",
+      "description": "A session exploring the connection between the gut and how you feel."
     },
-    "p001-anxiety-release": {
-      "title": "Relaxation for anxious moments",
-      "description": "Guided relaxation for moments of worry or anxious feelings."
+    "9feeb917-cdf7-4e02-b26a-467c8bfc8145": {
+      "title": "Indigestion",
+      "description": "A session focused on indigestion and the discomfort that can come with it."
     },
-    "p002-deep-focus": {
-      "title": "Deep focus",
-      "description": "Guided relaxation on the topic of focus."
+    "4475ddc0-202f-4775-872b-366e39681932": {
+      "title": "Mindfulness meditation",
+      "description": "A session focused on mindfulness and bringing attention to the present moment."
     },
-    "p003-confidence": {
-      "title": "Relaxation for confidence",
-      "description": "Guided relaxation on the topic of confidence and self-worth."
+    "7d7d2194-9f93-4829-9b81-5b12eb31ed13": {
+      "title": "Setting boundaries",
+      "description": "A session exploring personal boundaries and what it means to hold them."
     },
-    "p004-grief": {
-      "title": "Grief and loss",
-      "description": "Guided relaxation on the topic of grief and loss."
+    "8c7cf64a-0f92-4e97-96ef-3b74f468e1bc": {
+      "title": "Falling asleep",
+      "description": "A session focused on falling asleep and the thoughts that can come up at bedtime."
     },
-    "p005-panic": {
-      "title": "Relaxation for stressful moments",
-      "description": "Guided relaxation for a quiet pause during everyday stress."
-    },
-    "p006-morning": {
-      "title": "Morning relaxation",
-      "description": "A short guided relaxation for the start of the day."
-    },
-    "p007-relationship": {
-      "title": "Relaxation for relationships",
-      "description": "Guided relaxation on the topic of everyday relationships."
+    "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442": {
+      "title": "Stress and overwhelm",
+      "description": "A session exploring stress and how it can build up during the day."
     }
   },
   "ui": {

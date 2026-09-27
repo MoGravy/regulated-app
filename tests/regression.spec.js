@@ -1,3 +1,4 @@
+import { ui, reviewedSession } from '../src/content/reviewedCopy.js'
 // Phase 6a-1. Everything here answers one question: does the redesign break a
 // customer who is already using production? It runs against the built bundle,
 // not the dev server, and no test in this file may write to the database —
@@ -90,7 +91,7 @@ test.describe('a customer arriving from the current production build', () => {
 
     await expect(page).toHaveURL(/\/$/)
     await expect(page.getByRole('heading', { name: /Good (morning|afternoon|evening)/ })).toBeVisible()
-    await expect(page.getByText('Feel safe in your own body')).toHaveCount(0)
+    await expect(page.getByText(ui.onboarding_heading)).toHaveCount(0)
     await expectNoConsoleErrors(errors)
   })
 
@@ -110,11 +111,7 @@ test.describe('a customer arriving from the current production build', () => {
     await page.goto('/sessions')
     await page.waitForLoadState('networkidle')
 
-    // Stress Off Switch, the only free id whose title agrees between the live
-    // sessions table and src/lib/hardcodedSessions.js. The other three free
-    // ids are attached to the wrong titles in that fallback — pre-existing on
-    // main, not introduced here, and only visible if Supabase is unreachable.
-    const done = page.locator('.row', { hasText: 'Stress Off Switch' })
+    const done = page.locator('.row', { hasText: reviewedSession({ id: 'a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442' }).title })
     await expect(done).toContainText('Done')
   })
 
@@ -287,7 +284,7 @@ test('a session played to the end is marked complete and leaves Continue listeni
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
 
   // The silent WAV is half a second, so the end arrives on its own.
-  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toBeVisible({ timeout: 20_000 })
   await page.getByRole('button', { name: 'Calmer' }).click()
   await expect(page.getByRole('heading', { name: 'That is done.' })).toBeVisible()
 
@@ -316,7 +313,7 @@ test('a stalled audio file does not finish the session', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
   await page.waitForTimeout(1500)
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toHaveCount(0)
 })
 
 test('a part-played session shows up in Continue listening', async ({ page }) => {
@@ -397,7 +394,7 @@ test('finishing the day the program is waiting on advances it by exactly one', a
   await page.getByRole('button', { name: /Start today's session/ }).click()
   await page.getByRole('button', { name: 'Start session' }).click()
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
-  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toBeVisible({ timeout: 20_000 })
   await page.getByRole('button', { name: 'Calmer' }).click()
   await expect(page.getByRole('heading', { name: 'That is done.' })).toBeVisible()
 
@@ -409,12 +406,11 @@ test('listening ahead in Browse does not skip a program day', async ({ page }) =
   await fakeAudio(page)
   await enterProgram(page, 0)
 
-  // Gut Brain Reset. Day one of the program is Deep Sleep Reset, so this is a
-  // session the program is not waiting on.
+  // Day one is Daily. Listening to the Sleep recording must not advance it.
   const AHEAD = 'ca65ecd1-8ade-4a6e-915e-84810f8b26cb'
   await page.goto(`/sessions/${AHEAD}/play`)
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
-  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toBeVisible({ timeout: 20_000 })
   await page.getByRole('button', { name: 'Calmer' }).click()
   await expect(page.getByRole('heading', { name: 'That is done.' })).toBeVisible()
 

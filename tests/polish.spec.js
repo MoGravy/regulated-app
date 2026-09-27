@@ -1,3 +1,4 @@
+import { ui } from '../src/content/reviewedCopy.js'
 import { test, expect } from '@playwright/test'
 import { skipOnboarding, signedIn, asPremium, fakeAudio, noProductionWrites } from './helpers.js'
 import path from 'node:path'
@@ -54,7 +55,7 @@ for (const [tag, prep] of [['B', async () => {}], ['D', accentD]]) {
       await expect(page.getByRole('heading', { name: /of your practice/ })).toBeVisible({ timeout: 10_000 })
       await page.waitForTimeout(700)
       await shot(page, `${tag}-player-ended`)
-      await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 10_000 })
+      await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toBeVisible({ timeout: 10_000 })
       await shot(page, `${tag}-player-checkout`)
     })
   })
