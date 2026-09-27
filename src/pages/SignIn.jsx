@@ -35,7 +35,7 @@ export default function SignIn() {
   if (authUser) {
     return (
       <div className="page-plain" style={{ padding: '80px 24px' }}>
-        <div style={{ maxWidth: 480, margin: '0 auto' }}>
+        <div style={{ maxWidth: 'var(--form-width, 480px)', margin: '0 auto' }}>
           <h1 style={{ margin: '0 0 10px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em' }}>
             You are signed in
           </h1>
@@ -94,7 +94,7 @@ export default function SignIn() {
 
       <div className="status-bar" style={{ position: 'relative' }}><span /><span /></div>
 
-      <div style={{ position: 'relative', height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+      <div style={{ position: 'relative', height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 'var(--form-width, 480px)', margin: '0 auto', width: '100%' }}>
         <button className="btn-icon" onClick={() => goBack(navigate)} aria-label="Back">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M10 3l-5 5 5 5" stroke="var(--ink-muted)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
@@ -102,21 +102,21 @@ export default function SignIn() {
         </button>
       </div>
 
-      <div style={{ position: 'relative', flex: 1, padding: '24px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+      <div className="entry-content" style={{ position: 'relative', flex: 'var(--entry-flex, 1)', padding: '24px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 'var(--form-width, 480px)', margin: '0 auto', width: '100%' }}>
         <div style={{ font: '500 13px/18px var(--font-ui)', color: 'var(--ink-muted)' }}>Regulated</div>
         <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>
           Feel safe in your own body
         </h1>
 
         {sent ? (
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
+          <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
             <p style={{ margin: 0, font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
               Check {email}. The link signs you in on this phone and stays signed in.
             </p>
             <button className="btn-ghost" onClick={() => setSent(false)}>Use a different email</button>
           </div>
         ) : (
-          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
+          <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="signin-email">Email</label>
               <input

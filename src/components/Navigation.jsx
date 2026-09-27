@@ -22,7 +22,7 @@ export default function Navigation() {
         left: 0,
         right: 0,
         margin: '0 auto',
-        maxWidth: 480,
+        maxWidth: 'var(--content-width, 480px)',
         display: 'flex',
         alignItems: 'stretch',
         height: 'calc(var(--nav-height) + var(--safe-bottom))',

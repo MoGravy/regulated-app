@@ -26,7 +26,7 @@ export default function MoodTracker({ label, onSubmit, optional = false }) {
   const [value, setValue] = useState(null)
 
   return (
-    <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
+    <div className="player-content" style={{ position: 'relative', flex: 'var(--player-flex, 1)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
       <h1 style={{ font: '300 32px/38px var(--font-display)', color: 'var(--player-title)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
         {label}
       </h1>

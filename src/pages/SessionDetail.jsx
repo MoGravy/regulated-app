@@ -82,12 +82,12 @@ export default function SessionDetail() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100dvh', background: 'var(--bg)' }}>
+    <div className="session-detail" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100dvh', background: 'var(--bg)' }}>
       <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div className="texture" style={{ flex: 'none', height: 240, background: tint(ink, 0.1) }}>
         <Texture ink={ink} variant="header" />
-        <button className="btn-icon" onClick={() => goBack(navigate, '/sessions')} aria-label="Back" style={{ position: 'absolute', left: 12, top: 8 }}>
+        <button className="btn-icon" onClick={() => goBack(navigate, '/sessions')} aria-label="Back" style={{ position: 'absolute', left: 'var(--detail-back, 12px)', top: 8 }}>
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M10 3l-5 5 5 5" stroke="var(--ink)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
           </svg>
@@ -103,7 +103,7 @@ export default function SessionDetail() {
         )}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 0' }}>
+      <div className="detail-content" style={{ flex: 'var(--detail-flex, 1)', overflowY: 'var(--detail-overflow, auto)', padding: '20px 24px 0' }}>
         <div style={{ display: 'inline-flex', height: 26, padding: '0 10px', alignItems: 'center', borderRadius: 'var(--r-pill)', font: '400 12px/16px var(--font-ui)', ...{ background: tint(ink, 0.1), color: ink } }}>
           {label}
         </div>

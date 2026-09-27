@@ -195,7 +195,7 @@ function SessionAttempt({ id }) {
   if (loadError) {
     return (
       <Shell>
-        <div style={{ position: 'relative', margin: 'auto', textAlign: 'center', padding: 32 }}>
+        <div className="player-content" style={{ position: 'relative', margin: 'auto', textAlign: 'center', padding: 32 }}>
           <div style={{ font: '400 21px/28px var(--font-display)', color: 'var(--player-title)' }}>Session not found</div>
           <button
             onClick={() => navigate('/sessions')}
@@ -224,7 +224,7 @@ function SessionAttempt({ id }) {
   if (audioError) {
     return (
       <Shell>
-        <div style={{ position: 'relative', margin: 'auto', textAlign: 'center', padding: 32 }}>
+        <div className="player-content" style={{ position: 'relative', margin: 'auto', textAlign: 'center', padding: 32 }}>
           <div style={{ font: '400 21px/28px var(--font-display)', color: 'var(--player-title)' }}>
             Take a breath. The audio is not here yet.
           </div>
@@ -255,7 +255,7 @@ function SessionAttempt({ id }) {
     <Shell>
       <div className="status-bar" style={{ position: 'relative', color: 'var(--player-faint)' }}><span /><span /></div>
 
-      <div style={{ position: 'relative', height: 56, flex: 'none', display: 'flex', alignItems: 'center', padding: '0 12px' }}>
+      <div className="player-content" style={{ position: 'relative', height: 56, flex: 'none', display: 'flex', alignItems: 'center', padding: '0 12px' }}>
         <button className="btn-icon" onClick={close} aria-label="Close player">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M3 6l5 5 5-5" stroke="var(--player-faint)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
@@ -268,7 +268,7 @@ function SessionAttempt({ id }) {
       )}
 
       {step === STEP.COMPLETE && (
-        <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px', textAlign: 'center' }}>
+        <div className="player-content" style={{ position: 'relative', flex: 'var(--player-flex, 1)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 32px', textAlign: 'center' }}>
           <div className="bloom" aria-hidden="true" />
           <h1 className="fade-in" style={{ position: 'relative', font: '300 32px/38px var(--font-display)', color: 'var(--player-title)', animationDelay: '600ms' }}>
             Day {completedSessions.includes(session.id) ? completedSessions.length : completedSessions.length + 1} of your practice
@@ -277,7 +277,7 @@ function SessionAttempt({ id }) {
       )}
 
       {step === STEP.CHECKOUT && (
-        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
+        <div className="player-content" style={{ position: 'relative', flex: 'var(--player-flex, 1)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
           <h1 style={{ font: '300 32px/38px var(--font-display)', color: 'var(--player-title)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
             How does your system feel now?
           </h1>
@@ -296,7 +296,7 @@ function SessionAttempt({ id }) {
       )}
 
       {step === STEP.DONE && (
-        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px', textAlign: 'center' }}>
+        <div className="player-content" style={{ position: 'relative', flex: 'var(--player-flex, 1)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px', textAlign: 'center' }}>
           <h1 style={{ font: '300 32px/38px var(--font-display)', color: 'var(--player-title)' }}>That is done.</h1>
           <p style={{ margin: '16px 0 0', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)' }}>
             Stay lying down for a minute if you can.
@@ -323,7 +323,7 @@ function SessionAttempt({ id }) {
       {step === STEP.PLAYING && (
         <>
           <div className="player-glow" data-playing={isPlaying} aria-hidden="true" />
-          <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
+          <div className="player-content" style={{ position: 'relative', flex: 'var(--player-flex, 1)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
             <div style={{ font: '400 13px/18px var(--font-ui)', color: 'var(--player-faint)' }}>{label}</div>
             <h1 style={{ margin: '10px 0 0', font: '300 36px/43px var(--font-display)', color: 'var(--player-title)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
               {session.title}
@@ -333,7 +333,7 @@ function SessionAttempt({ id }) {
             </p>
           </div>
 
-          <div style={{ position: 'relative', flex: 'none', padding: '0 32px 48px' }}>
+          <div className="player-content" style={{ position: 'relative', flex: 'none', padding: '0 32px 48px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 36, marginBottom: 44 }}>
               <SkipButton dir="back" onClick={() => skip(-15)} />
               <button
@@ -380,7 +380,7 @@ function SessionAttempt({ id }) {
 
 function Shell({ children }) {
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--player-bg)', position: 'relative', display: 'flex', flexDirection: 'column', color: 'var(--player-body)', overflow: 'hidden' }}>
+    <div className="player-page" style={{ minHeight: '100dvh', background: 'var(--player-bg)', position: 'relative', display: 'flex', flexDirection: 'column', color: 'var(--player-body)', overflow: 'hidden' }}>
       <div aria-hidden="true" className="blob blob-a blob-drift" style={{ position: 'absolute', width: 320, height: 260, left: -60, top: 120, background: 'var(--player-blob-a)', filter: 'blur(40px)' }} />
       <div aria-hidden="true" className="blob blob-b" style={{ position: 'absolute', width: 240, height: 200, right: -50, bottom: 180, background: 'var(--player-blob-b)', filter: 'blur(36px)' }} />
       {children}

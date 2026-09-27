@@ -117,7 +117,7 @@ export default function CustomAudio() {
   if (step === 'intro') return <CustomAudioIntro onStart={() => setStep('form')} onBack={() => goBack(navigate)} />
 
   return (
-    <div className="page animate-fade-in">
+    <div className="page animate-fade-in readable-page">
       <div className="page-content" style={{ paddingTop: 56 }}>
 
         {/* Header */}
@@ -391,10 +391,10 @@ function CustomAudioIntro({ onStart, onBack }) {
     ['Yours to keep', 'It stays in your library whether or not you subscribe. One free revision.'],
   ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg)' }}>
+    <div className="readable-page custom-intro" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg)' }}>
       <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
-      <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+      <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 'var(--content-width, 480px)', margin: '0 auto', width: '100%' }}>
         <button className="btn-icon" onClick={onBack} aria-label="Back">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M10 3l-5 5 5 5" stroke="var(--ink-muted)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
@@ -402,7 +402,7 @@ function CustomAudioIntro({ onStart, onBack }) {
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px', maxWidth: 'var(--content-width, 480px)', margin: '0 auto', width: '100%' }}>
         <h1 style={{ margin: '0 0 12px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
           A session made for you
         </h1>
