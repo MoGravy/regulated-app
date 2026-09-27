@@ -1,4 +1,4 @@
-const NATIVE_ORIGINS = new Set(['capacitor://localhost', 'http://localhost'])
+const NATIVE_ORIGINS = new Set(['capacitor://localhost', 'http://localhost', 'https://localhost'])
 
 export function setNativeCors(req, res) {
   const origin = req.headers?.origin

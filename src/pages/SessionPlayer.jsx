@@ -10,11 +10,16 @@ import MoodTracker from '../components/MoodTracker'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
 import { haptic } from '../lib/haptic'
 import { apiUrl } from '../lib/apiUrl'
+import { useSessionPlayback } from '../hooks/useSessionPlayback'
 
 const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', COMPLETE: 'complete', CHECKOUT: 'checkout', DONE: 'done' }
 
 export default function SessionPlayer() {
   const { id } = useParams()
+  return <SessionAttempt key={id} id={id} />
+}
+
+function SessionAttempt({ id }) {
   const navigate = useNavigate()
   const { userEmail, markSessionComplete, saveProgress, completedSessions } = useApp()
 
@@ -25,14 +30,16 @@ export default function SessionPlayer() {
   const [retry, setRetry] = useState(0)
   const [step, setStep] = useState(STEP.PRE_MOOD)
   const [moodBefore, setMoodBefore] = useState(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
   const [showCustomPrompt, setShowCustomPrompt] = useState(false)
 
-  const audioRef = useRef(null)
   const wakeLockRef = useRef(null)
-  const progressRef = useRef({ id: null, position: 0, duration: 0 })
+  const playback = useSessionPlayback({
+    session, url: audioUrl, enabled: step !== STEP.PRE_MOOD,
+    onEnded: () => setStep(STEP.COMPLETE),
+    onError: () => setAudioError('Audio could not be loaded'),
+    onClose: state => saveProgress(state.sessionId, state.position, state.duration),
+  })
+  const { isPlaying, currentTime, duration } = playback
 
   // ---------------------------------------------------------------------------
   // Load session: cache, then Supabase, then hardcoded fallback
@@ -64,7 +71,7 @@ export default function SessionPlayer() {
         return
       }
 
-      console.warn('[SessionPlayer] DB fetch failed:', JSON.stringify(error), '— trying hardcoded fallback')
+      console.warn('[SessionPlayer] DB fetch failed:', JSON.stringify(error), 'Trying hardcoded fallback')
       const fallback = HARDCODED_SESSIONS_BY_ID[trimmed]
       if (fallback) {
         setSession(fallback)
@@ -80,7 +87,7 @@ export default function SessionPlayer() {
   }, [id])
 
   // Resolve the playable URL once the session is loaded. ALL audio goes through
-  // /api/get-audio-url for a freshly signed short-lived URL — no baked tokens on
+  // /api/get-audio-url for a freshly signed short-lived URL, with no baked tokens on
   // the client. Endpoint itself is untouched.
   useEffect(() => {
     if (!session) return
@@ -89,6 +96,7 @@ export default function SessionPlayer() {
 
     let cancelled = false
     setAudioError(null)
+    setAudioUrl(null)
     async function resolveUrl() {
       try {
         const res = await fetch(apiUrl('/api/get-audio-url'), {
@@ -104,7 +112,7 @@ export default function SessionPlayer() {
         if (!res.ok) throw new Error(`get-audio-url responded ${res.status}`)
         const data = await res.json()
         if (!data?.url) throw new Error('get-audio-url returned no url')
-        setAudioUrl(data.url)
+        if (!cancelled) setAudioUrl(data.url)
       } catch (err) {
         if (cancelled) return
         console.error('[SessionPlayer] get-audio-url failed:', err?.message || err)
@@ -115,20 +123,6 @@ export default function SessionPlayer() {
     return () => { cancelled = true }
   }, [session, retry])
 
-  // Seed the duration from the row until the audio reports its real length.
-  // The pre-mood step used to auto-advance after 1200ms, which made the question
-  // a 1.2s flash and left mood_before permanently null. It now waits for an
-  // answer; "Skip" is still one tap.
-  useEffect(() => {
-    if (!session) return
-    setDuration(d => d || (session.duration || 20) * 60)
-  }, [session])
-
-  useEffect(() => {
-    if (step !== STEP.PLAYING || !audioUrl || !audioRef.current) return
-    audioRef.current.play().catch(() => {})
-  }, [step, audioUrl])
-
   // The completion moment holds for two seconds, then the check-out.
   useEffect(() => {
     if (step !== STEP.COMPLETE) return
@@ -136,8 +130,9 @@ export default function SessionPlayer() {
     return () => clearTimeout(t)
   }, [step])
 
-  // Wake lock — request when playing, release on pause/end/unmount
+  // Browsers keep the screen awake while playing. Native audio can play with it locked.
   useEffect(() => {
+    if (playback.native) return
     if (isPlaying) {
       navigator.wakeLock?.request('screen').then(lock => { wakeLockRef.current = lock }).catch(() => {})
     } else {
@@ -149,17 +144,6 @@ export default function SessionPlayer() {
       wakeLockRef.current = null
     }
   }, [isPlaying])
-
-  // Keep the latest position in a ref so the unmount save does not need to be
-  // re-registered on every tick.
-  useEffect(() => {
-    progressRef.current = { id: session?.id, position: currentTime, duration }
-  }, [session, currentTime, duration])
-
-  useEffect(() => () => {
-    const { id: sid, position, duration: d } = progressRef.current
-    if (sid) saveProgress(sid, position, d)
-  }, [])
 
   function handlePreMood(mood) {
     setMoodBefore(mood)
@@ -180,28 +164,20 @@ export default function SessionPlayer() {
   }
 
   function togglePlay() {
-    const a = audioRef.current
-    if (!a) return
     haptic()
-    if (isPlaying) { a.pause(); setIsPlaying(false) }
-    else a.play().catch(() => {})
+    if (isPlaying) playback.pause()
+    else playback.play()
   }
 
   function skip(secs) {
-    const a = audioRef.current
-    if (!a) return
-    const next = Math.max(0, Math.min(a.currentTime + secs, duration))
-    a.currentTime = next
-    setCurrentTime(next)
+    playback.seek(Math.max(0, Math.min(currentTime + secs, duration)))
   }
 
   function seek(e) {
     const rect = e.currentTarget.getBoundingClientRect()
     const ratio = (e.clientX - rect.left) / rect.width
-    const t = ratio * (duration || 0)
-    if (!Number.isFinite(t)) return
-    setCurrentTime(t)
-    if (audioRef.current) audioRef.current.currentTime = t
+    const t = ratio * duration
+    if (Number.isFinite(t)) playback.seek(t)
   }
 
   function fmt(seconds) {
@@ -277,19 +253,6 @@ export default function SessionPlayer() {
 
   return (
     <Shell>
-      {audioUrl && (
-        <audio
-          ref={audioRef}
-          src={audioUrl}
-          preload="auto"
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onTimeUpdate={e => setCurrentTime(e.currentTarget.currentTime)}
-          onLoadedMetadata={e => { if (Number.isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration) }}
-          onEnded={() => { setIsPlaying(false); setStep(STEP.COMPLETE) }}
-        />
-      )}
-
       <div className="status-bar" style={{ position: 'relative', color: 'var(--player-faint)' }}><span /><span /></div>
 
       <div style={{ position: 'relative', height: 56, flex: 'none', display: 'flex', alignItems: 'center', padding: '0 12px' }}>
@@ -415,7 +378,6 @@ export default function SessionPlayer() {
   )
 }
 
-// The only dark surface in the system — design 1b.
 function Shell({ children }) {
   return (
     <div style={{ minHeight: '100dvh', background: 'var(--player-bg)', position: 'relative', display: 'flex', flexDirection: 'column', color: 'var(--player-body)', overflow: 'hidden' }}>
