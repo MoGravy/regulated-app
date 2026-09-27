@@ -34,7 +34,7 @@ Matthew handles account sign-in, identity checks, legal agreements, developer fe
 - Google developer account is created and paid. Website verification passed. Google rejected the existing ASIC certificate; the approved support request was submitted. Identity and subsequent phone verification remain open.
 - Xcode is installed and its licence accepted. The iPad simulator runs the app. The wider tablet layout passed eight responsive checks and native portrait/landscape inspection.
 - Android release bundle and physical-iOS release archive both build successfully. Both are unsigned. These are compilation checks, not submission-ready builds.
-- Account access, native audio ownership and delivery authorization have local checks. Android has controlled audio runtime evidence; iOS audio runtime and physical-device playback remain unverified.
+- Account access, native audio ownership and delivery authorization have local checks. Android and iOS have controlled audio runtime evidence. The isolated iOS test passed 23 assertions, including natural completion while backgrounded. Physical-device playback and full native integration remain unverified.
 - Account deletion has a request receipt and a tested read-only inventory. It does not yet fulfill deletion. The private privacy draft retains unresolved facts and is not ready to publish.
 
 ## Remaining work and gates
@@ -42,7 +42,7 @@ Matthew handles account sign-in, identity checks, legal agreements, developer fe
 1. Finish native store purchases, restoration and server verification, then test the real store flows. Store products and signing depend on account access. The billing provider is not yet configured.
 2. Finish deletion fulfillment, record ownership, provider handling and retention decisions. Migrations remain unapplied. Do not activate the request flow as a completed deletion service.
 3. Complete privacy/support/deletion pages and declarations from verified facts. The live privacy route remains unresolved. The private draft is outside this public repository.
-4. Verify hosted native authentication and CORS, real-device audio, and the iPad app on Apple silicon Mac. The separate iOS audio harness currently waits for an explicitly requested narrow local safety-hook exception. Do not work around that refusal.
+4. Verify hosted native authentication and CORS, real-device audio, and the iPad app on Apple silicon Mac. The separate iOS audio test passed after the owner-approved narrow safety-hook exception. Its report and limitations are in `~/AgentWorkspace/regulated-device-check/ios-audio-harness`.
 5. Finish app icons, store screenshots, review access, listing forms and signing. Icon drafts are prepared outside the repository but are not installed.
 6. Submit only after the full verification path passes, then resolve store review findings and verify public listings.
 
