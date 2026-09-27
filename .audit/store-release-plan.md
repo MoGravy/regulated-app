@@ -28,6 +28,24 @@ Build from live `main` at `98a65b8` in this worktree. Keep the unfinished educat
 
 Matthew handles account sign-in, identity checks, legal agreements, developer fees and payment details. He confirms which legal entity owns Regulated. He approves final privacy and health claims after legal review, and helps recruit any Google test users. The rest stays in this worktree until verified.
 
-## Present blockers
+## Verified progress, 27 September 2026
 
-Apple Developer requests sign-in. Google Play Console is at signup. Xcode is absent. The live `/privacy` route redirects to `/welcome`. The repo is public. A local secret-read guard rejected the old DOCX filename, so use the recovered Claude chat and other records without trying another path to that file.
+- Apple organization documents were submitted by Matthew. Enrollment is still under review.
+- Google developer account is created and paid. Website verification passed. Google rejected the existing ASIC certificate; the approved support request was submitted. Identity and subsequent phone verification remain open.
+- Xcode is installed and its licence accepted. The iPad simulator runs the app. The wider tablet layout passed eight responsive checks and native portrait/landscape inspection.
+- Android release bundle and physical-iOS release archive both build successfully. Both are unsigned. These are compilation checks, not submission-ready builds.
+- Account access, native audio ownership and delivery authorization have local checks. Android has controlled audio runtime evidence; iOS audio runtime and physical-device playback remain unverified.
+- Account deletion has a request receipt and a tested read-only inventory. It does not yet fulfill deletion. The private privacy draft retains unresolved facts and is not ready to publish.
+
+## Remaining work and gates
+
+1. Finish native store purchases, restoration and server verification, then test the real store flows. Store products and signing depend on account access. The billing provider is not yet configured.
+2. Finish deletion fulfillment, record ownership, provider handling and retention decisions. Migrations remain unapplied. Do not activate the request flow as a completed deletion service.
+3. Complete privacy/support/deletion pages and declarations from verified facts. The live privacy route remains unresolved. The private draft is outside this public repository.
+4. Verify hosted native authentication and CORS, real-device audio, and the iPad app on Apple silicon Mac. The separate iOS audio harness currently waits for an explicitly requested narrow local safety-hook exception. Do not work around that refusal.
+5. Finish app icons, store screenshots, review access, listing forms and signing. Icon drafts are prepared outside the repository but are not installed.
+6. Submit only after the full verification path passes, then resolve store review findings and verify public listings.
+
+Evidence and exact account state live in `~/quill/MEMORY.md` and the linked vault note `Regulated store submission 2026-09-26`. Build and screenshot evidence is under `~/AgentWorkspace/regulated-device-check`. No production deployment or store submission has occurred.
+
+Preserve earlier refusals. The old DOCX filename and a generated icon-copy path were rejected by the local secret-read guard. Use existing reviewed records and do not retry those paths without the required permission.
