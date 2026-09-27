@@ -15,7 +15,7 @@ const supabase = createClient(
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 const FROM_EMAIL = process.env.FROM_EMAIL || process.env.VITE_FROM_EMAIL || 'hello@regulatedapp.co'
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'change-this-secret'
+const ADMIN_SECRET = process.env.ADMIN_SECRET
 const APP_URL = process.env.APP_URL || process.env.VITE_APP_URL || 'https://regulatedapp.co'
 
 export default async function handler(req, res) {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
   const { orderId, audioPath, secret } = req.body
 
-  if (secret !== ADMIN_SECRET) {
+  if (!ADMIN_SECRET || secret !== ADMIN_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
