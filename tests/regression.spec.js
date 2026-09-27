@@ -8,6 +8,25 @@ import {
   noProductionWrites, asPremium, fakeAudio, storage, signedIn, FAKE_JWT,
 } from './helpers.js'
 
+test('a signed-out paid checkout return does not grant premium access', async ({ page }) => {
+  await skipOnboarding(page)
+  await page.route(/\/rest\/v1\/|\/rpc\/|\/auth\/v1\//, route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '[]',
+  }))
+  await page.route('**/api/**', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '{}',
+  }))
+  await page.route('**/api/verify-session?*', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ status: 'paid', type: 'subscription', plan: 'annual' }),
+  }))
+  await page.goto('/success?type=subscription&plan=annual&session_id=test-checkout')
+  await expect(page.getByText('ANNUALFREE', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Go Home', exact: true }).click()
+  await page.getByRole('button', { name: 'You', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'You have premium', exact: true })).toHaveCount(0)
+})
+
 // Exactly what live production writes today. Nothing else exists for a
 // returning customer, so this is the real upgrade state.
 const PROD_STATE = {
