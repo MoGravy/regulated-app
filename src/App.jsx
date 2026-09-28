@@ -11,6 +11,8 @@ import Premium from './pages/Premium'
 import Success from './pages/Success'
 import Onboarding from './pages/Onboarding'
 import Program from './pages/Program'
+import Courses, { Course } from './pages/Courses'
+import Care from './pages/Care'
 import SignIn from './pages/SignIn'
 
 export default function App() {
@@ -35,6 +37,9 @@ function AppShell() {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/" element={<><Home /><Navigation /></>} />
         <Route path="/program" element={<><Program /><Navigation /></>} />
+        <Route path="/courses" element={<><Courses /><Navigation /></>} />
+        <Route path="/courses/:courseId" element={<><Course /><Navigation /></>} />
+        <Route path="/care" element={<><Care /><Navigation /></>} />
         <Route path="/sessions" element={<><Sessions /><Navigation /></>} />
         <Route path="/sessions/:id" element={<SessionDetail />} />
         <Route path="/sessions/:id/play" element={<SessionPlayer />} />

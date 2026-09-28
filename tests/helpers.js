@@ -12,7 +12,7 @@ export async function skipOnboarding(page) {
 
 // Program mode with `daysDone` days already finished. The program ships gated
 // behind the content approval, so the preview flag is what makes its screens
-// reachable at all — the gated path is asserted separately.
+// reachable at all. The gated path is asserted separately.
 export async function enterProgram(page, daysDone = 0) {
   await page.addInitScript(days => {
     localStorage.setItem('regulated_onboarding', 'true')
@@ -23,7 +23,7 @@ export async function enterProgram(page, daysDone = 0) {
 }
 
 // Collects console errors for a test. Ignores the /api 404s that a local
-// static preview cannot serve — those are asserted separately against a
+// static preview cannot serve. Those are asserted separately against a
 // deployment that does have the functions.
 export function watchConsole(page) {
   const errors = []
@@ -71,13 +71,18 @@ export const FAKE_USER = {
   id: 'u1', email: 'account@example.com', aud: 'authenticated', role: 'authenticated',
   app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z',
 }
-export async function signedIn(page) {
+export async function signedIn(page, user = FAKE_USER) {
+  const token = user === FAKE_USER ? FAKE_JWT : [
+    b64({ alg: 'HS256', typ: 'JWT' }),
+    b64({ sub: user.id, email: user.email, role: 'authenticated', aud: 'authenticated', exp: 4102444800 }),
+    'sig',
+  ].join('.')
   await page.addInitScript(([k, t, u]) => {
     localStorage.setItem(k, JSON.stringify({
       access_token: t, refresh_token: 'r', token_type: 'bearer',
       expires_at: 4102444800, expires_in: 3600, user: u,
     }))
-  }, [AUTH_KEY, FAKE_JWT, FAKE_USER])
+  }, [AUTH_KEY, token, user])
   // PostgREST would reject the fake token and the library would fall back to
   // the hardcoded list, so reads go out as the public role and writes stay
   // local. The token still reaches /api/* routes, which every test stubs.
