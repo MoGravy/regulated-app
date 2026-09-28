@@ -5,7 +5,7 @@ import { hasPremiumAccess } from './_access.js'
 function database(rows) {
   return {
     from(table) {
-      let found = rows[table] || []
+      let found = (rows[table] || []).map(row => ({ ...row, user_email_normalized: row.user_email?.trim().toLowerCase() }))
       return {
         select() { return this },
         eq(key, value) { found = found.filter(row => row[key] === value); return this },

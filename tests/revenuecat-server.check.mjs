@@ -284,5 +284,5 @@ test('shared access gate preserves verified Apple/Google rows and legacy Stripe 
   }
   assert.equal(await hasPremiumAccess(supabase, { id: ACCOUNT, email: ' Buyer@Example.test ' }, new Date(NOW)), true)
   assert.deepEqual(queries[0].filters.provider, ['apple', 'google'])
-  assert.equal(queries[1].filters.user_email, 'buyer@example.test')
+  assert.equal(queries[1].filters.user_email_normalized, 'buyer@example.test')
 })

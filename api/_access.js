@@ -30,7 +30,7 @@ export async function hasPremiumAccess(supabase, user, now) {
   const { data: stripe, error: stripeError } = await supabase
     .from('subscriptions')
     .select('id, user_email')
-    .ilike('user_email', normalEmail(user.email))
+    .eq('user_email_normalized', normalEmail(user.email))
     .eq('status', 'active')
     .gt('current_period_end', cutoff)
   if (stripeError) throw stripeError

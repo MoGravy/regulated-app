@@ -34,8 +34,9 @@ export async function annualFreeCheck(req) {
   const { data: used, error: usedError } = await supabase
     .from('custom_orders')
     .select('id, user_email')
-    .ilike('user_email', email)
+    .eq('user_email_normalized', email)
     .eq('coupon_code_used', ANNUAL_FREE)
+    .not('stripe_session_id', 'is', null)
   if (usedError) throw usedError
   if (sameEmail(used, email).length) return { error: 'ANNUALFREE has already been used on this account' }
 

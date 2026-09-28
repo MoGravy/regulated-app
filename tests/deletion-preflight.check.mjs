@@ -22,7 +22,7 @@ await db.exec(base)
 for (const file of [
   '001_auth_and_program.sql', '002_session_tags.sql', '003_program_tracks.sql',
   '004_session_waitlist.sql', '005_rls.sql', '006_events.sql',
-  '007_lock_down_rpc_and_subscriptions.sql', '007_store_entitlements.sql', '008_account_deletion_requests.sql', '009_revenuecat_sync.sql',
+  '007_lock_down_rpc_and_subscriptions.sql', '007_store_entitlements.sql', '008_account_deletion_requests.sql', '009_revenuecat_sync.sql', '010_payment_integrity.sql',
 ]) await db.exec(await source(`../migrations/${file}`))
 const { rows: [permissions] } = await db.query(`select
   has_function_privilege('anon','public.increment_coupon_usage(text)','execute') as anon_coupon,
@@ -106,7 +106,7 @@ const first = await preflightDeletion(client, db, ids.clientReceipt)
 if (first.summary.schemaDifferenceCount) {
   const coverage = JSON.parse(await source('../scripts/deletion-coverage.json')).objects
   const observed = Object.fromEntries(first.manifest.schema.map(row => [row.object, row.fingerprint]))
-  console.error('Schema differences:', [...new Set([...Object.keys(coverage), ...Object.keys(observed)])].filter(key => coverage[key] !== observed[key]))
+  console.error('Schema differences:', JSON.stringify(Object.fromEntries([...new Set([...Object.keys(coverage), ...Object.keys(observed)])].filter(key => coverage[key] !== observed[key]).map(key => [key, { before: coverage[key], after: observed[key] }]))))
 }
 assert.equal(first.summary.schemaDifferenceCount, 0, 'Reviewed source fixture must match explicit coverage')
 assert.ok(first.manifest, 'Preflight must return internal evidence')
@@ -141,6 +141,8 @@ for (const [add, remove] of [
   ['create policy unexpected_write on public.events for insert with check (true)', 'drop policy unexpected_write on public.events'],
   ['create schema unseen; create table unseen.related(id uuid references auth.users(id))', 'drop table unseen.related; drop schema unseen'],
   ['alter table public.events add column extra_private text', 'alter table public.events drop column extra_private'],
+  ['alter table public.custom_orders drop constraint custom_orders_stripe_session_id_key',
+    'alter table public.custom_orders add constraint custom_orders_stripe_session_id_key unique(stripe_session_id)'],
 ]) {
   const previous = (await preflightDeletion(client, db, ids.clientReceipt)).summary.planHash
   await db.exec(add)

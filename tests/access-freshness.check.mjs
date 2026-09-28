@@ -38,7 +38,7 @@ async function access({ fresh = false, failure = false, provider = 'revenuecat',
       },
       then(resolve) {
         assert.equal(table, 'subscriptions')
-        assert.equal(filters.user_email, 'fixture@example.test')
+        assert.equal(filters.user_email_normalized, 'fixture@example.test')
         assert.equal(filters.status, 'active')
         return Promise.resolve({ data: stripe ? [{ id: 'stripe-fixture', user_email: 'Fixture@Example.Test' }] : [] }).then(resolve)
       },

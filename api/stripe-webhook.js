@@ -57,15 +57,10 @@ export default async function handler(req, res) {
         const { type, plan, coupon_code, discount_applied } = session.metadata || {}
         const user_email = normalEmail(session.metadata?.user_email)
 
-        let created = false
         if (type === 'custom_audio') {
-          created = await handleCustomAudioPayment(session, user_email, coupon_code, discount_applied)
+          await handleCustomAudioPayment(session, user_email, coupon_code, discount_applied)
         } else if (type === 'subscription') {
-          created = await handleSubscriptionPayment(session, user_email, plan, coupon_code, discount_applied)
-        }
-
-        if (coupon_code && created) {
-          await supabase.rpc('increment_coupon_usage', { p_code: coupon_code })
+          await handleSubscriptionPayment(session, user_email, plan, coupon_code, discount_applied)
         }
         break
       }
@@ -143,9 +138,9 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
 
   if (insertError) {
     if (insertError.code === '23505') {
-      // Duplicate Stripe event redelivery — row already exists, nothing to do
-      console.log('[webhook] custom_orders: duplicate stripe_session_id, skipping insert')
-      return false
+      const { data, error } = await supabase.from('custom_orders').select('id')
+        .eq('stripe_session_id', session.id).maybeSingle()
+      if (!error && data) return false
     }
     console.error('[webhook] custom_orders insert failed:', JSON.stringify(insertError))
     throw new Error(`custom_orders insert failed: ${insertError.message}`)
@@ -185,8 +180,9 @@ async function handleSubscriptionPayment(session, userEmail, plan, couponCode, d
 
   if (insertError) {
     if (insertError.code === '23505') {
-      console.log('[webhook] subscriptions: duplicate stripe_subscription_id, skipping insert')
-      return false
+      const { data, error } = await supabase.from('subscriptions').select('id')
+        .eq('stripe_subscription_id', subscription.id).maybeSingle()
+      if (!error && data) return false
     }
     console.error('[webhook] subscriptions insert failed:', JSON.stringify(insertError))
     throw new Error(`subscriptions insert failed: ${insertError.message}`)
@@ -208,8 +204,7 @@ async function handleSubscriptionPayment(session, userEmail, plan, couponCode, d
 }
 
 // The row is already written when this runs. A failed email must not fail the
-// webhook: Stripe's retry would find the row, stop early, and neither resend
-// the email nor count the coupon. Logged instead, so it can be sent by hand.
+// webhook: Stripe's retry would find the row and stop before resending.
 async function sendEmail(message) {
   try {
     const { error } = await resend.emails.send(message)

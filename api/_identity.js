@@ -24,7 +24,7 @@ export async function activeSubscriptions(supabase, email, columns = 'id') {
   const { data, error } = await supabase
     .from('subscriptions')
     .select(`${columns}, user_email`)
-    .ilike('user_email', normalEmail(email))
+    .eq('user_email_normalized', normalEmail(email))
     .eq('status', 'active')
     .gt('current_period_end', new Date().toISOString())
   if (error) throw error
