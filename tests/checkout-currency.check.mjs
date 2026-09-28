@@ -20,7 +20,7 @@ async function call(body, options = {}) {
   const database = { from(table) {
     calls.database++
     assert.equal(table, 'coupons')
-    return { select() { return this }, eq() { return this }, async single() { return { data: { code: 'FIXTURE', active: true, max_uses: null, discount_type: options.percentage ? 'percentage' : 'fixed', discount_amount: 10 } } } }
+    return { select() { return this }, eq() { return this }, async single() { return { data: { code: options.code || 'FIXTURE', active: true, max_uses: null, discount_type: options.percentage ? 'percentage' : 'fixed', discount_amount: 10 } } } }
   } }
   const context = vm.createContext({
     normalEmail,
@@ -47,6 +47,9 @@ assert.equal(custom.calls.checkouts[0].line_items[0].price_data.product_data.des
 assert.equal(custom.calls.coupons[0].currency, 'aud')
 assert.equal(custom.calls.coupons[0].amount_off, 1000)
 assert.equal(custom.calls.prices.length, 0)
+assert.equal('allow_promotion_codes' in custom.calls.checkouts[0], false)
+const customNoCode = await call({ type: 'custom_audio', email: 'fixture@example.test' })
+assert.equal('allow_promotion_codes' in customNoCode.calls.checkouts[0], false)
 const percentage = await call({ type: 'custom_audio', couponCode: 'FIXTURE' }, { percentage: true })
 assert.equal(percentage.calls.coupons[0].percent_off, 10)
 assert.equal('currency' in percentage.calls.coupons[0], false)
@@ -57,7 +60,17 @@ for (const plan of ['annual', 'monthly']) {
   assert.equal(valid.calls.prices[0], `fixture-${plan}`)
   assert.equal(valid.calls.checkouts[0].line_items[0].price, `fixture-${plan}`)
   assert.equal(valid.calls.checkouts[0].metadata.plan, plan)
+  assert.equal('allow_promotion_codes' in valid.calls.checkouts[0], false)
 }
+const subscriptionCoupon = await call({ type: 'subscription', plan: 'annual', couponCode: 'FIXTURE' })
+assert.equal(subscriptionCoupon.status, 200)
+assert.equal(subscriptionCoupon.calls.checkouts[0].metadata.coupon_code, 'FIXTURE')
+assert.equal(subscriptionCoupon.calls.checkouts[0].discounts[0].coupon, 'fixture-coupon')
+assert.equal('allow_promotion_codes' in subscriptionCoupon.calls.checkouts[0], false)
+const freeSubscription = await call({ type: 'subscription', plan: 'annual', couponCode: 'ANNUALFREE' }, { code: 'ANNUALFREE' })
+assert.equal(freeSubscription.status, 400)
+assert.equal(freeSubscription.calls.coupons.length, 0)
+assert.equal(freeSubscription.calls.checkouts.length, 0)
 for (const options of [
   { price: { currency: 'usd' } }, { price: { currency: undefined } },
   { lookupError: true }, { missingConfig: true },

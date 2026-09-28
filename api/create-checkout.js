@@ -102,6 +102,9 @@ export default async function handler(req, res) {
       if (!appliedCoupon) {
         return res.status(400).json({ error: 'Invalid or expired coupon code' })
       }
+      if (appliedCoupon.code === ANNUAL_FREE && type !== 'custom_audio') {
+        return res.status(400).json({ error: 'Coupon is only valid for a custom session' })
+      }
       if (appliedCoupon.code === ANNUAL_FREE) {
         const gate = await annualFreeCheck(req)
         if (gate.error) return res.status(403).json({ error: gate.error })
@@ -140,8 +143,7 @@ export default async function handler(req, res) {
           },
         ],
         discounts,
-        // only allow_promotion_codes when no programmatic coupon applied
-        ...(discounts ? {} : { allow_promotion_codes: true }),
+        // ponytail: app-checked codes carry metadata; hosted codes cannot be reconciled safely here.
         metadata: {
           type: 'custom_audio',
           user_email: email,
@@ -160,17 +162,17 @@ export default async function handler(req, res) {
       return res.status(200).json({ url: session.url, sessionId: session.id })
 
     } else if (type === 'subscription') {
-      // allow_promotion_codes lets customers enter codes (e.g. ANNUALFREE) on
-      // Stripe's hosted page — no programmatic coupon handling needed here.
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
         customer_email: email,
         line_items: [{ price: resolvedPriceId, quantity: 1 }],
-        allow_promotion_codes: true,
+        discounts,
         metadata: {
           type: 'subscription',
           plan,
           user_email: email,
+          coupon_code: appliedCoupon ? appliedCoupon.code : '',
+          discount_applied: appliedCoupon ? String(appliedCoupon.discount_amount) : '0',
         },
         subscription_data: {
           metadata: { user_email: email, plan },
