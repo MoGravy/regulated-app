@@ -1,0 +1,9 @@
+{
+  "course": { "slug": "fake-course", "title": "Fake Course" },
+  "lessons": [
+    { "key": "welcome", "section": "Chapter one", "title": "Welcome", "body_text": "First paragraph.\n\nIt's the client's second paragraph." },
+    { "key": "practice", "section": "Chapter one", "title": "Practice",
+      "media": [ { "key": "audio", "kind": "audio", "title": "Practice audio", "file": "practice.mp3" } ] },
+    { "key": "review", "section": "Chapter two", "title": "Review", "body_text": "" }
+  ]
+}

@@ -17,13 +17,14 @@ export function AppProvider({ children }) {
   const [isPremium, setIsPremium] = useState(false)
   const [onboardingDone, setOnboardingDone] = useLocalStorage('regulated_onboarding', false)
   // 'program' | 'browse'. Browse is the default and stays the default while
-  // the program is unapproved — brief phase 4.
+  // the program is unapproved, brief phase 4.
   const [mode, setMode] = useLocalStorage('regulated_mode', 'browse')
   // How many program days are finished. See src/config/program.js for why this
   // is a counter rather than a set of session ids.
   const [programDay, setProgramDay] = useLocalStorage('regulated_program_day', 0)
   const [toasts, setToasts] = useState([])
   const [authUser, setAuthUser] = useState(null)
+  const [authReady, setAuthReady] = useState(false)
 
   // Auth is additive. Signed out, everything below behaves exactly as it did
   // before phase 3: the localStorage email still drives the premium check.
@@ -35,13 +36,16 @@ export function AppProvider({ children }) {
       if (!live) return
       const user = session?.user ?? null
       setAuthUser(user)
+      setAuthReady(true)
       if (user?.email) {
         setUserEmail(user.email)
         ensureProfile(user)
       }
     }
 
-    supabase.auth.getSession().then(({ data }) => adopt(data.session))
+    supabase.auth.getSession()
+      .then(({ data }) => adopt(data.session))
+      .catch(() => adopt(null))
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => adopt(session))
 
     return () => {
@@ -50,7 +54,6 @@ export function AppProvider({ children }) {
     }
     // setUserEmail is a fresh closure every render; re-running this would tear
     // down the auth listener on every state change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -89,7 +92,7 @@ export function AppProvider({ children }) {
   }
 
   // Position in seconds. Drives the in-progress row state and the design's
-  // "Continue listening" card. Local only — nothing is written to Supabase.
+  // "Continue listening" card. Local only, nothing is written to Supabase.
   function saveProgress(sessionId, position, duration) {
     if (!sessionId || !duration || !Number.isFinite(position)) return
     const ratio = position / duration
@@ -125,7 +128,7 @@ export function AppProvider({ children }) {
       completedSessions, markSessionComplete,
       progress, saveProgress, lastInProgress,
       isPremium, setIsPremium,
-      authUser, signOut,
+      authUser, authReady, signOut,
       onboardingDone, setOnboardingDone,
       mode, setMode,
       programDay,
