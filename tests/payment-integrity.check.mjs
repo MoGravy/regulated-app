@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 import { Readable } from 'node:stream'
 import vm from 'node:vm'
-import { callerEmail, activeSubscriptions, sameEmail, normalEmail } from '../api/_identity.js'
+import { callerUser, activeSubscriptions, sameEmail, normalEmail } from '../api/_identity.js'
 import { receiptStatus } from '../api/_checkout-receipt.js'
 import { ui } from '../src/content/reviewedCopy.js'
 
@@ -81,7 +81,8 @@ if (process.argv[2] !== 'coupon') {
       values ('  Jane@Example.Test  ','','','','ANNUALFREE');
     reset role;`)
   const annualSource = (await source('../api/_annualfree.js')).replace(/^import .*$/gm, '').replaceAll('export ', '')
-  const context = vm.createContext({ process: { env: {} }, callerEmail, activeSubscriptions, sameEmail, normalEmail,
+  const context = vm.createContext({ process: { env: {} }, callerUser, activeSubscriptions, sameEmail, normalEmail,
+    randomUUID: () => '00000000-0000-4000-8000-000000000001',
     createClient: () => supabase, Stripe: class { constructor() { return { subscriptions: { retrieve: async () => ({ items: { data: [{ price: { recurring: { interval: 'year' } } }] } }) } } } } })
   vm.runInContext(annualSource + '\nglobalThis.check = annualFreeCheck', context)
   assert.equal((await context.check({ headers: { authorization: 'Bearer fixture' } })).email, 'jane@example.test', 'Anonymous unpaid order cannot consume ANNUALFREE')

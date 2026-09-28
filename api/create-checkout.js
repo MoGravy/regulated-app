@@ -1,7 +1,7 @@
 import { ui } from '../src/content/reviewedCopy.js'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { annualFreeCheck, ANNUAL_FREE } from './_annualfree.js'
+import { annualFreeCheck, annualFreeCheckout, saveAnnualFreeSession, ANNUAL_FREE } from './_annualfree.js'
 import { normalEmail } from './_identity.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -97,6 +97,7 @@ export default async function handler(req, res) {
     // here means tampering or a race on expiry/usage limits.
     let discounts = undefined
     let appliedCoupon = null
+    let annualReservation = null
     if (couponCode) {
       appliedCoupon = await lookupCoupon(couponCode)
       if (!appliedCoupon) {
@@ -110,6 +111,10 @@ export default async function handler(req, res) {
         if (gate.error) return res.status(403).json({ error: gate.error })
         // The free session belongs to the account that earned it.
         email = gate.email
+        const claim = await annualFreeCheckout(gate)
+        if (claim.error) return res.status(409).json({ error: claim.error })
+        if (claim.session) return res.status(200).json({ url: claim.session.url, sessionId: claim.session.id })
+        annualReservation = { accountId: gate.accountId, id: claim.reservationId }
       }
       const stripeCoupon = await stripe.coupons.create({
         name: appliedCoupon.code,
@@ -154,10 +159,13 @@ export default async function handler(req, res) {
           affirmations:  trunc(affirmations),
           coupon_code:   appliedCoupon ? appliedCoupon.code : '',
           discount_applied: appliedCoupon ? String(appliedCoupon.discount_amount) : '0',
+          ...(annualReservation && { annual_free_reservation_id: annualReservation.id }),
         },
         success_url: `${appUrl}/success?type=custom_audio&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/custom`,
       })
+
+      if (annualReservation) await saveAnnualFreeSession(annualReservation.accountId, annualReservation.id, session.id)
 
       return res.status(200).json({ url: session.url, sessionId: session.id })
 
