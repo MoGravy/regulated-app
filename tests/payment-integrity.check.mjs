@@ -88,6 +88,9 @@ if (process.argv[2] !== 'coupon') {
   assert.equal((await context.check({ headers: { authorization: 'Bearer fixture' } })).email, 'jane@example.test', 'Anonymous unpaid order cannot consume ANNUALFREE')
   await db.exec(`insert into coupons(code,discount_type,discount_amount,used_count) values ('ANNUALFREE','percentage',100,0);
     insert into custom_orders(user_email,pattern,trigger,desired_state,status,stripe_session_id,coupon_code_used)
+      values ('  Jane@Example.Test  ','','','','test','annual_test_fixture','ANNUALFREE');`)
+  assert.equal((await context.check({ headers: { authorization: 'Bearer fixture' } })).email, 'jane@example.test', 'Historical test order does not spend the benefit')
+  await db.exec(`insert into custom_orders(user_email,pattern,trigger,desired_state,status,stripe_session_id,coupon_code_used)
       values ('  Jane@Example.Test  ','','','','confirmed','annual_paid_fixture','ANNUALFREE');`)
   for (const status of ['confirmed', 'in_progress', 'delivered', 'cancelled']) {
     await db.query("update custom_orders set status=$1 where stripe_session_id='annual_paid_fixture'", [status])
