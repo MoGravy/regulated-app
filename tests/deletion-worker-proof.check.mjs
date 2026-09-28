@@ -72,12 +72,18 @@ assert.ok(await row('proof_ordinary', 'o2'))
 assert.equal((await row('proof_requests', 'r2')).failures, 1)
 assert.equal((await row('proof_requests', 'r2')).last_error, 'review_required')
 await recordRequest(db, 'r3', 'z')
-await db.exec(`insert into proof_clinical values
+await db.exec(`insert into proof_ordinary values ('o3','z',1);
+  insert into proof_clinical values
   ('c3','z',1,1,false,null,null,null,null,false,null);
   insert into proof_operations(id,request_id,kind,resource_id,owner_id,expected_version,fact_version,approved)
-  values ('missing-facts','r3','clinical','c3','z',1,1,true);`)
-await assert.rejects(processClaim(db, await claimDue(db, 'r3', 'worker-e')), /clinical_evidence_changed/)
+  values ('ordinary-before-review','r3','ordinary','o3','z',1,null,true),
+    ('missing-facts','r3','clinical','c3','z',1,1,true);`)
+assert.deepEqual(await processClaim(db, await claimDue(db, 'r3', 'worker-e')),
+  { ordinaryState: 'done', heldState: 'review_required' })
+assert.equal(await row('proof_ordinary', 'o3'), undefined)
 assert.ok(await row('proof_clinical', 'c3'))
+assert.equal((await row('proof_requests', 'r3')).reviewed_at, null)
+assert.equal((await row('proof_requests', 'r3')).last_error, 'review_required')
 await recordRequest(db, 'r4', 'y')
 await db.exec(`insert into proof_ordinary values ('o4','y',1);
   insert into proof_operations(id,request_id,kind,resource_id,owner_id,expected_version,approved)

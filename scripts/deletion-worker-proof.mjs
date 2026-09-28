@@ -47,6 +47,7 @@ export async function processClaim(db, claim, crashAfterDelete = false) {
         where request_id=$1 order by id for update`, [claim.id])
       if (!operations.length) throw new Error('empty_manifest')
       let nextRun = null
+      let needsReview = false
       for (const operation of operations) {
         if (!operation.approved || operation.owner_id !== request.account_id) throw new Error('unapproved_operation')
         if (operation.kind !== 'ordinary' && operation.kind !== 'clinical') throw new Error('unknown_resource')
@@ -61,15 +62,24 @@ export async function processClaim(db, claim, crashAfterDelete = false) {
           const { rows: [row] } = await tx.query(`select * from proof_clinical
             where id=$1 and owner_id=$2 and version=$3 for update`,
           [operation.resource_id, request.account_id, operation.expected_version])
-          if (!row || row.fact_version !== operation.fact_version || !row.verified || !row.source || !row.all_holds_verified) {
+          if (!row || row.fact_version !== operation.fact_version) {
             throw new Error('clinical_evidence_changed')
+          }
+          if (!row.verified || !row.source || !row.all_holds_verified) {
+            needsReview = true
+            await tx.query(`update proof_operations set state='review_required' where id=$1`, [operation.id])
+            continue
           }
           const assessment = assessClinicalRetention({
             lastContactDate: row.last_contact_date?.toISOString().slice(0, 10),
             dateOfBirth: row.date_of_birth?.toISOString().slice(0, 10),
             everSeenAsMinor: row.ever_seen_as_minor,
           }, clock.today)
-          if (assessment.status === 'review_required') throw new Error('clinical_facts_need_review')
+          if (assessment.status === 'review_required') {
+            needsReview = true
+            await tx.query(`update proof_operations set state='review_required' where id=$1`, [operation.id])
+            continue
+          }
           const holdThrough = row.other_hold_through?.toISOString().slice(0, 10) > assessment.holdThroughDate
             ? row.other_hold_through.toISOString().slice(0, 10) : assessment.holdThroughDate
           if (clock.today <= holdThrough) {
@@ -89,13 +99,17 @@ export async function processClaim(db, claim, crashAfterDelete = false) {
         await tx.query(`update proof_operations set state='done', hold_through=null where id=$1`, [operation.id])
       }
 
+      if (needsReview) {
+        const reviewRun = new Date(clock.instant.getTime() + 24 * 60 * 60 * 1000)
+        if (!nextRun || reviewRun < nextRun) nextRun = reviewRun
+      }
+      const heldState = needsReview ? 'review_required' : nextRun ? 'held' : 'done'
       await tx.query(`update proof_requests set
-        reviewed_at=coalesce(reviewed_at,$2),
-        ordinary_state='done', held_state=$3, next_run_at=$4,
-        lease_owner=null, lease_until=null, last_error=null
-        where id=$1 and generation=$5`, [claim.id, clock.instant,
-        nextRun ? 'held' : 'done', nextRun, claim.generation])
-      return { ordinaryState: 'done', heldState: nextRun ? 'held' : 'done' }
+        ordinary_state='done', held_state=$2, next_run_at=$3,
+        lease_owner=null, lease_until=null, last_error=$4
+        where id=$1 and generation=$5`, [claim.id, heldState, nextRun,
+        needsReview ? 'review_required' : null, claim.generation])
+      return { ordinaryState: 'done', heldState }
     })
   } catch (error) {
     if (error.message === 'simulated_crash' || error.message === 'stale_claim') throw error
