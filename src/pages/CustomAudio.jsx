@@ -36,6 +36,8 @@ export default function CustomAudio() {
   }
   const finalPrice = getDiscountedPrice()
 
+  const FIELD_ORDER = ['email', 'pattern', 'trigger', 'desiredState']
+
   function validate() {
     const e = {}
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
@@ -65,6 +67,12 @@ export default function CustomAudio() {
     const e2 = validate()
     if (Object.keys(e2).length) {
       setErrors(e2)
+      const first = FIELD_ORDER.find(k => e2[k])
+      const el = document.querySelector(`[name="${first}"]`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        el.focus({ preventScroll: true })
+      }
       return
     }
     setStep('confirm')
@@ -164,10 +172,11 @@ export default function CustomAudio() {
                 type="email"
                 className="form-input"
                 placeholder="you@example.com"
+                name="email"
                 value={form.email}
                 onChange={e => handleChange('email', e.target.value)}
               />
-              {errors.email && <span style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.email}</span>}
+              {errors.email && <span role="alert" style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.email}</span>}
               <span style={{ fontSize: 12, color: 'var(--ink-faint)' }}>
                 Your custom audio will be delivered here.
               </span>
@@ -215,11 +224,12 @@ export default function CustomAudio() {
               <textarea
                 className="form-input form-textarea"
                 placeholder="Describe your pattern here…"
+                name="pattern"
                 value={form.pattern}
                 onChange={e => handleChange('pattern', e.target.value)}
                 style={{ minHeight: 300, resize: 'vertical' }}
               />
-              {errors.pattern && <span style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.pattern}</span>}
+              {errors.pattern && <span role="alert" style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.pattern}</span>}
             </div>
 
             {/* Trigger */}
@@ -232,10 +242,11 @@ export default function CustomAudio() {
                 type="text"
                 className="form-input"
                 placeholder={ui.custom_trigger_example}
+                name="trigger"
                 value={form.trigger}
                 onChange={e => handleChange('trigger', e.target.value)}
               />
-              {errors.trigger && <span style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.trigger}</span>}
+              {errors.trigger && <span role="alert" style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.trigger}</span>}
             </div>
 
             {/* Desired state */}
@@ -247,11 +258,12 @@ export default function CustomAudio() {
               <textarea
                 className="form-input form-textarea"
                 placeholder="e.g. Calm and grounded. Trusting my body. Present without panic. Able to set a boundary and feel okay about it."
+                name="desiredState"
                 value={form.desiredState}
                 onChange={e => handleChange('desiredState', e.target.value)}
                 style={{ minHeight: 110, resize: 'vertical' }}
               />
-              {errors.desiredState && <span style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.desiredState}</span>}
+              {errors.desiredState && <span role="alert" style={{ fontSize: 12, color: 'var(--cat-motivation)' }}>{errors.desiredState}</span>}
             </div>
 
             {/* Affirmations */}

@@ -10,5 +10,23 @@ export async function callerUser(req, supabase) {
 
 export async function callerEmail(req, supabase) {
   const user = await callerUser(req, supabase)
-  return user?.email?.toLowerCase().trim() || null
+  return normalEmail(user?.email) || null
+}
+
+export const normalEmail = e => String(e || '').trim().toLowerCase()
+
+export function sameEmail(rows, email) {
+  const want = normalEmail(email)
+  return (rows || []).filter(r => normalEmail(r.user_email) === want)
+}
+
+export async function activeSubscriptions(supabase, email, columns = 'id') {
+  const { data, error } = await supabase
+    .from('subscriptions')
+    .select(`${columns}, user_email`)
+    .ilike('user_email', normalEmail(email))
+    .eq('status', 'active')
+    .gt('current_period_end', new Date().toISOString())
+  if (error) throw error
+  return sameEmail(data, email)
 }

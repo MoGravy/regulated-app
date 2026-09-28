@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import vm from 'node:vm'
+import { normalEmail, sameEmail } from '../api/_identity.js'
 
 const source = (await readFile(new URL('../api/_access.js', import.meta.url), 'utf8'))
   .replace(/^import .*\n/gm, '').replace('export async function', 'async function')
@@ -12,7 +13,7 @@ async function access({ fresh = false, failure = false, provider = 'revenuecat',
     constructor(...args) { super(...(args.length ? args : [clock])) }
     static now() { return clock }
   }
-  const context = vm.createContext({ Date: Clock, syncRevenueCatSnapshot: async () => {
+  const context = vm.createContext({ normalEmail, sameEmail, Date: Clock, syncRevenueCatSnapshot: async () => {
     clock += delay
     if (failure) throw new Error('Provider unavailable')
     return { enabled: true, fresh }
@@ -23,6 +24,7 @@ async function access({ fresh = false, failure = false, provider = 'revenuecat',
     return {
       select() { return this },
       eq(key, value) { filters[key] = value; return this },
+      ilike(key, value) { filters[key] = value; return this },
       in(key, value) { filters[key] = value; return this },
       gt(key, value) { filters[key] = value; cutoffs.push(value); return this },
       limit() { return this },
@@ -33,10 +35,12 @@ async function access({ fresh = false, failure = false, provider = 'revenuecat',
           const granted = filters.provider.includes(provider) && initial + expiry > Date.parse(filters.expires_at)
           return { data: granted ? { id: 'store-fixture' } : null }
         }
+      },
+      then(resolve) {
         assert.equal(table, 'subscriptions')
         assert.equal(filters.user_email, 'fixture@example.test')
         assert.equal(filters.status, 'active')
-        return { data: stripe ? { id: 'stripe-fixture' } : null }
+        return Promise.resolve({ data: stripe ? [{ id: 'stripe-fixture', user_email: 'Fixture@Example.Test' }] : [] }).then(resolve)
       },
     }
   } }

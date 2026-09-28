@@ -22,8 +22,15 @@ await db.exec(base)
 for (const file of [
   '001_auth_and_program.sql', '002_session_tags.sql', '003_program_tracks.sql',
   '004_session_waitlist.sql', '005_rls.sql', '006_events.sql',
-  '007_store_entitlements.sql', '008_account_deletion_requests.sql', '009_revenuecat_sync.sql',
+  '007_lock_down_rpc_and_subscriptions.sql', '007_store_entitlements.sql', '008_account_deletion_requests.sql', '009_revenuecat_sync.sql',
 ]) await db.exec(await source(`../migrations/${file}`))
+const { rows: [permissions] } = await db.query(`select
+  has_function_privilege('anon','public.increment_coupon_usage(text)','execute') as anon_coupon,
+  has_function_privilege('authenticated','public.increment_coupon_usage(text)','execute') as account_coupon,
+  has_function_privilege('service_role','public.increment_coupon_usage(text)','execute') as server_coupon,
+  has_function_privilege('anon','public.increment_completed_sessions(text)','execute') as anon_counter,
+  has_function_privilege('authenticated','public.increment_completed_sessions(text)','execute') as account_counter`)
+assert.deepEqual(permissions, { anon_coupon: false, account_coupon: false, server_coupon: true, anon_counter: false, account_counter: false })
 await db.exec(await source('./fixtures/deletion-education.sql'))
 
 const ids = {
@@ -96,6 +103,11 @@ const snapshot = async () => {
 }
 const before = await snapshot()
 const first = await preflightDeletion(client, db, ids.clientReceipt)
+if (first.summary.schemaDifferenceCount) {
+  const coverage = JSON.parse(await source('../scripts/deletion-coverage.json')).objects
+  const observed = Object.fromEntries(first.manifest.schema.map(row => [row.object, row.fingerprint]))
+  console.error('Schema differences:', [...new Set([...Object.keys(coverage), ...Object.keys(observed)])].filter(key => coverage[key] !== observed[key]))
+}
 assert.equal(first.summary.schemaDifferenceCount, 0, 'Reviewed source fixture must match explicit coverage')
 assert.ok(first.manifest, 'Preflight must return internal evidence')
 assert.equal(first.summary.candidateCounts.care_links, 1)

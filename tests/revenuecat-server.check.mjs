@@ -268,12 +268,15 @@ test('shared access gate preserves verified Apple/Google rows and legacy Stripe 
       const chain = {
         select() { return chain },
         eq(field, value) { query.filters[field] = value; return chain },
+        ilike(field, value) { query.filters[field] = value; return chain },
         in(field, value) { query.filters[field] = value; return chain },
         gt(field, value) { query.filters[field] = value; return chain },
         limit() { return chain },
         async maybeSingle() {
           if (table === 'store_entitlements') return { data: null, error: null }
-          return { data: { id: 'legacy-stripe-row' }, error: null }
+        },
+        then(resolve) {
+          return Promise.resolve({ data: [{ id: 'legacy-stripe-row', user_email: 'Buyer@Example.Test' }], error: null }).then(resolve)
         },
       }
       return chain

@@ -2,6 +2,7 @@ import { ui } from '../src/content/reviewedCopy.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import vm from 'node:vm'
+import { normalEmail } from '../api/_identity.js'
 import { CURRENCY, CUSTOM_AUDIO_PRICE_CENTS, ANNUAL_FOUNDING_PRICE_CENTS, MONTHLY_PRICE_CENTS } from '../src/config/pricing.js'
 
 const source = fs.readFileSync(new URL('../api/create-checkout.js', import.meta.url), 'utf8')
@@ -22,6 +23,7 @@ async function call(body, options = {}) {
     return { select() { return this }, eq() { return this }, async single() { return { data: { code: 'FIXTURE', active: true, max_uses: null, discount_type: options.percentage ? 'percentage' : 'fixed', discount_amount: 10 } } } }
   } }
   const context = vm.createContext({
+    normalEmail,
     ui, CURRENCY, CUSTOM_AUDIO_PRICE_CENTS, ANNUAL_FOUNDING_PRICE_CENTS, MONTHLY_PRICE_CENTS,
     process: { env: options.missingConfig ? {} : { STRIPE_PRICE_ANNUAL: 'fixture-annual', STRIPE_PRICE_MONTHLY: 'fixture-monthly' } },
     Stripe: class { constructor() { return stripe } },

@@ -14,6 +14,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    // No customer email in the reply: anyone holding a session id can call
+    // this, and the success page only needs the status and the plan.
     const session = await stripe.checkout.sessions.retrieve(session_id)
     return res.status(200).json({
       status: receiptStatus(session) || 'unconfirmed',
@@ -22,6 +24,6 @@ export default async function handler(req, res) {
     })
   } catch (err) {
     console.error('verify-session error:', err)
-    return res.status(500).json({ error: err.message })
+    return res.status(500).json({ error: 'Could not verify payment' })
   }
 }

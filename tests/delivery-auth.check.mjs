@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import vm from 'node:vm'
+import { createHash, timingSafeEqual } from 'node:crypto'
 
 const path = new URL('../api/deliver-audio.js', import.meta.url)
 const source = fs.readFileSync(path, 'utf8')
@@ -10,6 +11,7 @@ const source = fs.readFileSync(path, 'utf8')
 async function call(configured, body) {
   let databaseCalls = 0
   const context = vm.createContext({
+    createHash, timingSafeEqual,
     process: { env: { ADMIN_SECRET: configured } },
     createClient: () => ({ from() { databaseCalls++; throw new Error('Unexpected database access') } }),
     Resend: class { constructor() { this.emails = { send() { throw new Error('Unexpected email') } } } },
@@ -30,7 +32,7 @@ const blocked = [
 ]
 for (const [configured, supplied] of blocked) {
   const result = await call(configured, { orderId: 'fixture-order', audioPath: 'fixture.wav', secret: supplied })
-  assert.equal(result.status, 401, 'Unconfigured or invalid admin access must fail closed')
+  assert.equal(result.status, configured ? 401 : 503, 'Unconfigured or invalid admin access must fail closed')
   assert.equal(result.databaseCalls, 0, 'Rejected requests must not query customer orders')
 }
 const valid = await call('test-only-configured-value', { secret: 'test-only-configured-value' })

@@ -1,4 +1,5 @@
 import { syncRevenueCatSnapshot } from './_revenuecat.js'
+import { normalEmail, sameEmail } from './_identity.js'
 
 // Only verified, server-written purchase rows can grant access. The old
 // Stripe table still uses email until those subscribers are mapped to IDs.
@@ -28,12 +29,10 @@ export async function hasPremiumAccess(supabase, user, now) {
   if (!user.email) return false
   const { data: stripe, error: stripeError } = await supabase
     .from('subscriptions')
-    .select('id')
-    .eq('user_email', user.email.toLowerCase().trim())
+    .select('id, user_email')
+    .ilike('user_email', normalEmail(user.email))
     .eq('status', 'active')
     .gt('current_period_end', cutoff)
-    .limit(1)
-    .maybeSingle()
   if (stripeError) throw stripeError
-  return !!stripe
+  return sameEmail(stripe, user.email).length > 0
 }
