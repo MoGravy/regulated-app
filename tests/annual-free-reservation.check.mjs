@@ -78,6 +78,10 @@ assert.match((await context.reserve(gate)).error, /reserved/)
 assert.equal(rows.size, 1, 'Unknown Stripe result must keep the only claim')
 await context.save(accountId, claimed.reservationId, 'cs_first')
 assert.equal((await context.reserve(gate)).session.id, 'cs_first', 'Open checkout is reused')
+gate.email = 'new@example.test'
+assert.match((await context.reserve(gate)).error, /email changed/)
+assert.equal(rows.size, 1)
+gate.email = 'a@example.test'
 sessionStatus = 'complete'
 assert.match((await context.reserve(gate)).error, /already been used/)
 assert.equal(rows.size, 1)

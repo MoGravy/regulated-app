@@ -59,6 +59,9 @@ export async function annualFreeCheckout(gate) {
     const { data: prior, error: readError } = await supabase.from('annual_free_reservations')
       .select('reservation_id,stripe_session_id,user_email').eq('account_id', gate.accountId).maybeSingle()
     if (readError || !prior) throw readError || error
+    if (prior.user_email !== gate.email) {
+      return { error: 'Your account email changed. Please contact support to check your reserved session.' }
+    }
     if (!prior.stripe_session_id) {
       return { error: 'Your previous checkout needs checking. Please contact support; your free session is reserved.' }
     }
