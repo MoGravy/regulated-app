@@ -55,6 +55,7 @@ from objects order by kind, name`
 const accountTables = {
   profiles: 't.id = u.id', user_progress: 't.user_id = u.id',
   store_entitlements: 't.account_id = u.id', revenuecat_sync_state: 't.account_id = u.id',
+  annual_free_reservations: 't.account_id = u.id',
   course_grants: 't.user_id = u.id', course_progress: 't.user_id = u.id',
   care_links: '(t.client_id = u.id or t.practitioner_id = u.id)',
   care_tasks: '(t.client_id = u.id or t.practitioner_id = u.id)',
@@ -114,8 +115,11 @@ export async function preflightDeletion(client, database, requestId) {
           if (table.startsWith('care_') && manifest.rows[table].length) blockers.add('shared_care_records')
         }
         for (const [table, column] of Object.entries(legacyTables)) {
+          const normalizedColumn = table === 'subscriptions' || table === 'custom_orders'
+            ? 't.user_email_normalized' : `lower(t.${column})`
           manifest.rows[table] = await candidates(tx, table,
-            `u.email_confirmed_at is not null and btrim(u.email) <> '' and lower(t.${column})=lower(btrim(u.email))`, requestId)
+            `u.email_confirmed_at is not null and btrim(u.email) <> '' and ${normalizedColumn}=lower(btrim(u.email))`, requestId)
+          if (inventory.legacyCandidateCounts?.[table] !== manifest.rows[table].length) blockers.add('candidate_inventory_mismatch')
         }
       }
       const result = {

@@ -2,7 +2,7 @@
   "scope": "source-fixture-only",
   "sources": [
     "supabase-schema.sql",
-    "migrations/001-011",
+    "migrations/001-012",
     "tests/fixtures/deletion-education.sql"
   ],
   "objects": {
@@ -290,7 +290,15 @@
     "constraint:public.account_deletion_requests.account_deletion_requests_review_due_at_not_null": "45def17f17049492de3aa415b6593de533f277f46904d98ae39785357802c7fb",
     "constraint:public.account_deletion_requests.account_deletion_requests_workflow_check": "10eb3bf5979374c233aaa5273509e0ebe03f3f6a5084ffb10cdf3a63a019698e",
     "function:public.set_deletion_request_deadlines()": "20d510c915c5cf2dadbdb186158e32b6e51936a235ae7ea6cccf9d1d5201960e",
-    "trigger:public.account_deletion_requests.set_deletion_request_deadlines": "11851342d261b933d9ca99bdf35d8e6e2d91a05f5b5e769c95c1e1f9acff58db"
+    "trigger:public.account_deletion_requests.set_deletion_request_deadlines": "11851342d261b933d9ca99bdf35d8e6e2d91a05f5b5e769c95c1e1f9acff58db",
+    "constraint:public.annual_free_reservations.annual_free_reservations_account_id_not_null": "34b9fbfdfb5ba04dec2dc331d3f17f860a94118fa9971df3130703c683c92575",
+    "constraint:public.annual_free_reservations.annual_free_reservations_created_at_not_null": "22c4904167621d102fb1e705894b3068b9562d4f3c5364b3934f8defa06d4f4f",
+    "constraint:public.annual_free_reservations.annual_free_reservations_pkey": "27b0147f176166806af8583bda6fdd42664581944c98f0d19d4ad6be9ff6bf6a",
+    "constraint:public.annual_free_reservations.annual_free_reservations_reservation_id_key": "3749e5ea744c45bc731972002fc881e5fd7d615b73be5c8de6887cb98fd4c860",
+    "constraint:public.annual_free_reservations.annual_free_reservations_reservation_id_not_null": "091849c48f6a711c4e60b7b154274f44a45583a957db282c15ce22e2ef747856",
+    "constraint:public.annual_free_reservations.annual_free_reservations_stripe_session_id_key": "3becb7c79dcf7babb7eb032f52fd3080a4880d83ad44f23ecbeba412c10f4126",
+    "constraint:public.annual_free_reservations.annual_free_reservations_user_email_not_null": "0c25b29df6d419ad74327a2b59799a2fa9a669b378ba5b0651ad6cec6370a0a8",
+    "relation:public.annual_free_reservations": "8a2ffb7fd54fc8d2ae902b54f3c948912bb0f12c5ab5c862f5ad63f22776fac9"
   },
   "reviewedChanges011": {
     "constraint:public.account_deletion_requests.account_deletion_requests_account_id_fkey": "Removed so the receipt survives Auth account closure.",
@@ -304,5 +312,15 @@
     "constraint:public.account_deletion_requests.account_deletion_requests_workflow_check": "States, review actor and lease pair are constrained.",
     "function:public.set_deletion_request_deadlines()": "New deadlines derive from the original request time and cannot be changed later.",
     "trigger:public.account_deletion_requests.set_deletion_request_deadlines": "Every new request receives deadlines; updates preserve them."
+  },
+  "reviewedChanges012": {
+    "constraint:public.annual_free_reservations.annual_free_reservations_account_id_not_null": "Every reservation belongs to one verified account.",
+    "constraint:public.annual_free_reservations.annual_free_reservations_created_at_not_null": "Reservation creation time is durable.",
+    "constraint:public.annual_free_reservations.annual_free_reservations_pkey": "One reservation row exists per account.",
+    "constraint:public.annual_free_reservations.annual_free_reservations_reservation_id_key": "Provider sessions can be matched to one claim.",
+    "constraint:public.annual_free_reservations.annual_free_reservations_reservation_id_not_null": "Every claim has a stable identifier.",
+    "constraint:public.annual_free_reservations.annual_free_reservations_stripe_session_id_key": "One Stripe session cannot belong to two reservations.",
+    "constraint:public.annual_free_reservations.annual_free_reservations_user_email_not_null": "Claim keeps verified account email for provider reconciliation.",
+    "relation:public.annual_free_reservations": "Private server-only annual benefit claim; deletion inventory and fulfillment must review it before any account closure."
   }
 }

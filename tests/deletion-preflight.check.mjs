@@ -22,7 +22,7 @@ await db.exec(base)
 for (const file of [
   '001_auth_and_program.sql', '002_session_tags.sql', '003_program_tracks.sql',
   '004_session_waitlist.sql', '005_rls.sql', '006_events.sql',
-  '007_lock_down_rpc_and_subscriptions.sql', '007_store_entitlements.sql', '008_account_deletion_requests.sql', '009_revenuecat_sync.sql', '010_payment_integrity.sql', '011_account_deletion_workflow.sql',
+  '007_lock_down_rpc_and_subscriptions.sql', '007_store_entitlements.sql', '008_account_deletion_requests.sql', '009_revenuecat_sync.sql', '010_payment_integrity.sql', '011_account_deletion_workflow.sql', '012_annual_free_reservations.sql',
 ]) await db.exec(await source(`../migrations/${file}`))
 const { rows: [permissions] } = await db.query(`select
   has_function_privilege('anon','public.increment_coupon_usage(text)','execute') as anon_coupon,
@@ -46,6 +46,8 @@ await db.query(`insert into auth.users values ($1,'client@example.test',now()),
   ($2,'practitioner@example.test',now()),($3,'unrelated@example.test',now())`, [ids.client, ids.practitioner, ids.unrelated])
 await db.query('insert into public.account_deletion_requests(id,account_id) values ($1,$2),($3,$4)',
   [ids.clientReceipt, ids.client, ids.practitionerReceipt, ids.practitioner])
+await db.query(`insert into public.annual_free_reservations(account_id,user_email,reservation_id)
+  values ($1,'client@example.test',$2)`, [ids.client, ids.order])
 await db.query(`insert into public.care_links(client_id,practitioner_id,client_label,practitioner_label)
   values ($1,$2,'private client label','private practitioner label')`, [ids.client, ids.practitioner])
 await db.query(`insert into public.care_tasks(id,client_id,practitioner_id,title)
@@ -58,6 +60,10 @@ await db.query(`insert into public.custom_orders(id,user_email,pattern,trigger,d
   values ($1,'client@example.test','private intake','private trigger','private desired state','custom-audios/shared.wav')`, [ids.order])
 await db.exec(`insert into public.custom_orders(user_email,pattern,trigger,desired_state,audio_url)
   values ('unrelated@example.test','other intake','other trigger','other state','custom-audios/shared.wav');
+  insert into public.custom_orders(user_email,pattern,trigger,desired_state)
+  values ('  client@example.test  ','padded intake','padded trigger','padded desired state');
+  insert into public.subscriptions(user_email,stripe_subscription_id)
+  values ('  client@example.test  ','padded_subscription_fixture');
   insert into public.analytics_events(event_name,properties) values ('old_event','{"private":"historical private text"}');`)
 
 function restClient(database) {
@@ -114,7 +120,10 @@ assert.equal(first.summary.candidateCounts.care_links, 1)
 assert.equal(first.summary.candidateCounts.care_tasks, 1)
 assert.equal(first.summary.candidateCounts.care_task_entries, 1)
 assert.equal(first.summary.candidateCounts.care_messages, 1)
-assert.equal(first.summary.candidateCounts.custom_orders, 1)
+assert.equal(first.summary.candidateCounts.custom_orders, 2)
+assert.equal(first.summary.candidateCounts.subscriptions, 1)
+assert.equal(first.summary.candidateCounts.annual_free_reservations, 1)
+assert.ok(first.summary.blockers.includes('candidate_inventory_mismatch'))
 for (const code of ['shared_care_records','legacy_ownership_review','historical_analytics_review',
   'provider_dispositions_unreviewed','paid_work_review','private_media_ownership','retention_decision','purchase_ownership_retention']) {
   assert.ok(first.summary.blockers.includes(code), code)

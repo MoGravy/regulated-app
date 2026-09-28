@@ -76,7 +76,7 @@ export async function inventoryDeletion(client, requestId) {
       'private_media_ownership', 'unmapped_data', 'retention_decision',
     ],
   }
-  for (const [table, column] of [['profiles', 'id'], ['user_progress', 'user_id'], ['store_entitlements', 'account_id'], ['revenuecat_sync_state', 'account_id']]) {
+  for (const [table, column] of [['profiles', 'id'], ['user_progress', 'user_id'], ['store_entitlements', 'account_id'], ['revenuecat_sync_state', 'account_id'], ['annual_free_reservations', 'account_id']]) {
     report.accountCounts[table] = await countRows(client, table, column, user.id)
   }
 
