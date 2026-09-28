@@ -1,0 +1,25 @@
+// Drafted by exact opencode-go/glm-5.3 and edited with Matthew's, Hermes's
+// and unslop writing rules. No reply-time or medical claims.
+export const careCopy = {
+  nav: 'Support',
+  pageTitle: 'Your support page',
+  signInPrompt: 'Sign in to continue.',
+  emptySpace: 'Nothing here yet.',
+  tasksTitle: 'Tasks',
+  messagesTitle: 'Messages',
+  emptyTasks: 'No tasks yet.',
+  emptyMessages: 'No messages yet.',
+  assignTitle: 'Assign a task',
+  taskTitleLabel: 'Task title',
+  taskInstructionsLabel: 'Instructions',
+  assignButton: 'Assign',
+  noteLabel: 'Practice note',
+  saveNote: 'Save note',
+  completeTask: 'Mark done',
+  completionLabel: 'Completed',
+  messageLabel: 'Message',
+  sendMessage: 'Send',
+  urgentNotice: 'This inbox is not for urgent help. If you need urgent help now, please contact your local emergency services.',
+  loading: 'Loading...',
+  error: 'Something went wrong. Please try again.',
+}

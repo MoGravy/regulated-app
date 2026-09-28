@@ -1,11 +1,13 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import { courseCopy } from '../config/courseCopy'
+import { careCopy } from '../config/careCopy'
 
-// Three tabs, label-only with a 16x2 underline on the active one — design 1b/1d.
-// "You" is the premium/account screen, which carries the Custom audio card, so
-// /custom stays one tap away without a fourth tab the design does not have.
+// The You screen carries Custom audio, so it stays one tap away.
 const TABS = [
   { path: '/', label: 'Today' },
   { path: '/sessions', label: 'Browse' },
+  { path: '/courses', label: courseCopy.nav },
+  { path: '/care', label: careCopy.nav },
   { path: '/premium', label: 'You' },
 ]
 
