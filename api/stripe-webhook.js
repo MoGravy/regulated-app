@@ -1,8 +1,9 @@
+import { receiptStatus } from './_checkout-receipt.js'
+import { ui } from '../src/content/reviewedCopy.js'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { normalEmail } from './_identity.js'
-import { CUSTOM_AUDIO_PRICE, ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE } from '../src/config/pricing.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -49,24 +50,17 @@ export default async function handler(req, res) {
 
   try {
     switch (event.type) {
-      case 'checkout.session.completed': {
+      case 'checkout.session.completed':
+      case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object
+        if (!receiptStatus(session)) break
         const { type, plan, coupon_code, discount_applied } = session.metadata || {}
-        // Lowercase, so the premium check finds it. Checkouts started before
-        // create-checkout normalised the address still carry it as typed.
         const user_email = normalEmail(session.metadata?.user_email)
 
-        let created = false
         if (type === 'custom_audio') {
-          created = await handleCustomAudioPayment(session, user_email, coupon_code, discount_applied)
+          await handleCustomAudioPayment(session, user_email, coupon_code, discount_applied)
         } else if (type === 'subscription') {
-          created = await handleSubscriptionPayment(session, user_email, plan, coupon_code, discount_applied)
-        }
-
-        // Count a coupon once per purchase. A Stripe redelivery finds the row
-        // already there (created is false) and must not count it again.
-        if (coupon_code && created) {
-          await supabase.rpc('increment_coupon_usage', { p_code: coupon_code })
+          await handleSubscriptionPayment(session, user_email, plan, coupon_code, discount_applied)
         }
         break
       }
@@ -122,7 +116,7 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
   const dueDate = new Date()
   dueDate.setDate(dueDate.getDate() + 7)
 
-  // Plain INSERT — unique constraint on stripe_session_id prevents duplicates.
+  // Plain INSERT, unique constraint on stripe_session_id prevents duplicates.
   // On re-delivery, PostgreSQL raises 23505 (unique violation) which we treat as
   // idempotent success. Any other error is a real failure and should cause Stripe to retry.
   const { error: insertError } = await supabase
@@ -144,9 +138,9 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
 
   if (insertError) {
     if (insertError.code === '23505') {
-      // Duplicate Stripe event redelivery — row already exists, nothing to do
-      console.log('[webhook] custom_orders: duplicate stripe_session_id, skipping insert')
-      return false
+      const { data, error } = await supabase.from('custom_orders').select('id')
+        .eq('stripe_session_id', session.id).maybeSingle()
+      if (!error && data) return false
     }
     console.error('[webhook] custom_orders insert failed:', JSON.stringify(insertError))
     throw new Error(`custom_orders insert failed: ${insertError.message}`)
@@ -158,12 +152,11 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
     .upsert({ email: userEmail, updated_at: new Date().toISOString() }, { onConflict: 'email' })
 
   // Send confirmation email only after the order is recorded
-  const dueDateStr = dueDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   await sendEmail({
     from: `Matthew at Regulated <${FROM_EMAIL}>`,
     to: userEmail,
     subject: "Your custom audio is in progress 🎧",
-    html: customAudioConfirmationEmail(dueDateStr),
+    html: customAudioConfirmationEmail(),
   })
   return true
 }
@@ -171,7 +164,7 @@ async function handleCustomAudioPayment(session, userEmail, couponCode, discount
 async function handleSubscriptionPayment(session, userEmail, plan, couponCode, discountApplied) {
   const subscription = await stripe.subscriptions.retrieve(session.subscription)
 
-  // Plain INSERT — UNIQUE constraint on stripe_subscription_id prevents duplicates.
+  // Plain INSERT, UNIQUE constraint on stripe_subscription_id prevents duplicates.
   // 23505 on re-delivery = idempotent; any other error = real failure, Stripe should retry.
   const { error: insertError } = await supabase
     .from('subscriptions')
@@ -187,8 +180,9 @@ async function handleSubscriptionPayment(session, userEmail, plan, couponCode, d
 
   if (insertError) {
     if (insertError.code === '23505') {
-      console.log('[webhook] subscriptions: duplicate stripe_subscription_id, skipping insert')
-      return false
+      const { data, error } = await supabase.from('subscriptions').select('id')
+        .eq('stripe_subscription_id', subscription.id).maybeSingle()
+      if (!error && data) return false
     }
     console.error('[webhook] subscriptions insert failed:', JSON.stringify(insertError))
     throw new Error(`subscriptions insert failed: ${insertError.message}`)
@@ -204,14 +198,13 @@ async function handleSubscriptionPayment(session, userEmail, plan, couponCode, d
     from: `Matthew at Regulated <${FROM_EMAIL}>`,
     to: userEmail,
     subject: "Welcome to Regulated Premium ✦",
-    html: premiumWelcomeEmail(),
+    html: premiumWelcomeEmail(plan),
   })
   return true
 }
 
 // The row is already written when this runs. A failed email must not fail the
-// webhook: Stripe's retry would find the row, stop early, and neither resend
-// the email nor count the coupon. Logged instead, so it can be sent by hand.
+// webhook: Stripe's retry would find the row and stop before resending.
 async function sendEmail(message) {
   try {
     const { error } = await resend.emails.send(message)
@@ -223,7 +216,7 @@ async function sendEmail(message) {
 
 // --- Email templates ---
 
-function customAudioConfirmationEmail(dueDate) {
+function customAudioConfirmationEmail() {
   return `
 <!DOCTYPE html>
 <html>
@@ -233,29 +226,17 @@ function customAudioConfirmationEmail(dueDate) {
     <div style="text-align:center;margin-bottom:32px;">
       <div style="font-size:48px;margin-bottom:12px;">🎯</div>
       <h1 style="color:#F0F4F6;font-size:26px;font-weight:800;margin:0 0 8px;">Order confirmed.</h1>
-      <p style="color:#8BA9B5;font-size:16px;margin:0;">Your custom audio is now in production.</p>
+      <p style="color:#8BA9B5;font-size:16px;margin:0;">${ui.custom_confirmed_body}</p>
     </div>
 
     <div style="background:#1A3A4A;border:1px solid rgba(126,207,192,0.15);border-radius:16px;padding:24px;margin-bottom:24px;">
       <div style="font-size:13px;font-weight:700;color:#7ECFC0;letter-spacing:0.08em;margin-bottom:16px;">WHAT HAPPENS NEXT</div>
-      ${[
-        ['🎙️', 'Recording begins', 'Matthew reviews your intake and starts building your session'],
-        ['✂️', 'Production', 'Your audio is recorded, edited, and mixed to professional quality'],
-        ['📬', `Delivery by ${dueDate}`, 'Audio delivered directly to this email address'],
-        ['♾️', 'Yours forever', 'Download and replay whenever you need it'],
-      ].map(([icon, title, detail]) => `
-        <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">
-          <span style="font-size:20px;flex-shrink:0">${icon}</span>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:#F0F4F6;margin-bottom:2px">${title}</div>
-            <div style="font-size:13px;color:#8BA9B5">${detail}</div>
-          </div>
-        </div>
-      `).join('')}
+      <p style="font-size:14px;color:#8BA9B5">${ui.custom_personalized}</p>
+      <p style="font-size:14px;color:#8BA9B5">${ui.custom_access}</p>
     </div>
 
     <p style="color:#8BA9B5;font-size:14px;line-height:1.7;margin-bottom:20px;">
-      In the meantime, jump into the free sessions in the app to start building your regulation baseline. The custom audio will layer on top of the foundation you build now.
+      ${ui.wellbeing_note}
     </p>
 
     <div style="text-align:center;margin-bottom:32px;">
@@ -265,7 +246,7 @@ function customAudioConfirmationEmail(dueDate) {
     </div>
 
     <p style="color:#4A7080;font-size:12px;line-height:1.6;text-align:center;">
-      Questions? Reply to this email or contact hello@regulatedapp.co<br>
+      Questions? Reply to this email or contact info@matthewtweediehypnosis.com.au<br>
       <a href="https://regulatedapp.co/unsubscribe" style="color:#4A7080">Unsubscribe</a>
     </p>
   </div>
@@ -274,7 +255,7 @@ function customAudioConfirmationEmail(dueDate) {
   `
 }
 
-function premiumWelcomeEmail() {
+function premiumWelcomeEmail(plan) {
   return `
 <!DOCTYPE html>
 <html>
@@ -284,25 +265,13 @@ function premiumWelcomeEmail() {
     <div style="text-align:center;margin-bottom:32px;">
       <div style="font-size:48px;margin-bottom:12px;">✦</div>
       <h1 style="color:#F0F4F6;font-size:26px;font-weight:800;margin:0 0 8px;">Welcome to Regulated Premium.</h1>
-      <p style="color:#8BA9B5;font-size:16px;margin:0;">Every session in the library is now unlocked. New sessions added every week.</p>
+      <p style="color:#8BA9B5;font-size:16px;margin:0;">${ui.payment_confirmed_body}</p>
     </div>
 
     <div style="background:#1A3A4A;border:1px solid rgba(126,207,192,0.15);border-radius:16px;padding:24px;margin-bottom:24px;">
       <div style="font-size:13px;font-weight:700;color:#7ECFC0;letter-spacing:0.08em;margin-bottom:16px;">YOUR ACCESS INCLUDES</div>
-      ${[
-        ['🎧', '13 sessions and growing', 'Every session in the library is now unlocked. New sessions added regularly.'],
-        ['🎯', 'Built for your pattern', 'Sleep, anxiety, gut, habits, confidence — each session targets a specific nervous system pattern.'],
-        ['🎙️', 'One free custom audio (annual)', `Order a session built for your exact trigger and outcome. Use code ANNUALFREE at checkout — normally $${CUSTOM_AUDIO_PRICE}, free for you.`],
-        ['🔒', 'Founding price locked for life', `Your $${ANNUAL_FOUNDING_PRICE}/year rate never rises, even when the library hits 40 sessions and the price goes to $${ANNUAL_FULL_PRICE}.`],
-      ].map(([icon, title, detail]) => `
-        <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">
-          <span style="font-size:20px;flex-shrink:0">${icon}</span>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:#F0F4F6;margin-bottom:2px">${title}</div>
-            <div style="font-size:13px;color:#8BA9B5">${detail}</div>
-          </div>
-        </div>
-      `).join('')}
+      <p style="font-size:14px;color:#8BA9B5">${ui.premium_available}</p>
+      ${plan === 'annual' ? `<p style="font-size:14px;color:#8BA9B5">${ui.annual_custom_help} ANNUALFREE</p>` : ''}
     </div>
 
     <div style="text-align:center;margin-bottom:32px;">
@@ -312,7 +281,7 @@ function premiumWelcomeEmail() {
     </div>
 
     <p style="color:#4A7080;font-size:12px;line-height:1.6;text-align:center;">
-      Questions? Reply to this email or contact hello@regulatedapp.co<br>
+      Questions? Reply to this email or contact info@matthewtweediehypnosis.com.au<br>
       <a href="https://regulatedapp.co/unsubscribe" style="color:#4A7080">Unsubscribe</a>
     </p>
   </div>

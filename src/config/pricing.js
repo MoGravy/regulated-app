@@ -1,6 +1,7 @@
-// Single source of truth for all prices — frontend pages AND api/ functions
+// Single source of truth for all prices, frontend pages AND api/ functions
 // import from here. Update values here only.
-export const ANNUAL_FOUNDING_PRICE       = 149    // display USD
+export const CURRENCY = 'aud'
+export const ANNUAL_FOUNDING_PRICE       = 149
 export const ANNUAL_FOUNDING_PRICE_CENTS = 14900  // Stripe unit_amount
 export const ANNUAL_FULL_PRICE           = 199    // the price once the library is full
 export const LIBRARY_TARGET              = 40     // sessions with audio at which annual goes to ANNUAL_FULL_PRICE
