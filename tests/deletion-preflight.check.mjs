@@ -22,7 +22,7 @@ await db.exec(base)
 for (const file of [
   '001_auth_and_program.sql', '002_session_tags.sql', '003_program_tracks.sql',
   '004_session_waitlist.sql', '005_rls.sql', '006_events.sql',
-  '007_lock_down_rpc_and_subscriptions.sql', '007_store_entitlements.sql', '008_account_deletion_requests.sql', '009_revenuecat_sync.sql', '010_payment_integrity.sql',
+  '007_lock_down_rpc_and_subscriptions.sql', '007_store_entitlements.sql', '008_account_deletion_requests.sql', '009_revenuecat_sync.sql', '010_payment_integrity.sql', '011_account_deletion_workflow.sql',
 ]) await db.exec(await source(`../migrations/${file}`))
 const { rows: [permissions] } = await db.query(`select
   has_function_privilege('anon','public.increment_coupon_usage(text)','execute') as anon_coupon,

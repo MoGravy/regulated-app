@@ -2,13 +2,12 @@
   "scope": "source-fixture-only",
   "sources": [
     "supabase-schema.sql",
-    "migrations/001-009",
+    "migrations/001-011",
     "tests/fixtures/deletion-education.sql"
   ],
   "objects": {
     "constraint:auth.users.users_id_not_null": "59703e4831f28021fa777ddde4b07b21a98612cb67d473549312682613ed97dc",
     "constraint:auth.users.users_pkey": "579960ca87585d6bca4faa17acfd26bf743e8c5af8ed4382cd2abb85a1302ad6",
-    "constraint:public.account_deletion_requests.account_deletion_requests_account_id_fkey": "0967f230b544ccdfad7f2b36e6ca8089c4b3dceee63c4092ab27162968e661ca",
     "constraint:public.account_deletion_requests.account_deletion_requests_account_id_key": "fe8a0ecfa4b15dd743e23c317b54332dd3e87fbb564896f1215263c2dc9d7e8b",
     "constraint:public.account_deletion_requests.account_deletion_requests_account_id_not_null": "34b9fbfdfb5ba04dec2dc331d3f17f860a94118fa9971df3130703c683c92575",
     "constraint:public.account_deletion_requests.account_deletion_requests_id_not_null": "59703e4831f28021fa777ddde4b07b21a98612cb67d473549312682613ed97dc",
@@ -252,7 +251,7 @@
     "policy:public.users.Anon can upsert own user": "7ab61aebd587fac77f9a0cc9f06792363904ca5718897d190747c5580ac62cbb",
     "policy:public.users.Service role full access to users": "2580f46e351d49073337f98a6190a59770d216c836e343e33e9b7527d35756b6",
     "relation:auth.users": "e5854cbe812c4969b2a95100446219727f02b9add29c692d0d5b8416f5e3c87f",
-    "relation:public.account_deletion_requests": "3517a8e1d7af12e1eac37282ccfb248f1b7af3f74e6ddf3bbb1e7ed9da287f61",
+    "relation:public.account_deletion_requests": "e54cc7505e8ce1cf3aabd0e6659476198428148de2dbed09dc0cbf0fb3efdfe1",
     "relation:public.analytics_events": "afc982427aa29ed899781f44f0dea70bac30d4e08e9fb85031c7e649cae663e5",
     "relation:public.care_links": "3301d3f4771ac83210fa9dec43b7e63037f449e7527a71595a8b205e6ced047c",
     "relation:public.care_messages": "606ecb735568a0363731167ded00fac96a300c8d7a07d0c3f75dc1e0c3fa8366",
@@ -282,6 +281,28 @@
     "function:public.count_paid_coupon()": "af682a637d2c56eea9043c14287758664f8c3043b05f3158a89b568f156e1957",
     "policy:public.custom_orders.Client orders remain unpaid": "a4e0d0b58117811d69f2cb0acf743a7b894dcd0f91b836341c2a10b8f5749a70",
     "trigger:public.custom_orders.count_paid_coupon": "60b0323de7682909464d715388d0d6762e80e3de9ced7c7e05d0673a9a60e302",
-    "trigger:public.subscriptions.count_paid_coupon": "88d5f61aa5ec5025606dc0fefb600063431c20712531a30cb5e2ce74767a21f2"
+    "trigger:public.subscriptions.count_paid_coupon": "88d5f61aa5ec5025606dc0fefb600063431c20712531a30cb5e2ce74767a21f2",
+    "constraint:public.account_deletion_requests.account_deletion_requests_failures_not_null": "d8e9f8fb2e5893c235e8a15a4c3e3fdfd100034b4277bcddc29177177b976fca",
+    "constraint:public.account_deletion_requests.account_deletion_requests_generation_not_null": "9fe33992a08eecf40a4d8a16d2fad5eb6c63d23bf3ec6561e9d352955538ab1f",
+    "constraint:public.account_deletion_requests.account_deletion_requests_held_state_not_null": "3f1c45b877d62b74693f287924904ecb5882f4c93147a979d11a468e6f83ddfd",
+    "constraint:public.account_deletion_requests.account_deletion_requests_ordinary_due_at_not_null": "19bbcf44fdd5b289332ac7e006096fecc10d134ce8cf4cb45b74312407a77845",
+    "constraint:public.account_deletion_requests.account_deletion_requests_ordinary_state_not_null": "d60520e813ece1c4c44036eaf2f8841993d84bcee633b44341bca31bfbc85ad2",
+    "constraint:public.account_deletion_requests.account_deletion_requests_review_due_at_not_null": "45def17f17049492de3aa415b6593de533f277f46904d98ae39785357802c7fb",
+    "constraint:public.account_deletion_requests.account_deletion_requests_workflow_check": "10eb3bf5979374c233aaa5273509e0ebe03f3f6a5084ffb10cdf3a63a019698e",
+    "function:public.set_deletion_request_deadlines()": "20d510c915c5cf2dadbdb186158e32b6e51936a235ae7ea6cccf9d1d5201960e",
+    "trigger:public.account_deletion_requests.set_deletion_request_deadlines": "11851342d261b933d9ca99bdf35d8e6e2d91a05f5b5e769c95c1e1f9acff58db"
+  },
+  "reviewedChanges011": {
+    "constraint:public.account_deletion_requests.account_deletion_requests_account_id_fkey": "Removed so the receipt survives Auth account closure.",
+    "relation:public.account_deletion_requests": "Added request deadlines, review and separate cleanup states, retry lease and sanitized failure state; service may update but cannot delete receipts.",
+    "constraint:public.account_deletion_requests.account_deletion_requests_failures_not_null": "Retry count is always present.",
+    "constraint:public.account_deletion_requests.account_deletion_requests_generation_not_null": "Lease generation is always present.",
+    "constraint:public.account_deletion_requests.account_deletion_requests_held_state_not_null": "Held resource state is explicit.",
+    "constraint:public.account_deletion_requests.account_deletion_requests_ordinary_due_at_not_null": "Original ordinary cleanup deadline is durable.",
+    "constraint:public.account_deletion_requests.account_deletion_requests_ordinary_state_not_null": "Ordinary cleanup state is explicit.",
+    "constraint:public.account_deletion_requests.account_deletion_requests_review_due_at_not_null": "Original human review deadline is durable.",
+    "constraint:public.account_deletion_requests.account_deletion_requests_workflow_check": "States, review actor and lease pair are constrained.",
+    "function:public.set_deletion_request_deadlines()": "New deadlines derive from the original request time and cannot be changed later.",
+    "trigger:public.account_deletion_requests.set_deletion_request_deadlines": "Every new request receives deadlines; updates preserve them."
   }
 }
