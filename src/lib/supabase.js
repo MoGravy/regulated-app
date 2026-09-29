@@ -2,34 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 import { HARDCODED_SESSIONS } from './hardcodedSessions'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/credentials'
 
-// ---------------------------------------------------------------------------
-// Key inspection helper
-// Supabase JWTs are base64url-encoded. Decoding the payload reveals the `role`
-// claim. If it says "service_role" the wrong key is in use.
-// ---------------------------------------------------------------------------
-function inspectSupabaseKey(key) {
-  if (!key) return { role: null, error: 'key is empty' }
-  try {
-    const parts = key.split('.')
-    if (parts.length !== 3) return { role: null, error: 'not a JWT' }
-    // base64url → base64 → JSON
-    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/').padEnd(
-      parts[1].length + (4 - parts[1].length % 4) % 4, '='
-    )
-    const payload = JSON.parse(atob(padded))
-    return { role: payload.role, iss: payload.iss, payload }
-  } catch (e) {
-    return { role: null, error: e.message }
-  }
-}
-
-// Credentials imported from src/config/credentials.js (hardcoded, no env vars)
-console.log('[supabase.js] URL:', SUPABASE_URL)
-console.log('[supabase.js] Anon key role:', inspectSupabaseKey(SUPABASE_ANON_KEY).role)
-
-// ---------------------------------------------------------------------------
-// Create client
-// ---------------------------------------------------------------------------
 export const supabase = createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
@@ -40,8 +12,6 @@ export const supabase = createClient(
     },
   }
 )
-
-console.log('[Supabase] Client initialized:', !!supabase)
 
 // ---------------------------------------------------------------------------
 // Session helpers
