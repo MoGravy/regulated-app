@@ -170,8 +170,8 @@ test('DAP shows a short guide and a clear video action', async ({ page }, testIn
   }))
   await page.route('**/rest/v1/course_lessons*', route => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify([
-      { id: DAP_GUIDE_ID, title: 'How to use the DAP Program', body_text: 'Currently 35?', position: 1 },
-      { id: LESSON_ID, title: 'Why DAP?', body_text: '', position: 2 },
+      { id: LESSON_ID, title: 'Why DAP?', body_text: '', position: 1 },
+      { id: DAP_GUIDE_ID, title: 'How to use the DAP Program', body_text: 'Currently 35?', position: 2 },
     ]),
   }))
   await page.route('**/rest/v1/course_media*', route => route.fulfill({
@@ -186,6 +186,10 @@ test('DAP shows a short guide and a clear video action', async ({ page }, testIn
   }))
 
   await page.goto(`/courses/${COURSE_ID}`)
+  const watch = page.getByRole('button', { name: 'Watch video: Why DAP?' })
+  await expect(watch).toBeInViewport()
+  await page.screenshot({ path: testInfo.outputPath('dap-video-action-mobile.png'), fullPage: true })
+  await page.getByRole('button', { name: 'How to use the DAP Program' }).click()
   await expect(page.getByText('DAP runs for 12 weeks:')).toBeVisible()
   await expect(page.getByText('Start your journal')).toBeVisible()
   await expect(page.getByText('Currently 35?')).toHaveCount(0)
@@ -193,9 +197,7 @@ test('DAP shows a short guide and a clear video action', async ({ page }, testIn
   await page.getByText('Build your audio').scrollIntoViewIfNeeded()
   await expect(page.getByText('Build your audio')).toBeInViewport()
   await page.getByRole('button', { name: 'Why DAP?', exact: true }).click()
-  const watch = page.getByRole('button', { name: 'Watch video: Why DAP?' })
   await expect(watch).toBeVisible()
-  await page.screenshot({ path: testInfo.outputPath('dap-video-action-mobile.png'), fullPage: true })
   await watch.click()
   await expect(page.getByLabel('Why DAP?', { exact: true })).toBeVisible()
 })

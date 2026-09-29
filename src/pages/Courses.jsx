@@ -200,26 +200,7 @@ export function Course() {
     {status === 'error' && <p role="alert">{courseCopy.error}</p>}
     {status === 'unavailable' && <p>{courseCopy.courseUnavailable}</p>}
     {status === 'ready' && <>
-      <div style={{ display: 'grid', gap: 8, marginBottom: 24 }}>
-        {result.lessons.map((lesson, index) => <Fragment key={lesson.id}>
-          {lesson.section && lesson.section !== result.lessons[index - 1]?.section &&
-            <h2 className="t-section" style={{ margin: index ? '16px 0 0' : 0 }}>{lesson.section}</h2>}
-          <button className="card" onClick={() => {
-            mediaRequest.current += 1
-            downloadRequest.current += 1
-            setPlayback(null)
-            setDownload(null)
-            setSelectedId(lesson.id)
-            setSaveError(false)
-            requestAnimationFrame(() => articleRef.current?.scrollIntoView({ block: 'start' }))
-          }}
-            aria-current={lesson.id === selectedId ? 'true' : undefined}
-            style={{ textAlign: 'left', cursor: 'pointer', width: '100%' }}>
-            {lesson.title}
-          </button>
-        </Fragment>)}
-      </div>
-      {selected && <article ref={articleRef}>
+      {selected && <article ref={articleRef} className="course-active-lesson">
         <h2 style={{ font: '400 24px/30px var(--font-display)' }}>{selected.title}</h2>
         {selected.id === dapGuide.lessonId
           ? <div className="course-guide">
@@ -260,11 +241,31 @@ export function Course() {
         </div>)}
         {completed
           ? <p role="status">{courseCopy.lessonCompleted}</p>
-          : <button className="btn-primary btn-lg" onClick={completeLesson} disabled={saving}>
+          : <button className={`btn-primary btn-lg${selectedMedia.length ? ' course-complete-action' : ''}`}
+              onClick={completeLesson} disabled={saving}>
               {courseCopy.markComplete}
             </button>}
         {saveError && <p role="alert">{courseCopy.error}</p>}
       </article>}
+      <div style={{ display: 'grid', gap: 8, marginBottom: 24 }}>
+        {result.lessons.map((lesson, index) => <Fragment key={lesson.id}>
+          {lesson.section && lesson.section !== result.lessons[index - 1]?.section &&
+            <h2 className="t-section" style={{ margin: index ? '16px 0 0' : 0 }}>{lesson.section}</h2>}
+          <button className="card" onClick={() => {
+            mediaRequest.current += 1
+            downloadRequest.current += 1
+            setPlayback(null)
+            setDownload(null)
+            setSelectedId(lesson.id)
+            setSaveError(false)
+            requestAnimationFrame(() => articleRef.current?.scrollIntoView({ block: 'start' }))
+          }}
+            aria-current={lesson.id === selectedId ? 'true' : undefined}
+            style={{ textAlign: 'left', cursor: 'pointer', width: '100%' }}>
+            {lesson.title}
+          </button>
+        </Fragment>)}
+      </div>
     </>}
   </CourseFrame>
 }

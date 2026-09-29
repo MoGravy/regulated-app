@@ -215,6 +215,10 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
 .course-guide li p { margin: 4px 0 0; }
 .course-media-item { margin: 24px 0; }
 .course-media-title { margin: 0 0 10px; font-weight: 600; }
+.course-active-lesson { padding-bottom: 28px; margin-bottom: 28px; border-bottom: 1px solid var(--line); }
+.course-complete-action { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); }
+.course-complete-action:hover:not(:disabled) { background: var(--sunk); }
+.course-complete-action:disabled { background: var(--sunk); color: var(--ink-disabled); }
 
 /* 44px icon button — back, close, player chrome */
 .btn-icon {
