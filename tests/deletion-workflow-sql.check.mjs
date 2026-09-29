@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
+import { deletionDeadlines } from '../scripts/deletion-deadlines.mjs'
 
 const runtime = process.env.PGLITE_MODULE || '/Users/matthew/AgentWorkspace/regulated-device-check/postgres-check/node_modules/@electric-sql/pglite/dist/index.js'
 const { PGlite } = await import(pathToFileURL(runtime))
@@ -28,6 +29,9 @@ assert.equal(original.next_run_at.toISOString(), original.requested_at.toISOStri
 assert.equal(original.ordinary_state, 'pending')
 assert.equal(original.held_state, 'pending')
 assert.equal(original.reviewed_at, null)
+assert.deepEqual(await deletionDeadlines(db, new Date('2026-09-07T23:59:59Z')), [])
+assert.deepEqual(await deletionDeadlines(db, new Date('2026-09-08T00:00:00Z')),
+  [{ id: receipt, review_due: true, ordinary_due: false, failed: false }])
 
 await db.query(`insert into public.account_deletion_requests(account_id,requested_at)
   values ($1,'2026-09-25T00:00:00Z') on conflict(account_id) do nothing`, [account])
@@ -46,6 +50,10 @@ const later = (await db.query('select review_due_at,ordinary_due_at,next_run_at 
 assert.equal(later.review_due_at.toISOString(), '2026-09-17T00:00:00.000Z')
 assert.equal(later.ordinary_due_at.toISOString(), '2026-10-10T00:00:00.000Z')
 assert.equal(later.next_run_at.toISOString(), '2026-09-10T00:00:00.000Z')
+assert.deepEqual(await deletionDeadlines(db, new Date('2026-10-10T00:00:00Z')),
+  [{ id: receipt, review_due: true, ordinary_due: true, failed: false },
+    { id: (await db.query('select id from public.account_deletion_requests where account_id=$1', [laterAccount])).rows[0].id,
+      review_due: true, ordinary_due: true, failed: false }])
 await assert.rejects(db.transaction(async tx => tx.query(`update public.account_deletion_requests
   set requested_at='2026-09-02T00:00:00Z' where id=$1`, [receipt])), /deadlines cannot change/)
 await assert.rejects(db.transaction(async tx => tx.query(`update public.account_deletion_requests
@@ -63,6 +71,12 @@ await db.query(`update public.account_deletion_requests set
   ordinary_state='done',held_state='held',next_run_at=null,
   generation=1,lease_token='00000000-0000-4000-8000-000000000022',
   lease_until='2026-09-04T00:05:00Z' where id=$1`, [receipt])
+assert.deepEqual((await deletionDeadlines(db, new Date('2026-10-10T00:00:00Z'))).map(row => row.id).includes(receipt), false)
+await db.query(`update public.account_deletion_requests set failures=1,last_error_code='review_required' where id=$1`, [receipt])
+assert.deepEqual((await deletionDeadlines(db, new Date('2026-10-10T00:00:00Z'))).find(row => row.id === receipt),
+  { id: receipt, review_due: false, ordinary_due: false, failed: true })
+await db.query('update public.account_deletion_requests set last_error_code=null where id=$1', [receipt])
+assert.equal((await deletionDeadlines(db, new Date('2026-10-10T00:00:00Z'))).some(row => row.id === receipt), false)
 await db.exec(migration)
 assert.equal((await db.query('select next_run_at from public.account_deletion_requests where id=$1', [receipt])).rows[0].next_run_at, null)
 assert.equal((await db.query('select count(*)::int as n from public.account_deletion_requests where ordinary_state=$1 and held_state=$2',
