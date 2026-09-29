@@ -158,6 +158,58 @@ test('a long course shows chapter headings and brings the chosen lesson into vie
   await expect(page.getByText('Text of lesson 2.')).toBeVisible()
 })
 
+test('course PDFs appear in the lesson and remain downloadable', async ({ page }) => {
+  await skipOnboarding(page)
+  await signedIn(page)
+  await page.route('**/api/check-subscription', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '{"active":false}',
+  }))
+  await page.route('**/rest/v1/courses*', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ id: COURSE_ID, title: 'Dissolve Anxiety Program' }),
+  }))
+  await page.route('**/rest/v1/course_lessons*', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify([{ id: LESSON_ID, title: 'The Anxiety Zapper', body_text: '', position: 1 }]),
+  }))
+  const secondId = '40000000-0000-4000-8000-000000000002'
+  await page.route('**/rest/v1/course_media*', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify([
+      { id: MEDIA_ID, lesson_id: LESSON_ID, kind: 'file', title: 'Anxiety Zapper sheet', position: 1 },
+      { id: secondId, lesson_id: LESSON_ID, kind: 'file', title: 'Practice worksheet', position: 2 },
+    ]),
+  }))
+  await page.route('**/rest/v1/course_progress*', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '[]',
+  }))
+  const requests = []
+  await page.route('**/api/get-course-media-url', route => {
+    const body = route.request().postDataJSON()
+    requests.push(body)
+    expect(route.request().headers().authorization).toMatch(/^Bearer /)
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      url: body.download ? '/save-sheet.pdf' : `/view-${body.mediaId}.pdf`, isPdf: true,
+    }) })
+  })
+  await page.route('**/view-*.pdf', route => route.fulfill({
+    status: 200, contentType: 'application/pdf', body: '%PDF-1.4\n%%EOF',
+  }))
+  await page.route('**/save-sheet.pdf', route => route.fulfill({
+    status: 200, contentType: 'application/pdf',
+    headers: { 'Content-Disposition': 'attachment; filename=zapper-sheet.pdf' },
+    body: '%PDF-1.4\n%%EOF',
+  }))
+
+  await page.goto(`/courses/${COURSE_ID}`)
+  await expect(page.getByTitle('Anxiety Zapper sheet')).toHaveAttribute('src', `/view-${MEDIA_ID}.pdf`)
+  await expect(page.getByTitle('Practice worksheet')).toHaveAttribute('src', `/view-${secondId}.pdf`)
+  expect(requests).toEqual(expect.arrayContaining([{ mediaId: MEDIA_ID }, { mediaId: secondId }]))
+  const downloadEvent = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Download file: Anxiety Zapper sheet' }).click()
+  expect((await downloadEvent).suggestedFilename()).toBe('zapper-sheet.pdf')
+  expect(requests).toContainEqual({ mediaId: MEDIA_ID, download: true })
+})
+
 test('DAP shows a short guide and a clear video action', async ({ page }, testInfo) => {
   await skipOnboarding(page)
   await signedIn(page)

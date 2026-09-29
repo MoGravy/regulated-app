@@ -44,7 +44,7 @@ function fakeClient({ userId = userA, granted = true, published = true, storageP
       assert.equal(bucket, 'course-media')
       return { createSignedUrl: async (objectPath, ttl, options) => {
         calls.signed += 1
-        assert.equal(objectPath, path)
+        assert.equal(objectPath, storagePath)
         assert.equal(ttl, 3600)
         calls.options = options
         return { data: { signedUrl: 'https://example.test/signed-media' }, error: null }
@@ -92,7 +92,15 @@ assert.equal(databaseFailure.calls.signed, 0)
 const file = fakeClient({ kind: 'file' })
 assert.equal((await request(file.client)).code, 200)
 assert.equal(file.calls.signed, 1)
-assert.deepEqual(file.calls.options, { download: true })
+assert.equal(file.calls.options, undefined)
+
+const pdf = fakeClient({ kind: 'file', storagePath: `${courseId}/${lessonId}/${mediaId}/sheet.pdf` })
+const preview = await request(pdf.client)
+assert.equal(preview.code, 200)
+assert.equal(preview.body.isPdf, true)
+assert.equal(pdf.calls.options, undefined)
+assert.equal((await request(pdf.client, 'valid', mediaId, true)).code, 200)
+assert.deepEqual(pdf.calls.options, { download: true })
 
 const signedOut = fakeClient()
 assert.equal((await request(signedOut.client, null)).code, 401)

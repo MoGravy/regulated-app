@@ -58,13 +58,14 @@ export async function handleCourseMediaRequest(req, res, client) {
       return res.status(500).json({ error: 'Media is misconfigured' })
     }
 
+    const isPdf = media.kind === 'file' && /\.pdf$/i.test(media.storage_path)
     const { data: signed, error: signError } = await client.storage
       .from('course-media').createSignedUrl(media.storage_path, TTL_SECONDS,
-        media.kind === 'file' || (media.kind === 'audio' && download) ? { download: true } : undefined)
+        download ? { download: true } : undefined)
     if (signError || !signed?.signedUrl) throw signError || new Error('No signed URL')
 
     res.setHeader('Cache-Control', 'no-store')
-    return res.status(200).json({ url: signed.signedUrl })
+    return res.status(200).json({ url: signed.signedUrl, isPdf })
   } catch (error) {
     console.error('[get-course-media-url] request failed:', error?.message || 'unknown error')
     return res.status(500).json({ error: 'Media could not be loaded' })

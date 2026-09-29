@@ -6,6 +6,20 @@ import { courseCopy, dapGuide } from '../config/courseCopy'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+async function getMediaUrl(mediaId, download = false) {
+  const headers = await authHeaders()
+  if (!headers.Authorization) throw new Error('Sign in required')
+  const response = await fetch('/api/get-course-media-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ mediaId, ...(download ? { download: true } : {}) }),
+  })
+  if (!response.ok) throw new Error(`Media request failed: ${response.status}`)
+  const result = await response.json()
+  if (!result.url) throw new Error('Media URL missing')
+  return result
+}
+
 function CourseFrame({ title, backTo, children }) {
   const navigate = useNavigate()
   return (
@@ -84,6 +98,7 @@ export function Course() {
   const [saveError, setSaveError] = useState(false)
   const [playback, setPlayback] = useState(null)
   const [download, setDownload] = useState(null)
+  const [filePreviews, setFilePreviews] = useState({})
   const mediaRequest = useRef(0)
   const downloadRequest = useRef(0)
   const articleRef = useRef(null)
@@ -150,25 +165,31 @@ export function Course() {
 
   const activeDownload = download?.userId === authUser?.id ? download : null
 
+  useEffect(() => {
+    const files = (result.media || []).filter(media => media.lesson_id === selectedId && media.kind === 'file')
+    setFilePreviews(Object.fromEntries(files.map(media => [media.id, { status: 'loading' }])))
+    if (!authUser || !files.length) return
+    let active = true
+    Promise.all(files.map(async media => {
+      try {
+        return [media.id, { status: 'ready', ...await getMediaUrl(media.id) }]
+      } catch {
+        return [media.id, { status: 'error' }]
+      }
+    })).then(rows => { if (active) setFilePreviews(Object.fromEntries(rows)) })
+    return () => { active = false }
+  }, [authUser?.id, selectedId, result.media])
+
   async function openMedia(media, save = false) {
     const requestRef = save ? downloadRequest : mediaRequest
     const request = ++requestRef.current
     const setStatus = save ? setDownload : setPlayback
     setStatus({ mediaId: media.id, userId: authUser.id, status: 'loading' })
     try {
-      const headers = await authHeaders()
-      if (!headers.Authorization) throw new Error('Sign in required')
-      const response = await fetch('/api/get-course-media-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...headers },
-        body: JSON.stringify({ mediaId: media.id, ...(save ? { download: true } : {}) }),
-      })
-      if (!response.ok) throw new Error(`Media request failed: ${response.status}`)
-      const { url } = await response.json()
-      if (!url) throw new Error('Media URL missing')
+      const { url } = await getMediaUrl(media.id, save)
       if (request !== requestRef.current) return
       setStatus({ mediaId: media.id, userId: authUser.id, status: 'ready', url })
-      if (save || media.kind === 'file') window.location.assign(url)
+      if (save) window.location.assign(url)
     } catch {
       if (request === requestRef.current) {
         setStatus({ mediaId: media.id, userId: authUser.id, status: 'error' })
@@ -213,7 +234,13 @@ export function Course() {
           : selected.body_text && <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{selected.body_text}</p>}
         {selectedMedia.map(media => <div key={media.id} className="course-media-item">
           {media.title !== selected.title && <p className="course-media-title">{media.title}</p>}
-          <button className="btn-primary btn-lg" onClick={() => openMedia(media)}
+          {media.kind === 'file' && filePreviews[media.id]?.isPdf &&
+            <iframe className="course-pdf" src={filePreviews[media.id].url} title={media.title} />}
+          {media.kind === 'file' && filePreviews[media.id]?.status === 'loading' &&
+            <p role="status">{courseCopy.mediaLoading}</p>}
+          {media.kind === 'file' && filePreviews[media.id]?.status === 'error' &&
+            <p role="alert">{courseCopy.mediaError}</p>}
+          <button className="btn-primary btn-lg" onClick={() => openMedia(media, media.kind === 'file')}
             aria-label={`${media.kind === 'audio' ? courseCopy.playAudio
               : media.kind === 'video' ? courseCopy.playVideo : courseCopy.downloadFile}: ${media.title}`}>
             <span aria-hidden="true">{media.kind === 'video' ? '▶' : media.kind === 'audio' ? '♫' : '↓'}</span>
