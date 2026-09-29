@@ -30,6 +30,5 @@ export const dapGuide = {
     { title: 'Measure each week', text: 'Repeat the DASS-21 and K10 measures once a week.' },
     { title: 'Add the audio', text: 'After your first week of journaling, use the Hypno-Meditation 2 to 3 times a day.' },
     { title: 'Move to Chapter 5', text: 'Once you have 2 weeks of journaling and Chapters 1 to 4 done, learn the Anxiety Zapper. Keep journaling and keep the weekly measures.' },
-    { title: 'Build your audio', text: 'About 4 weeks after starting the Zapper, follow the Hypnotic Reprogramming lessons to make a custom audio. Later lessons show you how.' },
   ],
 }
