@@ -46,10 +46,10 @@ export default function CustomAudio() {
       e.pattern = 'Please describe your pattern in at least a sentence or two (20 characters or more). The more detail, the better the audio.'
     }
     if (!form.trigger.trim()) {
-      e.trigger = 'Required — this anchors the whole session'
+      e.trigger = 'Required, this anchors the whole session'
     }
     if (!form.desiredState.trim()) {
-      e.desiredState = 'Required — this is where we guide you'
+      e.desiredState = 'Required, this is where we guide you'
     }
     return e
   }
@@ -86,7 +86,7 @@ export default function CustomAudio() {
     try {
       setUserEmail(form.email)
 
-      // Send all order details to the backend — no Supabase call needed here.
+      // Send all order details to the backend, no Supabase call needed here.
       // The serverless function embeds the fields in Stripe metadata, and the
       // webhook creates the confirmed order in the database after payment.
       const res = await fetch('/api/create-checkout', {
@@ -160,7 +160,7 @@ export default function CustomAudio() {
           ))}
           <div className="divider" />
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--ink)' }}>${PRICE}</span>
+            <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--ink)' }}>A${PRICE}</span>
             <span style={{ fontSize: 14, color: 'var(--ink-faint)' }}>one-time · 7-day turnaround</span>
           </div>
         </div>
@@ -185,7 +185,7 @@ export default function CustomAudio() {
               </span>
             </div>
 
-            {/* Pattern — expanded with full instruction block */}
+            {/* Pattern, expanded with full instruction block */}
             <div className="form-group">
               <label className="form-label">Your Specific Pattern *</label>
 
@@ -240,7 +240,7 @@ export default function CustomAudio() {
             <div className="form-group">
               <label className="form-label">Main Trigger *</label>
               <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: '0 0 10px' }}>
-                What's the specific moment, person, or feeling that sets the pattern off? Name it precisely — the more specific, the more targeted your audio will be.
+                What's the specific moment, person, or feeling that sets the pattern off? Name it precisely, the more specific, the more targeted your audio will be.
               </p>
               <input
                 type="text"
@@ -257,7 +257,7 @@ export default function CustomAudio() {
             <div className="form-group">
               <label className="form-label">Desired State *</label>
               <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: '0 0 10px' }}>
-                How do you want to feel when that trigger arrives? Describe the emotional and physical state — calm, grounded, confident, free. This is the destination your audio guides you toward.
+                How do you want to feel when that trigger arrives? Describe the emotional and physical state, calm, grounded, confident, free. This is the destination your audio guides you toward.
               </p>
               <textarea
                 className="form-input form-textarea"
@@ -279,7 +279,7 @@ export default function CustomAudio() {
                 </span>
               </label>
               <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: '0 0 10px' }}>
-                Any specific phrases, beliefs, or statements you want Matthew to weave into the audio. These become part of your session's language — phrases that feel true to you, not generic.
+                Any specific phrases, beliefs, or statements you want Matthew to weave into the audio. These become part of your session's language, phrases that feel true to you, not generic.
               </p>
               <textarea
                 className="form-input form-textarea"
@@ -324,11 +324,11 @@ export default function CustomAudio() {
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   {appliedCoupon && (
                     <span style={{ fontSize: 15, color: 'var(--ink-faint)', textDecoration: 'line-through' }}>
-                      ${PRICE}
+                      A${PRICE}
                     </span>
                   )}
                   <span style={{ fontSize: 24, fontWeight: 800, color: appliedCoupon ? 'var(--cat-habits)' : 'var(--accent)' }}>
-                    ${finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)}
+                    A${finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -354,7 +354,7 @@ export default function CustomAudio() {
                 {loading ? (
                   <><span className="spinner" />Redirecting to payment…</>
                 ) : (
-                  <>Pay ${finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)} → Get My Custom Audio</>
+                  <>Pay A${finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)} → Get My Custom Audio</>
                 )}
               </button>
               <button
@@ -397,7 +397,7 @@ export default function CustomAudio() {
   )
 }
 
-// The design's Custom audio board — three numbered steps in the sans, headings
+// The design's Custom audio board, three numbered steps in the sans, headings
 // in the serif, no icon tiles. Sits in front of the existing brief form.
 function CustomAudioIntro({ onStart, onBack }) {
   const STEPS = [
@@ -454,7 +454,7 @@ function CustomAudioIntro({ onStart, onBack }) {
 
       <div className="footer-cta">
         <button className="btn-primary btn-lg" onClick={onStart}>
-          Start a custom session · ${PRICE}
+          Start a custom session · A${PRICE}
         </button>
         <div style={{ marginTop: 12, textAlign: 'center' }} className="t-caption">
           One payment. Brief first, pay before recording.

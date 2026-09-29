@@ -10,11 +10,11 @@ export default function Success() {
   const { setIsPremium } = useApp()
 
   const type = params.get('type') // 'subscription' | 'custom_audio'
-  const plan = params.get('plan') // 'annual' | 'monthly' | null — display hint only
+  const plan = params.get('plan') // 'annual' | 'monthly' | null, display hint only
   const sessionId = params.get('session_id')
 
   // Verify the payment server-side before revealing anything sensitive (the
-  // ANNUALFREE code). URL params are untrusted — the code only renders once the
+  // ANNUALFREE code). URL params are untrusted, the code only renders once the
   // backend confirms a real PAID subscription whose Stripe metadata says annual.
   const [verifyState, setVerifyState] = useState('pending') // 'pending' | 'confirmed' | 'failed'
   const [verified, setVerified] = useState(null) // { status, type, plan } from backend
@@ -31,7 +31,8 @@ export default function Success() {
         if (!res.ok) throw new Error(`verify-session responded ${res.status}`)
         const data = await res.json()
         if (cancelled) return
-        const paid = data.status === 'paid' || data.status === 'complete'
+        const paid = data.status === 'paid' ||
+          (data.type === 'custom_audio' && data.status === 'no_payment_required')
         if (!paid) {
           setVerifyState('failed')
           return
@@ -50,7 +51,7 @@ export default function Success() {
         setVerifyState('failed')
         // Network failure ≠ unpaid: Stripe only redirects here after payment,
         // and the webhook is the server-side source of truth. Don't strand a
-        // paying customer without their premium flag — audio access is
+        // paying customer without their premium flag, audio access is
         // independently gated server-side, so this is safe to set.
         if (type === 'subscription' && sessionId) setIsPremium(true)
       }
@@ -59,14 +60,14 @@ export default function Success() {
     return () => { cancelled = true }
   }, [sessionId])
 
-  // Gate the reward code strictly on the verified backend result — never on the
+  // Gate the reward code strictly on the verified backend result, never on the
   // URL's plan param.
   const showAnnualCode =
     verifyState === 'confirmed' &&
     verified?.type === 'subscription' &&
     verified?.plan === 'annual'
 
-  // Render immediately — no loading gate. Payment already confirmed by Stripe
+  // Render immediately, no loading gate. Payment already confirmed by Stripe
   // redirecting here with a session_id.
 
   if (type === 'custom_audio') {
@@ -144,7 +145,7 @@ export default function Success() {
         You now have access to every session in the library, with new sessions added monthly. Everything Matthew creates goes straight to your library.
       </p>
 
-      {/* While verifying an annual purchase, show a loading state — never the code */}
+      {/* While verifying an annual purchase, show a loading state, never the code */}
       {plan === 'annual' && verifyState === 'pending' && (
         <div style={{
           width: '100%',
@@ -178,7 +179,7 @@ export default function Success() {
             YOUR FREE CUSTOM AUDIO
           </div>
           <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, marginBottom: 10 }}>
-            Use this code at checkout when ordering your custom audio session (normally ${CUSTOM_AUDIO_PRICE} — free for annual members):
+            Use this code at checkout when ordering your custom audio session (normally A${CUSTOM_AUDIO_PRICE}, free for annual members):
           </div>
           <div style={{
             fontFamily: 'monospace',

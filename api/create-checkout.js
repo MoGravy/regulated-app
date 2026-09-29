@@ -1,6 +1,7 @@
+import { ui } from '../src/content/reviewedCopy.js'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
-import { annualFreeCheck, ANNUAL_FREE } from './_annualfree.js'
+import { annualFreeCheck, annualFreeCheckout, saveAnnualFreeSession, ANNUAL_FREE } from './_annualfree.js'
 import { normalEmail } from './_identity.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -11,9 +12,9 @@ const supabase = createClient(
 )
 
 // Custom audio price is server-authoritative. The client never sends an amount.
-import { CUSTOM_AUDIO_PRICE_CENTS } from '../src/config/pricing.js'
+import { CUSTOM_AUDIO_PRICE_CENTS, CURRENCY, ANNUAL_FOUNDING_PRICE_CENTS, MONTHLY_PRICE_CENTS } from '../src/config/pricing.js'
 
-// Look up a coupon code in the coupons table — same rules as /api/validate-coupon.
+// Look up a coupon code in the coupons table, same rules as /api/validate-coupon.
 // Returns the coupon row, or null if the code is missing/inactive/expired/exhausted.
 async function lookupCoupon(code) {
   if (!code) return null
@@ -58,41 +59,68 @@ export default async function handler(req, res) {
     // Custom audio order fields (stored in metadata; webhook creates DB row after payment)
     pattern, trigger, desiredState, affirmations,
   } = req.body
-  // Stored and matched lowercase. The premium check compares the signed-in
-  // address, which Supabase keeps lowercase, so "Jane@x.com" must not be kept.
   email = email ? normalEmail(email) : undefined
   // NOTE: price and discount values are never read from the client. Price is a
   // server constant; discounts come from the coupons table via lookupCoupon().
 
-  // Stripe metadata values are capped at 500 chars — truncate long free-text fields
+  // Stripe metadata values are capped at 500 chars, truncate long free-text fields
   const trunc = (str, max = 490) =>
     str && str.length > max ? str.slice(0, max) + '…' : (str || '')
 
   const appUrl = getAppUrl(req)
 
   try {
-    // Build Stripe discount object from the coupons table — client-sent discount
+    let resolvedPriceId
+    if (type === 'subscription') {
+      if (plan !== 'annual' && plan !== 'monthly') {
+        return res.status(400).json({ error: 'Invalid subscription plan' })
+      }
+      resolvedPriceId = plan === 'annual'
+        ? process.env.STRIPE_PRICE_ANNUAL
+        : process.env.STRIPE_PRICE_MONTHLY
+      if (!resolvedPriceId) {
+        console.error(`[checkout] STRIPE_PRICE_${(plan || 'UNKNOWN').toUpperCase()} env var not set`)
+        return res.status(500).json({ error: 'Subscription price not configured. Contact support.' })
+      }
+      const price = await stripe.prices.retrieve(resolvedPriceId)
+      const amount = plan === 'annual' ? ANNUAL_FOUNDING_PRICE_CENTS : MONTHLY_PRICE_CENTS
+      const interval = plan === 'annual' ? 'year' : 'month'
+      if (price?.active !== true || price.currency !== CURRENCY || price.type !== 'recurring' ||
+          price.unit_amount !== amount || price.recurring?.interval !== interval || price.recurring?.interval_count !== 1) {
+        return res.status(500).json({ error: 'Subscription price not configured. Contact support.' })
+      }
+    }
+
+    // Build Stripe discount object from the coupons table, client-sent discount
     // values are ignored. An invalid/expired code is a hard error rather than a
     // silent full-price charge: the client validated it moments ago, so a miss
     // here means tampering or a race on expiry/usage limits.
     let discounts = undefined
     let appliedCoupon = null
+    let annualReservation = null
     if (couponCode) {
       appliedCoupon = await lookupCoupon(couponCode)
       if (!appliedCoupon) {
         return res.status(400).json({ error: 'Invalid or expired coupon code' })
+      }
+      if (appliedCoupon.code === ANNUAL_FREE && type !== 'custom_audio') {
+        return res.status(400).json({ error: 'Coupon is only valid for a custom session' })
       }
       if (appliedCoupon.code === ANNUAL_FREE) {
         const gate = await annualFreeCheck(req)
         if (gate.error) return res.status(403).json({ error: gate.error })
         // The free session belongs to the account that earned it.
         email = gate.email
+        const claim = await annualFreeCheckout(gate)
+        if (claim.error) return res.status(409).json({ error: claim.error })
+        if (claim.session) return res.status(200).json({ url: claim.session.url, sessionId: claim.session.id })
+        annualReservation = { accountId: gate.accountId, id: claim.reservationId }
       }
       const stripeCoupon = await stripe.coupons.create({
         name: appliedCoupon.code,
         ...(appliedCoupon.discount_type === 'percentage'
           ? { percent_off: appliedCoupon.discount_amount }
-          : { amount_off: Math.round(appliedCoupon.discount_amount * 100), currency: 'usd' }
+          : { amount_off: Math.round(appliedCoupon.discount_amount * 100), currency: CURRENCY }
         ),
         duration: 'once',
         max_redemptions: 1,
@@ -108,11 +136,11 @@ export default async function handler(req, res) {
         line_items: [
           {
             price_data: {
-              currency: 'usd',
+              currency: CURRENCY,
               unit_amount: CUSTOM_AUDIO_PRICE_CENTS,
               product_data: {
                 name: 'Custom Audio Session',
-                description: 'Personalized nervous system regulation audio — delivered within 7 days',
+                description: ui.custom_personalized,
                 images: [`${appUrl}/og-image.jpg`],
               },
             },
@@ -120,48 +148,39 @@ export default async function handler(req, res) {
           },
         ],
         discounts,
-        // only allow_promotion_codes when no programmatic coupon applied
-        ...(discounts ? {} : { allow_promotion_codes: true }),
+        // ponytail: app-checked codes carry metadata; hosted codes cannot be reconciled safely here.
         metadata: {
           type: 'custom_audio',
           user_email: email,
-          // Full order details — webhook reads these to create the DB row
+          // Full order details, webhook reads these to create the DB row
           pattern:       trunc(pattern),
           trigger:       trunc(trigger),
           desired_state: trunc(desiredState),
           affirmations:  trunc(affirmations),
           coupon_code:   appliedCoupon ? appliedCoupon.code : '',
           discount_applied: appliedCoupon ? String(appliedCoupon.discount_amount) : '0',
+          ...(annualReservation && { annual_free_reservation_id: annualReservation.id }),
         },
         success_url: `${appUrl}/success?type=custom_audio&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${appUrl}/custom`,
       })
 
+      if (annualReservation) await saveAnnualFreeSession(annualReservation.accountId, annualReservation.id, session.id)
+
       return res.status(200).json({ url: session.url, sessionId: session.id })
 
     } else if (type === 'subscription') {
-      // Price IDs live in Vercel env vars — never trust the client to send them.
-      // To update pricing: change STRIPE_PRICE_ANNUAL / STRIPE_PRICE_MONTHLY in Vercel.
-      const resolvedPriceId = plan === 'annual'
-        ? process.env.STRIPE_PRICE_ANNUAL
-        : process.env.STRIPE_PRICE_MONTHLY
-
-      if (!resolvedPriceId) {
-        console.error(`[checkout] STRIPE_PRICE_${(plan || 'UNKNOWN').toUpperCase()} env var not set`)
-        return res.status(500).json({ error: 'Subscription price not configured. Contact support.' })
-      }
-
-      // allow_promotion_codes lets customers enter codes (e.g. ANNUALFREE) on
-      // Stripe's hosted page — no programmatic coupon handling needed here.
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
         customer_email: email,
         line_items: [{ price: resolvedPriceId, quantity: 1 }],
-        allow_promotion_codes: true,
+        discounts,
         metadata: {
           type: 'subscription',
           plan,
           user_email: email,
+          coupon_code: appliedCoupon ? appliedCoupon.code : '',
+          discount_applied: appliedCoupon ? String(appliedCoupon.discount_amount) : '0',
         },
         subscription_data: {
           metadata: { user_email: email, plan },
