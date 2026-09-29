@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { supabase, checkSubscription, ensureProfile, signOutUser } from '../lib/supabase'
 import { programAt } from '../config/program'
+import { disableCarePush } from '../lib/carePush'
 
 const AppContext = createContext(null)
 
@@ -68,6 +69,8 @@ export function AppProvider({ children }) {
   // Signing out drops the local email too, otherwise premium would survive a
   // sign-out. "Restore a purchase" on the You tab gets it back.
   async function signOut() {
+    // Remove this device's alerts before ending its authenticated session.
+    await disableCarePush().catch(() => {})
     await signOutUser()
     setAuthUser(null)
     setUserEmail(null)
