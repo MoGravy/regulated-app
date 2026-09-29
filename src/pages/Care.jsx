@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { supabase } from '../lib/supabase'
 import { careCopy } from '../config/careCopy'
+import { carePushCopy } from '../config/carePushCopy'
+import CareAlerts from '../components/CareAlerts'
+import CareConnect from '../components/CareConnect'
+import { carePushRequest } from '../lib/carePush'
 
 function SupportFrame({ children }) {
   const navigate = useNavigate()
@@ -63,7 +67,11 @@ function SupportSpace({ link, userId }) {
     Promise.all([loadTasks(), loadMessages()])
       .then(() => setStatus('ready'))
       .catch(() => setStatus('error'))
-    const poll = setInterval(() => loadMessages().catch(() => {}), 15000)
+    const poll = setInterval(() => {
+      loadMessages().catch(() => {})
+      loadTasks().catch(() => {})
+      carePushRequest('dispatch').catch(() => {})
+    }, 15000)
     return () => clearInterval(poll)
   }, [loadTasks, loadMessages])
 
@@ -78,6 +86,7 @@ function SupportSpace({ link, userId }) {
         title: taskTitle.trim(), instructions: instructions.trim(),
       })
       if (writeError) throw writeError
+      await carePushRequest('dispatch').catch(() => {})
       setTaskTitle('')
       setInstructions('')
       await loadTasks()
@@ -113,6 +122,7 @@ function SupportSpace({ link, userId }) {
       })
       if (writeError) throw writeError
       setMessageText('')
+      await carePushRequest('dispatch').catch(() => {})
       await loadMessages()
     } catch { setError(true) }
     finally { setSaving(false) }
@@ -120,6 +130,10 @@ function SupportSpace({ link, userId }) {
 
   return <>
     <h2 style={{ font: '400 22px/28px var(--font-display)' }}>{otherName}</h2>
+    <button className="btn-ghost" disabled={saving} onClick={() => {
+      setError(false)
+      Promise.all([loadTasks(), loadMessages()]).catch(() => setError(true))
+    }}>{carePushCopy.refresh}</button>
     <div role="tablist" aria-label={careCopy.pageTitle} className="segmented" style={{ margin: '18px 0' }}>
       {['tasks', 'messages'].map(value => <button key={value} className="segmented-item" role="tab"
         id={`care-${value}-tab`} aria-controls={`care-${value}-panel`}
@@ -192,6 +206,7 @@ export default function Care() {
   const { authUser, authReady } = useApp()
   const [result, setResult] = useState({ status: 'loading', rows: [], userId: null })
   const [selectedPair, setSelectedPair] = useState(null)
+  const [reloadVersion, setReloadVersion] = useState(0)
 
   useEffect(() => {
     if (!authReady) return
@@ -211,7 +226,7 @@ export default function Care() {
         if (active) setResult({ status: 'error', rows: [], userId: authUser.id })
       })
     return () => { active = false }
-  }, [authReady, authUser?.id])
+  }, [authReady, authUser?.id, reloadVersion])
 
   const status = !authReady ? 'loading' : !authUser ? 'sign_in'
     : result.userId === authUser.id ? result.status : 'loading'
@@ -225,7 +240,10 @@ export default function Care() {
       <button className="btn-primary btn-lg" onClick={() => navigate('/signin')}>Sign in</button>
     </>}
     {status === 'error' && <p role="alert">{careCopy.error}</p>}
-    {status === 'ready' && result.rows.length === 0 && <p>{careCopy.emptySpace}</p>}
+    {status === 'ready' && <CareAlerts key={authUser.id} userId={authUser.id} />}
+    {status === 'ready' && <CareConnect key={`connect-${authUser.id}`} userId={authUser.id}
+      onConnected={() => setReloadVersion(value => value + 1)} />}
+    {status === 'ready' && result.rows.length === 0 && <p>{carePushCopy.emptySpace}</p>}
     {status === 'ready' && result.rows.length > 1 && <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
       {result.rows.map(link => <button key={pairKey(link)} className="btn-ghost"
         aria-current={selected === link ? 'true' : undefined}
