@@ -20,7 +20,7 @@ async function getMediaUrl(mediaId, download = false) {
   return result
 }
 
-function CourseFrame({ title, backTo, children }) {
+export function CourseFrame({ title, backTo, children }) {
   const navigate = useNavigate()
   return (
     <div className="page">
