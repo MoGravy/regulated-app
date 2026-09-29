@@ -37,8 +37,9 @@ export default function CareConnect({ userId, onConnected }) {
     } catch { setStatus('error') }
     finally { setSaving(false) }
   }
-  return <form className="card" onSubmit={connect} style={{ marginBottom: 20 }}>
-    <h2 style={{ marginTop: 0 }}>{copy.connectTitle}</h2>
+  return <details className="card" style={{ marginBottom: 20 }}>
+    <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{copy.connectTitle}</summary>
+    <form onSubmit={connect}>
     <p>{copy.connectHelp}</p>
     <label htmlFor="care-client-email">{copy.clientEmailLabel}</label>
     <input id="care-client-email" type="email" autoComplete="off" required maxLength={254}
@@ -51,5 +52,6 @@ export default function CareConnect({ userId, onConnected }) {
       {saving ? copy.connecting : copy.connectButton}
     </button>
     {status && <p role={status === 'error' ? 'alert' : 'status'}>{status === 'error' ? copy.connectError : copy.connectSuccess}</p>}
-  </form>
+    </form>
+  </details>
 }

@@ -35,13 +35,13 @@ export default function CareAlerts({ userId }) {
   }
   const status = { on: copy.alertsOn, off: copy.alertsOff, unavailable: copy.alertsUnavailable,
     denied: copy.alertsDenied, loading: copy.alertsSaving, saving: copy.alertsSaving, error: copy.alertsError }[state]
-  return <section className="card" style={{ marginBottom: 20 }} aria-label={copy.notificationsTitle}>
-    <h2 style={{ marginTop: 0 }}>{copy.notificationsTitle}</h2>
+  return <details className="card" style={{ marginBottom: 20 }}>
+    <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{copy.notificationsTitle}</summary>
     <p role="status">{status}</p>
     {error && <p role="alert">{copy.alertsError}</p>}
     {['on', 'off', 'saving'].includes(state) && <button className="btn-primary" onClick={change} disabled={state === 'saving'}>
       {state === 'on' ? copy.disableAlerts : copy.enableAlerts}
     </button>}
     <p style={{ fontSize: 14 }}>{copy.homeScreenHelp}</p>
-  </section>
+  </details>
 }
