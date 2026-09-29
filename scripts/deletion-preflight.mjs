@@ -99,8 +99,11 @@ export async function preflightDeletion(client, database, requestId) {
       if (role.rows[0]?.unrestricted !== true) throw new Error('Restricted reader')
       const { rows: schema } = await tx.query(schemaInspectionSql)
       const observed = Object.fromEntries(schema.map(row => [row.object, row.fingerprint]))
-      const changed = [...new Set([...Object.keys(coverage.objects), ...Object.keys(observed)])]
-        .filter(key => observed[key] !== coverage.objects[key]).sort()
+      const hasCare = schema.some(row => row.object.startsWith('relation:public.care_'))
+      const expected = hasCare ? coverage.objects : Object.fromEntries(
+        Object.entries(coverage.objects).filter(([key]) => !key.includes('public.care_')))
+      const changed = [...new Set([...Object.keys(expected), ...Object.keys(observed)])]
+        .filter(key => observed[key] !== expected[key]).sort()
       const blockers = new Set([...unresolved, ...inventory.blockers])
       const manifest = { format: 1, requestId, accountId: inventory.accountId, schema, inventory, rows: {} }
       if (changed.length) blockers.add('schema_coverage_mismatch')
@@ -111,6 +114,7 @@ export async function preflightDeletion(client, database, requestId) {
         manifest.authVersion = receipt.rows[0].version
         manifest.rows.account_deletion_requests = await candidates(tx, 'account_deletion_requests', 't.id = r.id', requestId)
         for (const [table, predicate] of Object.entries(accountTables)) {
+          if (!hasCare && table.startsWith('care_')) continue
           manifest.rows[table] = await candidates(tx, table, predicate, requestId)
           if (table.startsWith('care_') && manifest.rows[table].length) blockers.add('shared_care_records')
         }
