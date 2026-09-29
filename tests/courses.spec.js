@@ -138,7 +138,9 @@ test('a long course shows chapter headings and brings the chosen lesson into vie
   const lessons = Array.from({ length: 30 }, (_, i) => ({
     id: `20000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`,
     section: i < 15 ? 'Chapter one' : 'Chapter two',
-    title: `Lesson ${i + 1}`, body_text: `Text of lesson ${i + 1}.`, position: i + 1,
+    title: `Lesson ${i + 1}`,
+    body_text: i === 1 ? '## What to do\n\nText of lesson 2.\n\n- Start here\n- Keep going' : `Text of lesson ${i + 1}.`,
+    position: i + 1,
   }))
   await page.route('**/rest/v1/course_lessons*', route => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify(lessons),
@@ -155,6 +157,11 @@ test('a long course shows chapter headings and brings the chosen lesson into vie
   await expect(page.getByRole('heading', { name: 'Chapter two' })).toHaveCount(1)
   await page.getByRole('button', { name: 'Lesson 2', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Lesson 2', exact: true })).toBeInViewport()
+  await expect(page.getByRole('button', { name: 'Lesson 2', exact: true })).toHaveAttribute('aria-current', 'step')
+  await expect(page.getByRole('button', { name: 'Lesson 1', exact: true })).not.toHaveAttribute('aria-current', 'step')
+  await expect(page.getByRole('button', { name: 'Lesson 2', exact: true })).toHaveCSS('border-color', 'rgb(36, 52, 77)')
+  await expect(page.getByRole('heading', { name: 'What to do' })).toBeVisible()
+  await expect(page.getByText('Start here', { exact: true })).toBeVisible()
   await expect(page.getByText('Text of lesson 2.')).toBeVisible()
 })
 
