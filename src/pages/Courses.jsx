@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { authHeaders, supabase } from '../lib/supabase'
-import { courseCopy } from '../config/courseCopy'
+import { courseCopy, dapGuide } from '../config/courseCopy'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -221,15 +221,28 @@ export function Course() {
       </div>
       {selected && <article ref={articleRef}>
         <h2 style={{ font: '400 24px/30px var(--font-display)' }}>{selected.title}</h2>
-        {selected.body_text && <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{selected.body_text}</p>}
-        {selectedMedia.map(media => <div key={media.id} style={{ margin: '18px 0' }}>
-          <button className="btn-ghost" onClick={() => openMedia(media)}>
+        {selected.id === dapGuide.lessonId
+          ? <div className="course-guide">
+              <p>{dapGuide.intro}</p>
+              <ol>{dapGuide.steps.map(step => <li key={step.title}>
+                <strong>{step.title}</strong>
+                <p>{step.text}</p>
+              </li>)}</ol>
+            </div>
+          : selected.body_text && <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{selected.body_text}</p>}
+        {selectedMedia.map(media => <div key={media.id} className="course-media-item">
+          {media.title !== selected.title && <p className="course-media-title">{media.title}</p>}
+          <button className="btn-primary btn-lg" onClick={() => openMedia(media)}
+            aria-label={`${media.kind === 'audio' ? courseCopy.playAudio
+              : media.kind === 'video' ? courseCopy.playVideo : courseCopy.downloadFile}: ${media.title}`}>
+            <span aria-hidden="true">{media.kind === 'video' ? '▶' : media.kind === 'audio' ? '♫' : '↓'}</span>
             {media.kind === 'audio' ? courseCopy.playAudio
-              : media.kind === 'video' ? courseCopy.playVideo : courseCopy.downloadFile}: {media.title}
+              : media.kind === 'video' ? courseCopy.playVideo : courseCopy.downloadFile}
           </button>
           {media.kind === 'audio' && <button className="btn-ghost" onClick={() => openMedia(media, true)}
+            aria-label={`${courseCopy.downloadFile}: ${media.title}`}
             disabled={activeDownload?.mediaId === media.id && activeDownload.status === 'loading'}>
-            {courseCopy.downloadFile}: {media.title}
+            {courseCopy.downloadFile}
           </button>}
           {activeDownload?.mediaId === media.id && activeDownload.status === 'loading' &&
             <p role="status">{courseCopy.mediaLoading}</p>}

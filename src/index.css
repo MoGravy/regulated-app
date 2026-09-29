@@ -206,6 +206,16 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
 }
 .btn-ghost:hover { color: var(--ink); }
 
+.course-guide { line-height: 1.55; }
+.course-guide > p { margin: 0 0 20px; }
+.course-guide ol { margin: 0 0 24px; padding-left: 26px; }
+.course-guide li { padding-left: 4px; margin-bottom: 16px; }
+.course-guide li::marker { font-weight: 700; color: var(--accent); }
+.course-guide strong { font: 700 16px/24px var(--font-ui); }
+.course-guide li p { margin: 4px 0 0; }
+.course-media-item { margin: 24px 0; }
+.course-media-title { margin: 0 0 10px; font-weight: 600; }
+
 /* 44px icon button — back, close, player chrome */
 .btn-icon {
   width: 44px;
