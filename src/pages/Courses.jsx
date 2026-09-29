@@ -44,6 +44,26 @@ function SignInPrompt() {
   </>
 }
 
+function LessonText({ text }) {
+  if (!/(^|\n)## /.test(text)) return <p className="course-legacy-copy">{text}</p>
+  const blocks = text.trim().split(/\n\s*\n/)
+  return <div className="course-lesson-copy">{blocks.map((block, index) => {
+    const lines = block.split('\n').map(line => line.trim()).filter(Boolean)
+    if (lines.length === 1 && lines[0].startsWith('## ')) {
+      return <h3 key={index}>{lines[0].slice(3)}</h3>
+    }
+    if (lines.every(line => line.startsWith('- '))) {
+      return <ul key={index}>{lines.map((line, item) => <li key={item}>{line.slice(2)}</li>)}</ul>
+    }
+    return <p key={index}>{lines.map((line, item) => <Fragment key={item}>
+      {item > 0 && <br />}
+      {/^https?:\/\/\S+$/.test(line)
+        ? <a href={line} target="_blank" rel="noopener noreferrer">{line}</a>
+        : line}
+    </Fragment>)}</p>
+  })}</div>
+}
+
 export default function Courses() {
   const navigate = useNavigate()
   const { authUser, authReady } = useApp()
@@ -231,7 +251,7 @@ export function Course() {
                 <p>{step.text}</p>
               </li>)}</ol>
             </div>
-          : selected.body_text && <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{selected.body_text}</p>}
+          : selected.body_text && <LessonText text={selected.body_text} />}
         {selectedMedia.map(media => <div key={media.id} className="course-media-item">
           {media.title !== selected.title && <p className="course-media-title">{media.title}</p>}
           {media.kind === 'file' && filePreviews[media.id]?.isPdf &&
@@ -278,7 +298,7 @@ export function Course() {
         {result.lessons.map((lesson, index) => <Fragment key={lesson.id}>
           {lesson.section && lesson.section !== result.lessons[index - 1]?.section &&
             <h2 className="t-section" style={{ margin: index ? '16px 0 0' : 0 }}>{lesson.section}</h2>}
-          <button className="card" onClick={() => {
+          <button className="card course-lesson-link" onClick={() => {
             mediaRequest.current += 1
             downloadRequest.current += 1
             setPlayback(null)
@@ -287,7 +307,7 @@ export function Course() {
             setSaveError(false)
             requestAnimationFrame(() => articleRef.current?.scrollIntoView({ block: 'start' }))
           }}
-            aria-current={lesson.id === selectedId ? 'true' : undefined}
+            aria-current={lesson.id === selectedId ? 'step' : undefined}
             style={{ textAlign: 'left', cursor: 'pointer', width: '100%' }}>
             {lesson.title}
           </button>
