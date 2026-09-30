@@ -4,6 +4,17 @@ export function signInDestination(value) {
   return '/premium'
 }
 
+export function emailConfirmation(hash) {
+  const params = new URLSearchParams(hash.replace(/^#/, ''))
+  const token = params.get('token_hash')
+  if (params.get('type') !== 'email' || !/^[a-zA-Z0-9_-]{20,256}$/.test(token || '')) return null
+  return { token_hash: token, type: 'email' }
+}
+
+export function emailReturnUrl(origin, next) {
+  return `${origin}/signin?next=${encodeURIComponent(signInDestination(next))}`
+}
+
 export function signInError(error, callback = false) {
   const code = error?.code || error?.details?.code
   if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || error?.status === 429) {

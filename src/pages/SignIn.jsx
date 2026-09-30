@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import Texture from '../components/Texture'
-import { sendMagicLink, signInWithPassword, signUpWithPassword } from '../lib/supabase'
-import { signInDestination, signInError } from '../lib/signInFlow'
+import { confirmEmailLink, sendMagicLink, signInWithPassword, signUpWithPassword } from '../lib/supabase'
+import { emailConfirmation, signInDestination, signInError } from '../lib/signInFlow'
+import { signInCopy } from '../config/signInCopy'
 
 // Design board "ONBOARDING": the note under it reads "Sign-in is the same
 // screen without the paragraph", so this is onboarding step 1 with the
@@ -15,6 +16,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function SignIn() {
   const navigate = useNavigate()
+  const { hash } = useLocation()
   const [params] = useSearchParams()
   const next = signInDestination(params.get('next'))
   const { userEmail, authUser, authError, addToast } = useApp()
@@ -25,8 +27,26 @@ export default function SignIn() {
   const [error, setError] = useState(authError || '')
   const [loading, setLoading] = useState(false)
   const submitting = useRef(false)
+  const [confirmation, setConfirmation] = useState(() => emailConfirmation(window.location.hash))
 
-  if (authUser) {
+  useEffect(() => {
+    const incoming = emailConfirmation(hash)
+    // Keep the one-time credential out of copied URLs and browser history.
+    if (incoming) {
+      setConfirmation(incoming)
+      setError('')
+      navigate(`/signin?next=${encodeURIComponent(next)}`, { replace: true })
+    }
+  }, [hash, navigate, next])
+
+  useEffect(() => {
+    if (authError) {
+      setError(authError)
+      setSent(false)
+    }
+  }, [authError])
+
+  if (authUser && !confirmation) {
     return (
       <div className="page-plain" style={{ padding: '80px 24px' }}>
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
@@ -42,6 +62,23 @@ export default function SignIn() {
         </div>
       </div>
     )
+  }
+
+  async function confirm() {
+    if (submitting.current) return
+    submitting.current = true
+    setLoading(true)
+    setError('')
+    try {
+      await confirmEmailLink(confirmation)
+      navigate(next, { replace: true })
+    } catch (err) {
+      setConfirmation(null)
+      setError(signInError(err, true))
+    } finally {
+      submitting.current = false
+      setLoading(false)
+    }
   }
 
   async function submit() {
@@ -101,13 +138,20 @@ export default function SignIn() {
       <div style={{ position: 'relative', flex: 1, padding: '24px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', width: '100%' }}>
         <div style={{ font: '500 13px/18px var(--font-ui)', color: 'var(--ink-muted)' }}>Regulated</div>
         <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>
-          Feel safe in your own body
+          {confirmation ? signInCopy.confirmTitle : 'Feel safe in your own body'}
         </h1>
 
-        {sent ? (
+        {confirmation ? (
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
+            <p>{signInCopy.confirmBody}</p>
+            <button className="btn-primary btn-lg" onClick={confirm} disabled={loading}>
+              {loading ? 'One moment…' : signInCopy.confirmButton}
+            </button>
+          </div>
+        ) : sent ? (
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
             <p style={{ margin: 0, font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              Check {email}. The link signs you in on this phone and stays signed in.
+              {signInCopy.sentBody.replace('{email}', email)}
             </p>
             <button className="btn-ghost" onClick={() => setSent(false)}>Use a different email</button>
           </div>
@@ -157,7 +201,7 @@ export default function SignIn() {
 
             <div style={{ font: '400 13px/20px var(--font-ui)', color: 'var(--ink-faint)', textWrap: 'pretty' }}>
               {mode === 'link'
-                ? 'No password. The link signs you in on this phone and stays signed in.'
+                ? signInCopy.emailHelp
                 : 'Your password only unlocks this account. Sessions stay on the device either way.'}
             </div>
 
