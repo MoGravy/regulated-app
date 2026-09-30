@@ -42,11 +42,11 @@ export default function CareConnect({ userId, onConnected }) {
     <form onSubmit={connect}>
     <p>{copy.connectHelp}</p>
     <label htmlFor="care-client-email">{copy.clientEmailLabel}</label>
-    <input id="care-client-email" type="email" autoComplete="off" required maxLength={254}
+    <input className="form-input" id="care-client-email" type="email" autoComplete="off" required maxLength={254}
       value={email} onChange={event => setEmail(event.target.value)}
       style={{ display: 'block', width: '100%', margin: '8px 0 16px' }} />
     <label htmlFor="care-client-label">{copy.clientNameLabel}</label>
-    <input id="care-client-label" required maxLength={100} value={label} onChange={event => setLabel(event.target.value)}
+    <input className="form-input" id="care-client-label" required maxLength={100} value={label} onChange={event => setLabel(event.target.value)}
       style={{ display: 'block', width: '100%', margin: '8px 0 16px' }} />
     <button className="btn-primary" disabled={saving || !email.trim() || !label.trim()}>
       {saving ? copy.connecting : copy.connectButton}

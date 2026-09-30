@@ -130,6 +130,7 @@ function SupportSpace({ link, userId }) {
   }
 
   return <>
+    <p className="care-role" role="status">{isPractitioner ? careCopy.practitionerRole : careCopy.clientRole}</p>
     <h2 style={{ font: '400 22px/28px var(--font-display)' }}>{otherName}</h2>
     <button className="btn-ghost" disabled={saving} onClick={() => {
       setError(false)
@@ -140,20 +141,21 @@ function SupportSpace({ link, userId }) {
       {['tasks', 'messages'].map(value => <button key={value} className="segmented-item" role="tab"
         id={`care-${value}-tab`} aria-controls={`care-${value}-panel`}
         aria-selected={section === value} onClick={() => setSection(value)}>
-        {value === 'tasks' ? careCopy.tasksTitle : careCopy.messagesTitle}
+        {value === 'tasks' ? (isPractitioner ? careCopy.practitionerTasks : careCopy.clientTasks) : careCopy.messagesTitle}
       </button>)}
     </div>
     {status === 'loading' && <p role="status">{careCopy.loading}</p>}
     {status === 'error' && <p role="alert">{careCopy.error}</p>}
     {error && <p role="alert">{careCopy.error}</p>}
     {status === 'ready' && section === 'tasks' && <div role="tabpanel" id="care-tasks-panel" aria-labelledby="care-tasks-tab">
+      <p>{isPractitioner ? careCopy.practitionerHelp : careCopy.clientHelp}</p>
       {isPractitioner && <form onSubmit={assignTask} className="card" style={{ marginBottom: 18 }}>
         <h3>{careCopy.assignTitle}</h3>
         <label htmlFor="care-task-title">{careCopy.taskTitleLabel}</label>
-        <input id="care-task-title" value={taskTitle} onChange={event => setTaskTitle(event.target.value)}
+        <input className="form-input" id="care-task-title" value={taskTitle} onChange={event => setTaskTitle(event.target.value)}
           maxLength={160} required style={{ display: 'block', width: '100%', margin: '8px 0 16px' }} />
         <label htmlFor="care-task-instructions">{careCopy.taskInstructionsLabel}</label>
-        <textarea id="care-task-instructions" value={instructions}
+        <textarea className="form-input form-textarea" id="care-task-instructions" value={instructions}
           onChange={event => setInstructions(event.target.value)} maxLength={4000}
           style={{ display: 'block', width: '100%', minHeight: 90, margin: '8px 0 16px' }} />
         <button className="btn-primary" type="submit" disabled={saving}>{careCopy.assignButton}</button>
@@ -172,10 +174,10 @@ function SupportSpace({ link, userId }) {
             </p>)}
           {!isPractitioner && <>
             <label htmlFor={`note-${task.id}`}>{careCopy.noteLabel}</label>
-            <textarea id={`note-${task.id}`} value={notes[task.id] || ''}
+            <textarea className="form-input form-textarea" id={`note-${task.id}`} value={notes[task.id] || ''}
               onChange={event => setNotes(current => ({ ...current, [task.id]: event.target.value }))}
               maxLength={5000} style={{ display: 'block', width: '100%', minHeight: 80, margin: '8px 0' }} />
-            <button className="btn-ghost" onClick={() => addEntry(task.id, 'note')} disabled={saving || !notes[task.id]?.trim()}>
+            <button className="btn-primary" onClick={() => addEntry(task.id, 'note')} disabled={saving || !notes[task.id]?.trim()}>
               {careCopy.saveNote}
             </button>
             {!complete && <button className="btn-ghost" onClick={() => addEntry(task.id, 'complete')} disabled={saving}>
@@ -195,7 +197,7 @@ function SupportSpace({ link, userId }) {
       </div>)}
       <form onSubmit={sendMessage} style={{ marginTop: 18 }}>
         <label htmlFor="care-message">{careCopy.messageLabel}</label>
-        <textarea id="care-message" value={messageText} onChange={event => setMessageText(event.target.value)}
+        <textarea className="form-input form-textarea" id="care-message" value={messageText} onChange={event => setMessageText(event.target.value)}
           maxLength={5000} required style={{ display: 'block', width: '100%', minHeight: 90, margin: '8px 0 14px' }} />
         <button className="btn-primary" type="submit" disabled={saving}>{careCopy.sendMessage}</button>
       </form>
@@ -241,13 +243,16 @@ export default function Care() {
       <p>{careCopy.signInPrompt}</p>
       <button className="btn-primary btn-lg" onClick={() => navigate('/signin?next=/care')}>Sign in</button>
     </>}
-    {status === 'error' && <p role="alert">{careCopy.error}</p>}
+    {status === 'error' && <>
+      <p role="alert">{careCopy.error}</p>
+      <button className="btn-primary" onClick={() => setReloadVersion(value => value + 1)}>{carePushCopy.refresh}</button>
+    </>}
     {status === 'ready' && <CareAlerts key={authUser.id} userId={authUser.id} />}
     {status === 'ready' && <CareConnect key={`connect-${authUser.id}`} userId={authUser.id}
       onConnected={() => setReloadVersion(value => value + 1)} />}
     {status === 'ready' && result.rows.length === 0 && <p>{carePushCopy.emptySpace}</p>}
     {status === 'ready' && result.rows.length > 1 && <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
-      {result.rows.map(link => <button key={pairKey(link)} className="btn-ghost"
+      {result.rows.map(link => <button key={pairKey(link)} className="card care-client-link"
         aria-current={selected === link ? 'true' : undefined}
         onClick={() => setSelectedPair(pairKey(link))}>
         {authUser.id === link.practitioner_id ? link.client_label : link.practitioner_label}
