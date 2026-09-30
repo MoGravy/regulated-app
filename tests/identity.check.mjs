@@ -4,10 +4,11 @@ import assert from 'node:assert/strict'
 import { callerEmail, sameEmail, activeSubscriptions } from '../api/_identity.js'
 
 const stub = users => ({ auth: { getUser: async t => users[t] ? { data: { user: users[t] } } : { data: {}, error: new Error('bad') } } })
-const sb = stub({ good: { email: ' Kat@Example.com ' } })
+const sb = stub({ good: { id: 'fixture-user', email: ' Kat@Example.com ' } })
 
 // Token wins over the body, and is normalised.
 assert.equal(await callerEmail({ headers: { authorization: 'Bearer good' }, body: { email: 'other@example.com' } }, sb), 'kat@example.com')
+assert.equal(await callerEmail({ headers: { authorization: 'Bearer good' } }, stub({ good: { email: 'kat@example.com' } })), null)
 // A bad token is refused, never downgraded to the body email.
 assert.equal(await callerEmail({ headers: { authorization: 'Bearer nope' }, body: { email: 'other@example.com' } }, sb), null)
 // No token: the body email counts for nothing.

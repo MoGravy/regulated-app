@@ -9,7 +9,8 @@ const LINK = {
   client_label: 'Sam', practitioner_label: 'Matthew',
 }
 
-async function fakeCare(page) {
+async function fakeCare(page, failInitial = false) {
+  let offline = failInitial
   const tasks = [{ id: TASK_ID, title: 'Notice one calm moment', instructions: 'Write down what happened.', created_at: '2026-09-26T00:00:00Z' }]
   const entries = []
   const messages = [{ id: 'm1', sender_id: PRACTITIONER_ID, body: 'Welcome, Sam.', created_at: '2026-09-26T00:00:00Z' }]
@@ -17,6 +18,7 @@ async function fakeCare(page) {
   await page.route('**/api/check-subscription', route => respond(route, { active: false }))
   await page.route('**/rest/v1/care_links*', route => respond(route, [LINK]))
   await page.route('**/rest/v1/care_tasks*', route => {
+    if (offline) return route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
     if (route.request().method() === 'POST') {
       const row = route.request().postDataJSON()
       tasks.unshift({ id: `task-${tasks.length + 1}`, ...row, created_at: '2026-09-26T01:00:00Z' })
@@ -40,7 +42,7 @@ async function fakeCare(page) {
     }
     return respond(route, messages)
   })
-  return { tasks, entries, messages }
+  return { tasks, entries, messages, recover: () => { offline = false } }
 }
 
 test('signed-out visitors cannot fetch the support space', async ({ page }) => {
@@ -110,4 +112,18 @@ test('practitioner assigns a task and replies only in the linked space', async (
   await page.getByRole('button', { name: 'Send', exact: true }).click()
   await expect(page.locator('.card').getByText('Thanks for checking in.')).toBeVisible()
   expect(data.messages.at(-1).sender_id).toBe(PRACTITIONER_ID)
+})
+
+
+test('Refresh recovers after an initial task-load outage', async ({ page }) => {
+  await skipOnboarding(page)
+  await signedIn(page)
+  const data = await fakeCare(page, true)
+  await page.goto('/care')
+  await expect(page.getByRole('alert')).toHaveText('Something went wrong. Please try again.')
+  await expect(page.getByText('Notice one calm moment')).toHaveCount(0)
+  data.recover()
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click()
+  await expect(page.getByText('Notice one calm moment')).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
 })

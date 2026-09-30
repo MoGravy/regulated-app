@@ -68,8 +68,9 @@ function SupportSpace({ link, userId }) {
       .then(() => setStatus('ready'))
       .catch(() => setStatus('error'))
     const poll = setInterval(() => {
-      loadMessages().catch(() => {})
-      loadTasks().catch(() => {})
+      Promise.all([loadTasks(), loadMessages()])
+        .then(() => { setStatus('ready'); setError(false) })
+        .catch(() => setError(true))
       carePushRequest('dispatch').catch(() => {})
     }, 15000)
     return () => clearInterval(poll)
@@ -132,7 +133,8 @@ function SupportSpace({ link, userId }) {
     <h2 style={{ font: '400 22px/28px var(--font-display)' }}>{otherName}</h2>
     <button className="btn-ghost" disabled={saving} onClick={() => {
       setError(false)
-      Promise.all([loadTasks(), loadMessages()]).catch(() => setError(true))
+      Promise.all([loadTasks(), loadMessages()])
+        .then(() => setStatus('ready')).catch(() => setError(true))
     }}>{carePushCopy.refresh}</button>
     <div role="tablist" aria-label={careCopy.pageTitle} className="segmented" style={{ margin: '18px 0' }}>
       {['tasks', 'messages'].map(value => <button key={value} className="segmented-item" role="tab"
