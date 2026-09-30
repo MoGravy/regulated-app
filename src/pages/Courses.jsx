@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { authHeaders, supabase } from '../lib/supabase'
-import { courseCopy, dapGuide } from '../config/courseCopy'
+import { courseCopy, dapGuide, dapGuideSteps } from '../config/courseCopy'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -151,9 +151,11 @@ export function Course() {
       supabase.from('courses').select('id,title').eq('id', courseId).maybeSingle(),
       supabase.from('course_lessons').select('id,section,title,body_text,position').eq('course_id', courseId).order('position'),
       supabase.from('course_progress').select('lesson_id').eq('user_id', authUser.id),
-    ]).then(async ([course, lessons, progress]) => {
+      supabase.from('course_grants').select('source').eq('user_id', authUser.id)
+        .eq('course_id', courseId).is('revoked_at', null).maybeSingle(),
+    ]).then(async ([course, lessons, progress, grant]) => {
       if (!active) return
-      if (course.error || lessons.error || progress.error) {
+      if (course.error || lessons.error || progress.error || grant.error) {
         setResult({ status: 'error', course: null, lessons: [], done: [], userId: authUser.id })
       } else if (!course.data) {
         setResult({ status: 'unavailable', course: null, lessons: [], done: [], userId: authUser.id })
@@ -168,7 +170,8 @@ export function Course() {
           setResult({ status: 'error', course: null, lessons: [], done: [], userId: authUser.id })
         } else {
           setResult({ status: 'ready', course: course.data, lessons: lessonRows, media: media.data || [],
-            done: (progress.data || []).map(row => row.lesson_id), userId: authUser.id })
+            done: (progress.data || []).map(row => row.lesson_id), userId: authUser.id,
+            grantSource: grant.data?.source })
           setSelectedId(lessonRows[0]?.id || null)
         }
       }
@@ -246,7 +249,7 @@ export function Course() {
         {selected.id === dapGuide.lessonId
           ? <div className="course-guide">
               <p>{dapGuide.intro}</p>
-              <ol>{dapGuide.steps.map(step => <li key={step.title}>
+              <ol>{dapGuideSteps(result.grantSource).map(step => <li key={step.title}>
                 <strong>{step.title}</strong>
                 <p>{step.text}</p>
               </li>)}</ol>
