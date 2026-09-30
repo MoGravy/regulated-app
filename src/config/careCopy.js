@@ -1,11 +1,18 @@
 // Drafted by exact opencode-go/glm-5.3 and edited with Matthew's, Hermes's
 // and unslop writing rules. No reply-time or medical claims.
+// Role copy: verified author session ses_f0be1254dffeQx8ZJL6LtrALAC.
 export const careCopy = {
   nav: 'Support',
   pageTitle: 'Your support page',
   signInPrompt: 'Sign in to continue.',
   emptySpace: 'Nothing here yet.',
   tasksTitle: 'Tasks',
+  practitionerRole: "Practitioner view. You assign tasks and read your client's task log.",
+  clientRole: 'Client view. You write notes in your task log and mark tasks done.',
+  practitionerTasks: 'Assigned tasks',
+  clientTasks: 'My task log',
+  practitionerHelp: 'Assign a task here. Client logs appear below.',
+  clientHelp: 'Choose a task and add a note about practice.',
   messagesTitle: 'Messages',
   emptyTasks: 'No tasks yet.',
   emptyMessages: 'No messages yet.',
@@ -13,8 +20,8 @@ export const careCopy = {
   taskTitleLabel: 'Task title',
   taskInstructionsLabel: 'Instructions',
   assignButton: 'Assign',
-  noteLabel: 'Practice note',
-  saveNote: 'Save note',
+  noteLabel: 'Task log note',
+  saveNote: 'Save to task log',
   completeTask: 'Mark done',
   completionLabel: 'Completed',
   messageLabel: 'Message',

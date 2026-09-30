@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { authHeaders, supabase } from '../lib/supabase'
 import { courseCopy, dapGuide, dapGuideSteps } from '../config/courseCopy'
+import { carePushCopy } from '../config/carePushCopy'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -68,6 +69,7 @@ function LessonText({ text }) {
 export default function Courses() {
   const navigate = useNavigate()
   const { authUser, authReady } = useApp()
+  const [reloadVersion, setReloadVersion] = useState(0)
   const [result, setResult] = useState({ status: 'loading', rows: [], userId: null })
 
   useEffect(() => {
@@ -87,7 +89,7 @@ export default function Courses() {
       })
       .catch(() => { if (active) setResult({ status: 'error', rows: [], userId: authUser.id }) })
     return () => { active = false }
-  }, [authReady, authUser?.id])
+  }, [authReady, authUser?.id, reloadVersion])
 
   const status = !authReady ? 'loading' : !authUser ? 'sign_in'
     : result.userId === authUser.id ? result.status : 'loading'
@@ -95,7 +97,10 @@ export default function Courses() {
   return <CourseFrame title={courseCopy.pageTitle} backTo="/">
     {status === 'loading' && <p role="status">{courseCopy.loading}</p>}
     {status === 'sign_in' && <SignInPrompt />}
-    {status === 'error' && <p role="alert">{courseCopy.error}</p>}
+    {status === 'error' && <>
+      <p role="alert">{courseCopy.error}</p>
+      <button className="btn-primary" onClick={() => setReloadVersion(value => value + 1)}>{carePushCopy.refresh}</button>
+    </>}
     {status === 'ready' && result.rows.length === 0 && <p>{courseCopy.emptyCourses}</p>}
     {status === 'ready' && result.rows.map(course => (
       <button key={course.id} className="card" onClick={() => navigate(`/courses/${course.id}`)}
@@ -113,6 +118,7 @@ export default function Courses() {
 export function Course() {
   const { courseId } = useParams()
   const { authUser, authReady } = useApp()
+  const [reloadVersion, setReloadVersion] = useState(0)
   const [result, setResult] = useState({ status: 'loading', course: null, lessons: [], done: [], userId: null })
   const [selectedId, setSelectedId] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -180,7 +186,7 @@ export function Course() {
       if (active) setResult({ status: 'error', course: null, lessons: [], done: [], userId: authUser.id })
     })
     return () => { active = false }
-  }, [authReady, authUser?.id, courseId])
+  }, [authReady, authUser?.id, courseId, reloadVersion])
 
   const selected = result.lessons.find(lesson => lesson.id === selectedId)
   const completed = selected && result.done.includes(selected.id)
@@ -242,7 +248,10 @@ export function Course() {
   return <CourseFrame title={status === 'ready' ? result.course.title : courseCopy.pageTitle} backTo="/courses">
     {status === 'loading' && <p role="status">{courseCopy.loading}</p>}
     {status === 'sign_in' && <SignInPrompt />}
-    {status === 'error' && <p role="alert">{courseCopy.error}</p>}
+    {status === 'error' && <>
+      <p role="alert">{courseCopy.error}</p>
+      <button className="btn-primary" onClick={() => setReloadVersion(value => value + 1)}>{carePushCopy.refresh}</button>
+    </>}
     {status === 'unavailable' && <p>{courseCopy.courseUnavailable}</p>}
     {status === 'ready' && <>
       {selected && <article ref={articleRef} className="course-active-lesson">

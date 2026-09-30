@@ -64,8 +64,8 @@ test('client logs homework and sends a message from a phone width', async ({ pag
   await page.goto('/care')
   await expect(page.getByRole('heading', { name: 'Your support page' })).toBeVisible()
   await expect(page.getByText('Notice one calm moment')).toBeVisible()
-  await page.getByLabel('Practice note').fill('I paused before replying.')
-  await page.getByRole('button', { name: 'Save note' }).click()
+  await page.getByLabel('Task log note').fill('I paused before replying.')
+  await page.getByRole('button', { name: 'Save to task log' }).click()
   await expect(page.getByText('I paused before replying.')).toBeVisible()
   await page.getByRole('button', { name: 'Mark done' }).click()
   await expect(page.getByText('Completed')).toBeVisible()
@@ -99,7 +99,7 @@ test('practitioner assigns a task and replies only in the linked space', async (
   const data = await fakeCare(page)
   await page.goto('/care')
   await expect(page.getByRole('heading', { name: 'Sam' })).toBeVisible()
-  await expect(page.getByLabel('Practice note')).toHaveCount(0)
+  await expect(page.getByLabel('Task log note')).toHaveCount(0)
   await page.getByLabel('Task title').fill('Practice your breathing')
   await page.getByLabel('Instructions').fill('Try it once and make a note.')
   await page.getByRole('button', { name: 'Assign', exact: true }).click()
@@ -125,5 +125,22 @@ test('Refresh recovers after an initial task-load outage', async ({ page }) => {
   data.recover()
   await page.getByRole('button', { name: 'Refresh', exact: true }).click()
   await expect(page.getByText('Notice one calm moment')).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
+test('Refresh recovers when the linked support space fails to load', async ({ page }) => {
+  await skipOnboarding(page)
+  await signedIn(page)
+  await fakeCare(page)
+  let unavailable = true
+  await page.route('**/rest/v1/care_links*', route => route.fulfill({
+    status: unavailable ? 400 : 200, contentType: 'application/json',
+    body: JSON.stringify(unavailable ? { message: 'Test outage' } : [LINK]),
+  }))
+  await page.goto('/care')
+  await expect(page.getByRole('alert')).toBeVisible()
+  unavailable = false
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click()
+  await expect(page.getByRole('tab', { name: 'My task log' })).toBeVisible()
   await expect(page.getByRole('alert')).toHaveCount(0)
 })

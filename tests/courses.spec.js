@@ -261,3 +261,19 @@ test('DAP shows a short guide and a clear video action', async ({ page }, testIn
   await watch.click()
   await expect(page.getByLabel('Why DAP?', { exact: true })).toBeVisible()
 })
+
+test('Refresh recovers a failed course-list request', async ({ page }) => {
+  await skipOnboarding(page)
+  await signedIn(page)
+  let unavailable = true
+  await page.route('**/rest/v1/courses*', route => route.fulfill({
+    status: unavailable ? 400 : 200, contentType: 'application/json',
+    body: JSON.stringify(unavailable ? { message: 'Test outage' } : [{ id: COURSE_ID, title: 'Course A' }]),
+  }))
+  await page.goto('/courses')
+  await expect(page.getByRole('alert')).toBeVisible()
+  unavailable = false
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Course A', exact: true })).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
