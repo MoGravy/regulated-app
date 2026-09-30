@@ -582,3 +582,7 @@ button:active:not(:disabled),
 .course-active-lesson > h2 { margin-bottom: 16px; }
 .care-client-link { flex: 0 0 auto; cursor: pointer; }
 .care-client-link[aria-current="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.care-reactions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.care-reactions button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 6px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); color: var(--ink); font-size: 18px; }
+.care-reactions button[aria-pressed="true"] { background: var(--accent-tint); border-color: var(--accent); }
+.care-reactions button:disabled { opacity: .6; cursor: wait; }
