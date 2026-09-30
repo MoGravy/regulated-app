@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { HARDCODED_SESSIONS } from './hardcodedSessions'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/credentials'
+import { signInDestination } from './signInFlow'
 
 export const supabase = createClient(
   SUPABASE_URL,
@@ -168,7 +169,7 @@ export async function getAudioSignedUrl(path) {
 export async function sendMagicLink(email, next = '') {
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.origin + (next === '/dap' ? '/dap' : '') },
+    options: { emailRedirectTo: window.location.origin + signInDestination(next) },
   })
   if (error) throw error
 }
@@ -183,7 +184,7 @@ export async function signUpWithPassword(email, password, next = '') {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: window.location.origin + (next === '/dap' ? '/dap' : '') },
+    options: { emailRedirectTo: window.location.origin + signInDestination(next) },
   })
   if (error) throw error
   // A null session means the project is set to confirm the address first.

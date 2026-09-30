@@ -3,6 +3,7 @@ import { useLocalStorage } from './useLocalStorage'
 import { supabase, checkSubscription, ensureProfile, signOutUser } from '../lib/supabase'
 import { programAt } from '../config/program'
 import { disableCarePush } from '../lib/carePush'
+import { signInError } from '../lib/signInFlow'
 
 const AppContext = createContext(null)
 
@@ -26,6 +27,7 @@ export function AppProvider({ children }) {
   const [toasts, setToasts] = useState([])
   const [authUser, setAuthUser] = useState(null)
   const [authReady, setAuthReady] = useState(false)
+  const [authError, setAuthError] = useState('')
 
   // Auth is additive. Signed out, everything below behaves exactly as it did
   // before phase 3: the localStorage email still drives the premium check.
@@ -38,15 +40,23 @@ export function AppProvider({ children }) {
       const user = session?.user ?? null
       setAuthUser(user)
       setAuthReady(true)
+      if (user) setAuthError('')
       if (user?.email) {
         setUserEmail(user.email)
         ensureProfile(user)
       }
     }
 
-    supabase.auth.getSession()
-      .then(({ data }) => adopt(data.session))
-      .catch(() => adopt(null))
+    supabase.auth.initialize()
+      .then(async ({ error }) => {
+        const { data } = await supabase.auth.getSession()
+        adopt(data.session)
+        if (live && !data.session && error) setAuthError(signInError(error, true))
+      })
+      .catch(() => {
+        adopt(null)
+        if (live) setAuthError(signInError(null, true))
+      })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => adopt(session))
 
     return () => {
@@ -131,7 +141,7 @@ export function AppProvider({ children }) {
       completedSessions, markSessionComplete,
       progress, saveProgress, lastInProgress,
       isPremium, setIsPremium,
-      authUser, authReady, signOut,
+      authUser, authReady, authError, signOut,
       onboardingDone, setOnboardingDone,
       mode, setMode,
       programDay,

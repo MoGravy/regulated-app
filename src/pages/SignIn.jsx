@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import Texture from '../components/Texture'
 import { sendMagicLink, signInWithPassword, signUpWithPassword } from '../lib/supabase'
+import { signInDestination, signInError } from '../lib/signInFlow'
 
 // Design board "ONBOARDING": the note under it reads "Sign-in is the same
 // screen without the paragraph", so this is onboarding step 1 with the
@@ -15,14 +16,15 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export default function SignIn() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
-  const next = params.get('next') === '/dap' ? '/dap' : '/premium'
-  const { userEmail, authUser, addToast } = useApp()
+  const next = signInDestination(params.get('next'))
+  const { userEmail, authUser, authError, addToast } = useApp()
   const [email, setEmail] = useState(userEmail || '')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState('link') // link | password | register
   const [sent, setSent] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(authError || '')
   const [loading, setLoading] = useState(false)
+  const submitting = useRef(false)
 
   if (authUser) {
     return (
@@ -43,6 +45,7 @@ export default function SignIn() {
   }
 
   async function submit() {
+    if (submitting.current) return
     if (!EMAIL_RE.test(email)) {
       setError('Enter an email we can reach you on.')
       return
@@ -52,6 +55,7 @@ export default function SignIn() {
       return
     }
     setError('')
+    submitting.current = true
     setLoading(true)
     try {
       if (mode === 'link') {
@@ -70,9 +74,9 @@ export default function SignIn() {
         }
       }
     } catch (err) {
-      console.error('[SignIn] failed:', err)
-      setError(err.message || 'That did not work. Try again.')
+      setError(signInError(err))
     } finally {
+      submitting.current = false
       setLoading(false)
     }
   }

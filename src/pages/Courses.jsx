@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { authHeaders, supabase } from '../lib/supabase'
 import { courseCopy, dapGuide, dapGuideSteps } from '../config/courseCopy'
@@ -38,9 +38,10 @@ export function CourseFrame({ title, backTo, children }) {
 
 function SignInPrompt() {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   return <>
     <p>{courseCopy.signInPrompt}</p>
-    <button className="btn-primary btn-lg" onClick={() => navigate('/signin')}>Sign in</button>
+    <button className="btn-primary btn-lg" onClick={() => navigate(`/signin?next=${encodeURIComponent(pathname)}`)}>Sign in</button>
   </>
 }
 
