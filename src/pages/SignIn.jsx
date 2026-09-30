@@ -22,6 +22,7 @@ export default function SignIn() {
   const { userEmail, authUser, authError, addToast } = useApp()
   const [email, setEmail] = useState(userEmail || '')
   const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
   const [mode, setMode] = useState('link') // link | password | register
   const [sent, setSent] = useState(false)
   const [error, setError] = useState(authError || '')
@@ -64,17 +65,21 @@ export default function SignIn() {
     )
   }
 
-  async function confirm() {
+  async function confirm(credential = confirmation) {
     if (submitting.current) return
+    if (credential?.token !== undefined && !/^\d{6}$/.test(credential.token)) {
+      setError(signInCopy.invalidCode)
+      return
+    }
     submitting.current = true
     setLoading(true)
     setError('')
     try {
-      await confirmEmailLink(confirmation)
+      await confirmEmailLink(credential)
       navigate(next, { replace: true })
     } catch (err) {
       setConfirmation(null)
-      setError(signInError(err, true))
+      setError(credential?.token !== undefined ? signInCopy.codeError : signInError(err, true))
     } finally {
       submitting.current = false
       setLoading(false)
@@ -97,6 +102,7 @@ export default function SignIn() {
     try {
       if (mode === 'link') {
         await sendMagicLink(email, next)
+        setCode('')
         setSent(true)
       } else if (mode === 'password') {
         await signInWithPassword(email, password)
@@ -144,16 +150,32 @@ export default function SignIn() {
         {confirmation ? (
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
             <p>{signInCopy.confirmBody}</p>
-            <button className="btn-primary btn-lg" onClick={confirm} disabled={loading}>
+            <button className="btn-primary btn-lg" onClick={() => confirm()} disabled={loading}>
               {loading ? 'One moment…' : signInCopy.confirmButton}
             </button>
           </div>
         ) : sent ? (
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
             <p style={{ margin: 0, font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              {signInCopy.sentBody.replace('{email}', email)}
+              {(mode === 'link' ? signInCopy.codeSentBody : signInCopy.sentBody).replace('{email}', email)}
             </p>
-            <button className="btn-ghost" onClick={() => setSent(false)}>Use a different email</button>
+            {mode === 'link' && (
+              <>
+                <label className="form-label" htmlFor="signin-code">{signInCopy.codeLabel}</label>
+                <input id="signin-code" className="form-input form-input-lg" type="text"
+                  inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                  value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={e => e.key === 'Enter' && confirm({ email, token: code, type: 'email' })}
+                  aria-invalid={!!error} aria-describedby={error ? 'signin-code-error' : 'signin-code-hint'} />
+                <p id="signin-code-hint">{signInCopy.codeHint}</p>
+                {error && <div id="signin-code-error" role="alert">{error}</div>}
+                <button className="btn-primary btn-lg" disabled={loading || code.length !== 6}
+                  onClick={() => confirm({ email, token: code, type: 'email' })}>
+                  {loading ? 'One moment…' : signInCopy.codeButton}
+                </button>
+              </>
+            )}
+            <button className="btn-ghost" onClick={() => { setSent(false); setCode(''); setError('') }}>Use a different email</button>
           </div>
         ) : (
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
