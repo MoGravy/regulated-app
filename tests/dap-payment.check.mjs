@@ -60,7 +60,7 @@ assert.equal(writes, 2)
 assert.equal(await reconcileDapRefund('invalid', db, provider), false)
 await assert.rejects(reconcileDap(receipt.id, { ...db, async rpc() { return { data: false } } }, provider))
 
-const source = fs.readFileSync(new URL('../api/dap-checkout.js', import.meta.url), 'utf8')
+const source = fs.readFileSync(new URL('../api/_dap-checkout.js', import.meta.url), 'utf8')
   .replace(/^import .*$/gm, '').replace('export default async function handler', 'async function handler')
 async function checkout(options = {}) {
   const calls = { reconciled: 0, retrieved: 0, filters: [], created: [], updates: [], reservations: 0, expired: [], identity: 0 }

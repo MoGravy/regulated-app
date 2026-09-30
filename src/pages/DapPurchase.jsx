@@ -23,7 +23,7 @@ export default function DapPurchase() {
 
   useEffect(() => {
     let active = true
-    fetch('/api/dap-checkout').then(response => response.ok ? response.json() : null)
+    fetch('/api/create-checkout?product=dap').then(response => response.ok ? response.json() : null)
       .then(data => { if (active) setEnabled(data?.enabled === true) })
       .catch(() => { if (active) setEnabled(false) })
     return () => { active = false }
@@ -35,7 +35,7 @@ export default function DapPurchase() {
     async function check() {
       try {
         if (sessionId) {
-          const response = await fetch('/api/dap-checkout', {
+          const response = await fetch('/api/create-checkout?product=dap', {
             method: 'POST', headers: { 'Content-Type': 'application/json', ...await authHeaders() },
             body: JSON.stringify({ action: 'status', sessionId }),
           })
@@ -54,7 +54,7 @@ export default function DapPurchase() {
     setBusy(true)
     setError(false)
     try {
-      const response = await fetch('/api/dap-checkout', {
+      const response = await fetch('/api/create-checkout?product=dap', {
         method: 'POST', headers: { 'Content-Type': 'application/json', ...await authHeaders() },
         body: JSON.stringify({}),
       })
