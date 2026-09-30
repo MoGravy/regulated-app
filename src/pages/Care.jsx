@@ -239,7 +239,7 @@ export default function Care() {
     {status === 'loading' && <p role="status">{careCopy.loading}</p>}
     {status === 'sign_in' && <>
       <p>{careCopy.signInPrompt}</p>
-      <button className="btn-primary btn-lg" onClick={() => navigate('/signin')}>Sign in</button>
+      <button className="btn-primary btn-lg" onClick={() => navigate('/signin?next=/care')}>Sign in</button>
     </>}
     {status === 'error' && <p role="alert">{careCopy.error}</p>}
     {status === 'ready' && <CareAlerts key={authUser.id} userId={authUser.id} />}
