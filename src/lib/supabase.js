@@ -165,10 +165,10 @@ export async function getAudioSignedUrl(path) {
 // fragment and detectSessionInUrl consumes it on load. No callback route.
 // ---------------------------------------------------------------------------
 
-export async function sendMagicLink(email) {
+export async function sendMagicLink(email, next = '') {
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.origin },
+    options: { emailRedirectTo: window.location.origin + (next === '/dap' ? '/dap' : '') },
   })
   if (error) throw error
 }
@@ -179,11 +179,11 @@ export async function signInWithPassword(email, password) {
   return data.user
 }
 
-export async function signUpWithPassword(email, password) {
+export async function signUpWithPassword(email, password, next = '') {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: window.location.origin },
+    options: { emailRedirectTo: window.location.origin + (next === '/dap' ? '/dap' : '') },
   })
   if (error) throw error
   // A null session means the project is set to confirm the address first.

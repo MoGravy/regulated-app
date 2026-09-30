@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { annualFreeCheck, annualFreeCheckout, saveAnnualFreeSession, ANNUAL_FREE } from './_annualfree.js'
 import { normalEmail } from './_identity.js'
+import dapCheckout from './_dap-checkout.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
@@ -46,6 +47,8 @@ function getAppUrl(req) {
 }
 
 export default async function handler(req, res) {
+  // ponytail: share the existing checkout function to stay within the Hobby function limit.
+  if (req.query?.product === 'dap') return dapCheckout(req, res)
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }

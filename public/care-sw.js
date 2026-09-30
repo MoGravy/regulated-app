@@ -16,8 +16,10 @@ self.addEventListener('notificationclick', event => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
     const existing = windows.find(client => new URL(client.url).origin === self.location.origin)
     if (existing) {
-      await existing.navigate('/care')
-      return existing.focus()
+      try {
+        await existing.navigate('/care')
+        return await existing.focus()
+      } catch { /* The old window may have closed after the lookup. */ }
     }
     return self.clients.openWindow('/care')
   })())

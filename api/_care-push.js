@@ -1,4 +1,14 @@
-import { createHash } from 'node:crypto'
+import { createHash, timingSafeEqual } from 'node:crypto'
+
+export function scheduledDispatch(req, secret = process.env.CARE_DISPATCH_SECRET) {
+  if (req.method !== 'POST' || req.body?.action !== 'dispatch' ||
+      typeof secret !== 'string' || secret.length < 32) return false
+  const supplied = req.headers?.authorization
+  const expected = `Bearer ${secret}`
+  if (typeof supplied !== 'string' || supplied.length !== expected.length) return false
+  const suppliedBytes = Buffer.from(supplied), expectedBytes = Buffer.from(expected)
+  return suppliedBytes.length === expectedBytes.length && timingSafeEqual(suppliedBytes, expectedBytes)
+}
 
 export const subscriptionId = endpoint => createHash('sha256').update(endpoint).digest('hex')
 

@@ -4,6 +4,7 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { normalEmail } from './_identity.js'
+import { reconcileDap, reconcileDapRefund } from './_dap-payment.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -53,6 +54,11 @@ export default async function handler(req, res) {
       case 'checkout.session.completed':
       case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object
+        if (session.metadata?.type === 'dap') {
+          // Read current payment/refund truth, never grant from event metadata alone.
+          if (!await reconcileDap(session.id, supabase, stripe)) throw new Error('DAP payment not verified')
+          break
+        }
         if (!receiptStatus(session)) break
         const { type, plan, coupon_code, discount_applied } = session.metadata || {}
         const user_email = normalEmail(session.metadata?.user_email)
@@ -62,6 +68,11 @@ export default async function handler(req, res) {
         } else if (type === 'subscription') {
           await handleSubscriptionPayment(session, user_email, plan, coupon_code, discount_applied)
         }
+        break
+      }
+
+      case 'charge.refunded': {
+        await reconcileDapRefund(event.data.object.payment_intent, supabase, stripe)
         break
       }
 
@@ -104,8 +115,8 @@ export default async function handler(req, res) {
     }
 
     return res.status(200).json({ received: true })
-  } catch (err) {
-    console.error('[webhook] handler error:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
+  } catch {
+    console.error('[webhook] handler failed:', event.type)
     return res.status(500).json({ error: 'Internal error' })
   }
 }

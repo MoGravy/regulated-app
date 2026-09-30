@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import Texture from '../components/Texture'
@@ -14,6 +14,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function SignIn() {
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const next = params.get('next') === '/dap' ? '/dap' : '/premium'
   const { userEmail, authUser, addToast } = useApp()
   const [email, setEmail] = useState(userEmail || '')
   const [password, setPassword] = useState('')
@@ -32,7 +34,7 @@ export default function SignIn() {
           <p style={{ margin: '0 0 24px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)' }}>
             As {authUser.email}.
           </p>
-          <button className="btn-primary btn-lg" onClick={() => navigate('/premium')}>
+          <button className="btn-primary btn-lg" onClick={() => navigate(next)}>
             Go to your account
           </button>
         </div>
@@ -53,18 +55,18 @@ export default function SignIn() {
     setLoading(true)
     try {
       if (mode === 'link') {
-        await sendMagicLink(email)
+        await sendMagicLink(email, next)
         setSent(true)
       } else if (mode === 'password') {
         await signInWithPassword(email, password)
         addToast('Signed in.', 'success')
-        navigate('/premium')
+        navigate(next)
       } else {
-        const { needsConfirmation } = await signUpWithPassword(email, password)
+        const { needsConfirmation } = await signUpWithPassword(email, password, next)
         if (needsConfirmation) setSent(true)
         else {
           addToast('Account created.', 'success')
-          navigate('/premium')
+          navigate(next)
         }
       }
     } catch (err) {
