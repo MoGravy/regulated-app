@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 import { callerUser } from './_identity.js'
-import { dispatchCarePush, subscriptionId, validSubscription } from './_care-push.js'
+import { dispatchCarePush, scheduledDispatch, subscriptionId, validSubscription } from './_care-push.js'
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
@@ -10,8 +10,9 @@ export default async function handler(req, res) {
   const configured = !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY)
   const db = createClient(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   try {
-    const user = await callerUser(req, db)
-    if (!user) return res.status(401).json({ error: 'Unauthorized' })
+    const scheduled = scheduledDispatch(req)
+    const user = scheduled ? null : await callerUser(req, db)
+    if (!scheduled && !user) return res.status(401).json({ error: 'Unauthorized' })
     if (req.method === 'GET') return res.status(200).json({ configured, publicKey: configured ? process.env.VAPID_PUBLIC_KEY : null })
     const action = req.body?.action
     if (action === 'subscribe') {
@@ -42,7 +43,7 @@ export default async function handler(req, res) {
     const sent = await dispatchCarePush(db, (subscription, payload) => webpush.sendNotification(subscription, payload, {
       vapidDetails: { subject: 'mailto:info@matthewtweediehypnosis.com.au', publicKey: process.env.VAPID_PUBLIC_KEY, privateKey: process.env.VAPID_PRIVATE_KEY },
       TTL: 3600, timeout: 5000,
-    }), user.id)
+    }), scheduled ? null : user.id)
     return res.status(200).json({ sent })
   } catch {
     // Never log subscription endpoints, keys, message text or client identity.

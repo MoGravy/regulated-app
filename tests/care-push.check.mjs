@@ -1,5 +1,19 @@
 import assert from 'node:assert/strict'
-import { dispatchCarePush, validSubscription } from '../api/_care-push.js'
+import { dispatchCarePush, scheduledDispatch, validSubscription } from '../api/_care-push.js'
+
+const schedulerSecret = 'fixture-only-not-a-real-secret-123456789'
+const scheduledRequest = { method: 'POST', body: { action: 'dispatch' }, headers: { authorization: `Bearer ${schedulerSecret}` } }
+assert.equal(scheduledDispatch(scheduledRequest, schedulerSecret), true)
+for (const request of [
+  { ...scheduledRequest, method: 'GET' },
+  { ...scheduledRequest, body: { action: 'subscribe' } },
+  { ...scheduledRequest, body: { action: 'unsubscribe' } },
+  { ...scheduledRequest, headers: {} },
+  { ...scheduledRequest, headers: { authorization: `Bearer ${schedulerSecret.slice(0, -1)}x` } },
+  { ...scheduledRequest, headers: { authorization: `Bearer ${'é'.repeat(schedulerSecret.length)}` } },
+]) assert.equal(scheduledDispatch(request, schedulerSecret), false)
+assert.equal(scheduledDispatch(scheduledRequest, ''), false)
+assert.equal(scheduledDispatch(scheduledRequest, 'short'), false)
 
 const subscription = { endpoint: 'https://web.push.apple.com/test', keys: { p256dh: 'A'.repeat(87), auth: 'B'.repeat(22) } }
 assert.equal(validSubscription(subscription), true)
