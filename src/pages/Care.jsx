@@ -7,6 +7,7 @@ import { carePushCopy } from '../config/carePushCopy'
 import CareAlerts from '../components/CareAlerts'
 import CareConnect from '../components/CareConnect'
 import { carePushRequest } from '../lib/carePush'
+import { careReactions } from '../config/careReactions'
 
 function SupportFrame({ children }) {
   const navigate = useNavigate()
@@ -29,6 +30,8 @@ function SupportSpace({ link, userId }) {
   const [tasks, setTasks] = useState([])
   const [entries, setEntries] = useState([])
   const [messages, setMessages] = useState([])
+  const [reactions, setReactions] = useState([])
+  const [reactionsReady, setReactionsReady] = useState(false)
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -61,6 +64,13 @@ function SupportSpace({ link, userId }) {
       .order('created_at')
     if (readError) throw readError
     setMessages(data || [])
+    const ids = (data || []).map(message => message.id)
+    const result = ids.length
+      ? await supabase.from('care_message_reactions').select('message_id,user_id,emoji').in('message_id', ids)
+      : { data: [], error: null }
+    // Existing conversations remain usable during schema rollout or reaction outages.
+    setReactionsReady(!result.error)
+    setReactions(result.error ? [] : result.data || [])
   }, [link.client_id, link.practitioner_id])
 
   useEffect(() => {
@@ -124,6 +134,22 @@ function SupportSpace({ link, userId }) {
       if (writeError) throw writeError
       setMessageText('')
       await carePushRequest('dispatch').catch(() => {})
+      await loadMessages()
+    } catch { setError(true) }
+    finally { setSaving(false) }
+  }
+
+  async function react(messageId, emoji) {
+    if (saving) return
+    setSaving(true)
+    setError(false)
+    try {
+      const current = reactions.find(row => row.message_id === messageId && row.user_id === userId)
+      const result = current?.emoji === emoji
+        ? await supabase.from('care_message_reactions').delete().eq('message_id', messageId).eq('user_id', userId)
+        : await supabase.from('care_message_reactions').upsert(
+            { message_id: messageId, user_id: userId, emoji }, { onConflict: 'message_id,user_id' })
+      if (result.error) throw result.error
       await loadMessages()
     } catch { setError(true) }
     finally { setSaving(false) }
@@ -194,6 +220,16 @@ function SupportSpace({ link, userId }) {
         style={{ margin: '10px 0', maxWidth: '90%', marginLeft: message.sender_id === userId ? 'auto' : 0 }}>
         <small>{message.sender_id === userId ? 'You' : otherName} · {new Date(message.created_at).toLocaleString()}</small>
         <p style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>{message.body}</p>
+        {reactionsReady && <div className="care-reactions">
+          {careReactions.map(({ emoji, label }) => {
+            const rows = reactions.filter(row => row.message_id === message.id && row.emoji === emoji)
+            const selected = rows.some(row => row.user_id === userId)
+            return <button key={emoji} type="button" aria-label={label} aria-pressed={selected}
+              disabled={saving} onClick={() => react(message.id, emoji)}>
+              <span aria-hidden="true">{emoji}</span>{rows.length > 0 && <span>{rows.length}</span>}
+            </button>
+          })}
+        </div>}
       </div>)}
       <form onSubmit={sendMessage} style={{ marginTop: 18 }}>
         <label htmlFor="care-message">{careCopy.messageLabel}</label>
