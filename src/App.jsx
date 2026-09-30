@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AppProvider, useApp } from './hooks/useApp'
-import { signInDestination } from './lib/signInFlow'
+import { emailConfirmation, signInDestination } from './lib/signInFlow'
 import Navigation from './components/Navigation'
 import Toast from './components/Toast'
 import Home from './pages/Home'
@@ -29,8 +29,11 @@ export default function App() {
 
 function AppShell() {
   // Keyed on the path so every screen change fades in (index.css .screen).
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   const { authReady, authUser, authError } = useApp()
+  if (pathname !== '/signin' && emailConfirmation(hash)) {
+    return <Navigate to={`/signin?next=${encodeURIComponent(signInDestination(pathname))}${hash}`} replace />
+  }
   if (authReady && !authUser && authError && pathname !== '/signin') {
     return <Navigate to={`/signin?next=${encodeURIComponent(signInDestination(pathname))}`} replace />
   }
