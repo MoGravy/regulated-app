@@ -15,7 +15,7 @@ function SupportFrame({ children }) {
       <button className="btn-ghost" onClick={() => navigate('/')}>Back</button>
       <a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a>
     </div>
-    <main className="page-content-wide" style={{ paddingTop: 8, paddingBottom: 120 }}>
+    <main className="page-content-wide care-content" style={{ paddingTop: 8, paddingBottom: 120 }}>
       <h1 style={{ margin: '0 0 20px', font: '300 32px/38px var(--font-display)' }}>{careCopy.pageTitle}</h1>
       {children}
     </main>
@@ -130,7 +130,7 @@ function SupportSpace({ link, userId }) {
   }
 
   return <>
-    <p className="care-role" role="status">{isPractitioner ? careCopy.practitionerRole : careCopy.clientRole}</p>
+    <p className={`care-role${isPractitioner ? ' care-role-practitioner' : ''}`} role="status">{isPractitioner ? careCopy.practitionerRole : careCopy.clientRole}</p>
     <h2 style={{ font: '400 22px/28px var(--font-display)' }}>{otherName}</h2>
     <button className="btn-ghost" disabled={saving} onClick={() => {
       setError(false)

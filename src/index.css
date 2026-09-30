@@ -574,6 +574,11 @@ button:active:not(:disabled),
 .skeleton-dark { background: linear-gradient(90deg, var(--player-track) 25%, var(--player-blob-a) 50%, var(--player-track) 75%); background-size: 200% 100%; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
-.care-role { padding: 14px 16px; background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 8px; font-weight: 600; line-height: 1.5; }
+.care-role { padding: 18px 20px; margin: 8px 0 24px; background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: 8px; font-weight: 700; line-height: 1.5; }
+.care-role-practitioner { background: #6B21A8; border-left-color: #6B21A8; color: #FFFFFF; }
+.care-content h2 { margin-bottom: 12px; }
+.care-content h3 { margin-bottom: 12px; }
+.care-content [role="tabpanel"] > p { margin: 0 0 16px; }
+.course-active-lesson > h2 { margin-bottom: 16px; }
 .care-client-link { flex: 0 0 auto; cursor: pointer; }
 .care-client-link[aria-current="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
