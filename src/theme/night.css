@@ -259,6 +259,27 @@
 }
 :root[data-look='night'] nav[aria-label='Primary'] button { letter-spacing: 0.04em; }
 :root[data-look='night'] nav[aria-label='Primary'] button[aria-current='page'] { color: var(--gold-hi) !important; }
+/* Tab icons above the labels, as on the Night Sleeper boards. Drawn as masks so
+   they take the tab's colour. Order follows TABS in Navigation.jsx. */
+:root[data-look='night'] nav[aria-label='Primary'] button::before {
+  content: '';
+  width: 22px;
+  height: 22px;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: var(--tab-icon) no-repeat center / contain;
+  mask: var(--tab-icon) no-repeat center / contain;
+}
+:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(1) { --tab-icon: url('./tab-today.svg'); }
+:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(2) { --tab-icon: url('./tab-browse.svg'); }
+:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(3) { --tab-icon: url('./tab-courses.svg'); }
+:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(4) { --tab-icon: url('./tab-support.svg'); }
+:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(5) { --tab-icon: url('./tab-you.svg'); }
+/* A Back button in the top strip sits at the left edge, not centred in the space. */
+:root[data-look='night'] .status-bar > .btn-ghost { width: auto; min-width: 44px; justify-content: flex-start; }
+/* Gold already marks the current tab, so the underline rests. */
+:root[data-look='night'] nav[aria-label='Primary'] button > span + span { display: none; }
+:root[data-look='night'] nav[aria-label='Primary'] button { font-size: 12px !important; }
 
 :root[data-look='night'] .footer-cta { background: rgba(11, 17, 36, 0.96); border-top-color: var(--line); }
 :root[data-look='night'] .toast { background: #18213F; border-color: var(--line-strong); }
