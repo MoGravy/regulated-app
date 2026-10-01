@@ -1,6 +1,5 @@
-// Streak wording, Night Sleeper look only. Not yet through the copy review the
-// rest of the app's wording has had; clear it before the night look goes public.
+// Authored by GLM 5.3 through OpenCode Go; reviewed with Matthew, Hermes and unslop.
 export const streakCopy = {
-  inARow: n => `${n} days in a row`,
-  practiceDay: n => `Day ${n} of your practice`,
+  inARow: n => `${n} practice nights in a row`,
+  practiceDay: n => `${n} completed sessions`,
 }
