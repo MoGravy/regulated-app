@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 import { callerUser } from './_identity.js'
-import { dispatchCarePush, sendCarePush, scheduledDispatch, subscriptionId, validSubscription } from './_care-push.js'
+import { dispatchCarePush, scheduledDispatch, subscriptionId, validSubscription } from './_care-push.js'
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     }
     if (action !== 'dispatch') return res.status(400).end()
     if (!configured) return res.status(200).json({ configured: false })
-    const sent = await dispatchCarePush(db, (subscription, payload) => sendCarePush(webpush, subscription, payload, {
+    const sent = await dispatchCarePush(db, (subscription, payload) => webpush.sendNotification(subscription, payload, {
       vapidDetails: { subject: 'mailto:info@matthewtweediehypnosis.com.au', publicKey: process.env.VAPID_PUBLIC_KEY, privateKey: process.env.VAPID_PRIVATE_KEY },
       TTL: 3600, timeout: 5000,
     }), scheduled ? null : user.id)

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { carePushPayload, dispatchCarePush, sendCarePush, scheduledDispatch, validSubscription } from '../api/_care-push.js'
+import { carePushPayload, dispatchCarePush, scheduledDispatch, validSubscription } from '../api/_care-push.js'
 
 const schedulerSecret = 'fixture-only-not-a-real-secret-123456789'
 const scheduledRequest = { method: 'POST', body: { action: 'dispatch' }, headers: { authorization: `Bearer ${schedulerSecret}` } }
@@ -59,21 +59,6 @@ const native = carePushPayload(job)
 assert.equal(new URL(native.notification.navigate).searchParams.get('item'), job.event_id)
 assert.equal(new URL(native.notification.navigate).searchParams.get('tab'), 'messages')
 assert.ok(!JSON.stringify(native).includes('Private'))
-let sentRequest
-const encrypted = Buffer.from('fixture encrypted bytes')
-const transport = { generateRequestDetails: () => ({ endpoint: subscription.endpoint,
-  headers: { 'Content-Type': 'application/octet-stream', 'Content-Encoding': 'aes128gcm', TTL: 3600 }, body: encrypted }) }
-await sendCarePush(transport, subscription, JSON.stringify(native), { timeout: 5000 }, async (url, request) => {
-  assert.equal(url, subscription.endpoint); sentRequest = request; return { ok: true }
-})
-assert.equal(sentRequest.headers['Content-Type'], 'application/notification+json')
-assert.equal(sentRequest.headers['Content-Encoding'], 'aes128gcm')
-assert.equal(sentRequest.body, encrypted)
-assert.equal(sentRequest.redirect, 'error')
-assert.ok(sentRequest.signal instanceof AbortSignal)
-for (const status of [410, 503]) {
-  await assert.rejects(sendCarePush(transport, subscription, '{}', { timeout: 5000 }, async () => ({ ok: false, status })), error => error.statusCode === status)
-}
 assert.deepEqual(fake.writes[0].value, { state: 'sent' })
 for (const settings of [{ active: false }, { recipient: 'other' }]) {
   fake = database(settings)

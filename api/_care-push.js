@@ -43,17 +43,6 @@ export function carePushPayload(job) {
   }
 }
 
-export async function sendCarePush(webpush, subscription, payload, options, send = fetch) {
-  // web-push overwrites a custom Content-Type. Reuse its encryption/VAPID output, then set the declarative type.
-  const request = webpush.generateRequestDetails(subscription, payload, options)
-  const response = await send(request.endpoint, {
-    method: 'POST', body: request.body,
-    headers: { ...request.headers, 'Content-Type': 'application/notification+json' },
-    redirect: 'error', signal: AbortSignal.timeout(options.timeout || 5000),
-  })
-  if (!response.ok) throw Object.assign(new Error('Push delivery failed'), { statusCode: response.status })
-}
-
 export async function dispatchCarePush(db, send, actor) {
   const { data: jobs, error } = await db.rpc('claim_care_push', { actor })
   if (error) throw error
