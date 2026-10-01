@@ -15,6 +15,7 @@ export default function CareAlerts({ userId }) {
       if (active) setPublicKey(settings.publicKey)
       if (Notification.permission === 'denied') return 'denied'
       const registration = await navigator.serviceWorker.getRegistration('/care-sw.js')
+      registration?.update().catch(() => {})
       return await registration?.pushManager.getSubscription() ? 'on' : 'off'
     }
     load().then(value => active && setState(value)).catch(() => active && setState('error'))

@@ -40,7 +40,8 @@ export async function dispatchCarePush(db, send, actor) {
     }
     try {
       // No message text, names or task details leave the app in alert previews.
-      await send(sub.subscription, JSON.stringify({ kind: job.kind, id: job.id }))
+      await send(sub.subscription, JSON.stringify({ kind: job.kind, id: job.id,
+        eventId: job.event_id, clientId: job.client_id, practitionerId: job.practitioner_id }))
       const { error: markError } = await db.from('care_push_jobs').update({ state: 'sent' }).eq('id', job.id)
       if (markError) throw markError
       return 1
