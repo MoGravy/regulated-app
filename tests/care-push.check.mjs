@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { dispatchCarePush, scheduledDispatch, validSubscription } from '../api/_care-push.js'
+import { carePushPayload, dispatchCarePush, sendCarePush, scheduledDispatch, validSubscription } from '../api/_care-push.js'
 
 const schedulerSecret = 'fixture-only-not-a-real-secret-123456789'
 const scheduledRequest = { method: 'POST', body: { action: 'dispatch' }, headers: { authorization: `Bearer ${schedulerSecret}` } }
@@ -45,7 +45,35 @@ function database({ active = true, recipient = 'client', sendError = null } = {}
 }
 let fake = database()
 assert.equal(await dispatchCarePush(fake.db, fake.send, 'practitioner'), 1)
-assert.deepEqual(fake.payloads, [{ kind: 'task', id: 'job', recipientId: 'client', eventId: 'event', clientId: 'client', practitionerId: 'practitioner' }])
+assert.equal(fake.payloads[0].kind, 'task')
+assert.equal(fake.payloads[0].web_push, 8030)
+assert.equal(fake.payloads[0].notification.navigate, 'https://regulatedapp.co/care?tab=tasks')
+assert.deepEqual(fake.payloads[0].notification, {
+  title: 'Regulated', body: 'Tasks', tag: 'job', navigate: 'https://regulatedapp.co/care?tab=tasks',
+  icon: 'https://regulatedapp.co/icon-192.png?v=night-2',
+})
+const job = { kind: 'message', id: 'fixture', event_id: '11111111-1111-4111-8111-111111111111',
+  client_id: '22222222-2222-4222-8222-222222222222', practitioner_id: '33333333-3333-4333-8333-333333333333',
+  body: 'Private message', client_label: 'Private name' }
+const native = carePushPayload(job)
+assert.equal(new URL(native.notification.navigate).searchParams.get('item'), job.event_id)
+assert.equal(new URL(native.notification.navigate).searchParams.get('tab'), 'messages')
+assert.ok(!JSON.stringify(native).includes('Private'))
+let sentRequest
+const encrypted = Buffer.from('fixture encrypted bytes')
+const transport = { generateRequestDetails: () => ({ endpoint: subscription.endpoint,
+  headers: { 'Content-Type': 'application/octet-stream', 'Content-Encoding': 'aes128gcm', TTL: 3600 }, body: encrypted }) }
+await sendCarePush(transport, subscription, JSON.stringify(native), { timeout: 5000 }, async (url, request) => {
+  assert.equal(url, subscription.endpoint); sentRequest = request; return { ok: true }
+})
+assert.equal(sentRequest.headers['Content-Type'], 'application/notification+json')
+assert.equal(sentRequest.headers['Content-Encoding'], 'aes128gcm')
+assert.equal(sentRequest.body, encrypted)
+assert.equal(sentRequest.redirect, 'error')
+assert.ok(sentRequest.signal instanceof AbortSignal)
+for (const status of [410, 503]) {
+  await assert.rejects(sendCarePush(transport, subscription, '{}', { timeout: 5000 }, async () => ({ ok: false, status })), error => error.statusCode === status)
+}
 assert.deepEqual(fake.writes[0].value, { state: 'sent' })
 for (const settings of [{ active: false }, { recipient: 'other' }]) {
   fake = database(settings)

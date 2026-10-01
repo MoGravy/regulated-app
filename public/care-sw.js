@@ -12,6 +12,7 @@ self.addEventListener('push', event => {
   }
   event.waitUntil(self.registration.showNotification('Regulated', {
     body: data.kind === 'task' ? 'Tasks' : 'Messages',
+    navigate: new URL(`/care?${params}`, self.location.origin).href,
     tag: data.id || 'regulated-care',
     icon: '/icon-192.png?v=night-2',
     data: { url: `/care?${params}`, recipientId: validId(data.recipientId) ? data.recipientId : null },

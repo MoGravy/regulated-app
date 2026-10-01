@@ -43,6 +43,7 @@ await event('notificationclick', { notification })
 assert.equal(navigated, target); assert.equal(focused, 1); assert.equal(opened.length, 0)
 assert.equal(posted.type, 'care-notification'); assert.equal(posted.url, target)
 assert.equal(notifications[0].icon, '/icon-192.png?v=night-2')
+assert.equal(notifications[0].navigate, new URL(target, self.location.origin).href, 'Native tap opens the exact destination without notificationclick JavaScript')
 // Restart the worker while retaining cache storage, as iOS may terminate it between events.
 vm.runInNewContext(fs.readFileSync(new URL('../public/care-sw.js', import.meta.url), 'utf8'), { self, URL, URLSearchParams, caches, Response })
 const recipientId = notifications[0].data.recipientId
