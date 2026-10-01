@@ -31,7 +31,7 @@ export default function CheckIn({ sessions }) {
         What does your system need right now?
       </h2>
       <div className="chip-row" role="group" aria-label="How you are">
-        {Object.entries(STATES).map(([key, s]) => {
+        {Object.entries(STATES).filter(([key]) => !key.startsWith('_')).map(([key, s]) => {
           const Icon = ICONS[s.icon]
           return (
             <button

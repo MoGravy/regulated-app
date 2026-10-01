@@ -6,6 +6,7 @@ import { supabase, trackSessionCompletion, SESSION_COLUMNS, getCachedSession, au
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import { categoryOf } from '../lib/categories'
+import { StreakNote } from '../components/Streak'
 import MoodTracker from '../components/MoodTracker'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
 import { haptic } from '../lib/haptic'
@@ -327,6 +328,7 @@ export default function SessionPlayer() {
           <div className="bloom" aria-hidden="true" />
           <h1 className="fade-in" style={{ position: 'relative', font: '300 32px/38px var(--font-display)', color: 'var(--player-title)', animationDelay: '600ms' }}>
             Day {completedSessions.includes(session.id) ? completedSessions.length : completedSessions.length + 1} of your practice
+            <StreakNote />
           </h1>
         </div>
       )}

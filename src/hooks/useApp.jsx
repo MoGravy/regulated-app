@@ -4,6 +4,7 @@ import { supabase, checkSubscription, ensureProfile, signOutUser } from '../lib/
 import { programAt } from '../config/program'
 import { disableCarePush } from '../lib/carePush'
 import { signInError } from '../lib/signInFlow'
+import { recordPracticeDay } from '../lib/streak'
 
 const AppContext = createContext(null)
 
@@ -91,6 +92,7 @@ export function AppProvider({ children }) {
     if (!completedSessions.includes(sessionId)) {
       setCompletedSessions([...completedSessions, sessionId])
     }
+    recordPracticeDay()
     // The program only moves when the session just finished is the one it was
     // waiting on, so listening ahead in Browse never skips a day.
     const { today } = programAt(programDay)
