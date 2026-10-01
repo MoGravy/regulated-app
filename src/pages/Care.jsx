@@ -275,17 +275,6 @@ export default function Care() {
   const [selectedPair, setSelectedPair] = useState(null)
   const [reloadVersion, setReloadVersion] = useState(0)
 
-  useEffect(() => {
-    const onNotification = event => {
-      if (event.data?.type !== 'care-notification' || typeof event.data.url !== 'string') return
-      try {
-        const url = new URL(event.data.url, window.location.origin)
-        if (url.origin === window.location.origin && url.pathname === '/care') navigate(url.pathname + url.search)
-      } catch { /* Ignore malformed notification destinations. */ }
-    }
-    navigator.serviceWorker?.addEventListener('message', onNotification)
-    return () => navigator.serviceWorker?.removeEventListener('message', onNotification)
-  }, [navigate])
 
   useEffect(() => {
     if (!authReady) return

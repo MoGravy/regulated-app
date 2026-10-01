@@ -45,7 +45,7 @@ function database({ active = true, recipient = 'client', sendError = null } = {}
 }
 let fake = database()
 assert.equal(await dispatchCarePush(fake.db, fake.send, 'practitioner'), 1)
-assert.deepEqual(fake.payloads, [{ kind: 'task', id: 'job', eventId: 'event', clientId: 'client', practitionerId: 'practitioner' }])
+assert.deepEqual(fake.payloads, [{ kind: 'task', id: 'job', recipientId: 'client', eventId: 'event', clientId: 'client', practitionerId: 'practitioner' }])
 assert.deepEqual(fake.writes[0].value, { state: 'sent' })
 for (const settings of [{ active: false }, { recipient: 'other' }]) {
   fake = database(settings)
