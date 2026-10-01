@@ -24,9 +24,13 @@ const FAMILIES = {
 
 const NEUTRAL = { ink: '#4E4C42', icon: null, label: '' }
 
+// The Night Sleeper look draws every family in one gold, as its boards do.
+const NIGHT_INK = '#D8B56A'
+const night = () => typeof document !== 'undefined' && document.documentElement.dataset.look === 'night'
+
 export function categoryOf(category) {
   const fam = FAMILIES[String(category || '').toLowerCase()] || NEUTRAL
-  return { ...fam, label: fam.label || category || '' }
+  return { ...fam, ink: night() ? NIGHT_INK : fam.ink, label: fam.label || category || '' }
 }
 
 // Chip fill at 10 percent, border at 22 percent, ink at full — design 1a.

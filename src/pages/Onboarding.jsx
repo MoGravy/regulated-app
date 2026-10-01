@@ -39,6 +39,7 @@ export default function Onboarding() {
       <div style={{ position: 'relative', flex: 1, padding: '40px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', width: '100%' }}>
         <div style={{ font: '500 13px/18px var(--font-ui)', color: 'var(--ink-muted)' }}>Regulated</div>
 
+        {step === 0 && <div className="night-arch" aria-hidden="true" />}
         {step === 0 && (
           <>
             <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>

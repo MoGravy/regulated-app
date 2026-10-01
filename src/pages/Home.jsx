@@ -10,6 +10,7 @@ import SessionRow from '../components/SessionRow'
 import CheckIn from '../components/CheckIn'
 import Texture from '../components/Texture'
 import { haptic } from '../lib/haptic'
+import { StreakPill } from '../components/Streak'
 
 function greeting() {
   const h = new Date().getHours()
@@ -85,6 +86,7 @@ export default function Home() {
         <h1 style={{ margin: '4px 0 20px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em' }}>
           {greeting()}
         </h1>
+        <StreakPill />
 
         <div className="segmented" role="tablist" aria-label="Mode" style={{ marginBottom: 24 }}>
           <button
