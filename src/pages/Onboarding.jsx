@@ -31,7 +31,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="texture" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg)' }}>
+    <div className="page-plain texture" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto', background: 'var(--bg)' }}>
       <Texture ink="#24344D" variant="page" />
 
       <div className="status-bar" style={{ position: 'relative' }}><span /><span /></div>
