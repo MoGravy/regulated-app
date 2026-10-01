@@ -67,7 +67,7 @@ export default function SignIn() {
 
   async function confirm(credential = confirmation) {
     if (submitting.current) return
-    if (credential?.token !== undefined && !/^\d{6}$/.test(credential.token)) {
+    if (credential?.token !== undefined && !/^\d{8}$/.test(credential.token)) {
       setError(signInCopy.invalidCode)
       return
     }
@@ -163,13 +163,13 @@ export default function SignIn() {
               <>
                 <label className="form-label" htmlFor="signin-code">{signInCopy.codeLabel}</label>
                 <input id="signin-code" className="form-input form-input-lg" type="text"
-                  inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                  inputMode="numeric" autoComplete="one-time-code" maxLength={8}
                   value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
                   onKeyDown={e => e.key === 'Enter' && confirm({ email, token: code, type: 'email' })}
                   aria-invalid={!!error} aria-describedby={error ? 'signin-code-error' : 'signin-code-hint'} />
                 <p id="signin-code-hint">{signInCopy.codeHint}</p>
                 {error && <div id="signin-code-error" role="alert">{error}</div>}
-                <button className="btn-primary btn-lg" disabled={loading || code.length !== 6}
+                <button className="btn-primary btn-lg" disabled={loading || code.length !== 8}
                   onClick={() => confirm({ email, token: code, type: 'email' })}>
                   {loading ? 'One moment…' : signInCopy.codeButton}
                 </button>
