@@ -28,6 +28,11 @@
   --control:       #D99A3D;  /* play control + progress fill, appears twice */
   --on-control:    #1B2841;
 
+  /* Support role and notification emphasis. */
+  --care-role-bg:  #6B21A8;
+  --care-role-ink: #FFFFFF;
+  --care-alert:    #7C3AED;
+
   /* player — the only dark surface */
   --player-bg:     #16202F;
   --player-blob-a: #22314A;
@@ -76,4 +81,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0ms !important; animation: none !important; }
+}
+
+:root[data-look="night"] {
+  --care-role-bg: var(--accent);
+  --care-role-ink: var(--on-accent);
+  --care-alert: var(--accent);
 }

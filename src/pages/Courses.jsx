@@ -29,7 +29,7 @@ export function CourseFrame({ title, backTo, children }) {
         <button className="btn-ghost" onClick={() => navigate(backTo)}>Back</button>
         <a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a>
       </div>
-      <main className="page-content-wide" style={{ paddingTop: 8, paddingBottom: 120 }}>
+      <main className="page-content-wide course-content" style={{ paddingTop: 8, paddingBottom: 120 }}>
         <h1 style={{ margin: '0 0 20px', font: '300 32px/38px var(--font-display)' }}>{title}</h1>
         {children}
       </main>
