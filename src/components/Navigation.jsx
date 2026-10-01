@@ -36,6 +36,7 @@ export default function Navigation() {
     >
       {TABS.map(tab => {
         const active = location.pathname === tab.path
+          || (tab.path === '/courses' && location.pathname.startsWith('/courses/'))
         return (
           <button
             key={tab.path}
