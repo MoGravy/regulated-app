@@ -73,7 +73,9 @@ export default function Success() {
   if (type === 'custom_audio') {
     return (
       <div style={{
-        minHeight: '100dvh',
+        flex: 1,
+        minHeight: 0,
+        overflowY: 'auto',
         background: 'var(--bg)',
         display: 'flex',
         flexDirection: 'column',
@@ -128,7 +130,9 @@ export default function Success() {
   // Premium success
   return (
     <div style={{
-      minHeight: '100dvh',
+      flex: 1,
+      minHeight: 0,
+      overflowY: 'auto',
       background: 'var(--bg)',
       display: 'flex',
       flexDirection: 'column',

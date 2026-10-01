@@ -39,28 +39,31 @@ function AppShell() {
   if (authReady && !authUser && authError && pathname !== '/signin') {
     return <Navigate to={`/signin?next=${encodeURIComponent(signInDestination(pathname))}`} replace />
   }
+  const showNavigation = ['/', '/program', '/courses', '/care', '/sessions', '/premium'].includes(pathname)
+    || pathname.startsWith('/courses/')
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100dvh' }}>
+    <div className={`app-shell${showNavigation ? ' app-shell-with-nav' : ''}`}>
       <Toast />
       <div className="screen" key={pathname}>
       <Routes>
         <Route path="/welcome" element={<Onboarding />} />
         <Route path="/signin" element={<SignIn />} />
-        <Route path="/" element={<><Home /><Navigation /></>} />
-        <Route path="/program" element={<><Program /><Navigation /></>} />
-        <Route path="/courses" element={<><Courses /><Navigation /></>} />
-        <Route path="/courses/:courseId" element={<><Course /><Navigation /></>} />
+        <Route path="/" element={<Home />} />
+        <Route path="/program" element={<Program />} />
+        <Route path="/courses" element={<Courses />} />
+        <Route path="/courses/:courseId" element={<Course />} />
         <Route path="/dap" element={<DapPurchase />} />
-        <Route path="/care" element={<><Care /><Navigation /></>} />
-        <Route path="/sessions" element={<><Sessions /><Navigation /></>} />
+        <Route path="/care" element={<Care />} />
+        <Route path="/sessions" element={<Sessions />} />
         <Route path="/sessions/:id" element={<SessionDetail />} />
         <Route path="/sessions/:id/play" element={<SessionPlayer />} />
         <Route path="/custom" element={<CustomAudio />} />
-        <Route path="/premium" element={<><Premium /><Navigation /></>} />
+        <Route path="/premium" element={<Premium />} />
         <Route path="/success" element={<Success />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </div>
+      {showNavigation && <Navigation />}
     </div>
   )
 }

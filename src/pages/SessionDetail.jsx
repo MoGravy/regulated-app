@@ -82,7 +82,7 @@ export default function SessionDetail() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100dvh', background: 'var(--bg)' }}>
+    <div className="page-frame" style={{ background: 'var(--bg)' }}>
       <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div className="texture" style={{ flex: 'none', height: 240, background: tint(ink, 0.1) }}>
