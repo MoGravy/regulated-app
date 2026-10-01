@@ -25,6 +25,24 @@ export function validSubscription(value) {
   } catch { return false }
 }
 
+export function carePushPayload(job) {
+  const params = new URLSearchParams({ tab: job.kind === 'task' ? 'tasks' : 'messages' })
+  for (const [key, value] of [['item', job.event_id], ['client', job.client_id], ['practitioner', job.practitioner_id]]) {
+    if (typeof value === 'string' && /^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(value)) params.set(key, value)
+  }
+  return {
+    // Retain legacy fields for older browsers and already-installed workers.
+    kind: job.kind, id: job.id, recipientId: job.recipient_id,
+    eventId: job.event_id, clientId: job.client_id, practitionerId: job.practitioner_id,
+    web_push: 8030,
+    notification: {
+      title: 'Regulated', body: job.kind === 'task' ? 'Tasks' : 'Messages', tag: job.id,
+      navigate: `https://regulatedapp.co/care?${params}`,
+      icon: 'https://regulatedapp.co/icon-192.png?v=night-2',
+    },
+  }
+}
+
 export async function dispatchCarePush(db, send, actor) {
   const { data: jobs, error } = await db.rpc('claim_care_push', { actor })
   if (error) throw error
@@ -40,8 +58,7 @@ export async function dispatchCarePush(db, send, actor) {
     }
     try {
       // No message text, names or task details leave the app in alert previews.
-      await send(sub.subscription, JSON.stringify({ kind: job.kind, id: job.id,
-        recipientId: job.recipient_id, eventId: job.event_id, clientId: job.client_id, practitionerId: job.practitioner_id }))
+      await send(sub.subscription, JSON.stringify(carePushPayload(job)))
       const { error: markError } = await db.from('care_push_jobs').update({ state: 'sent' }).eq('id', job.id)
       if (markError) throw markError
       return 1

@@ -104,7 +104,7 @@ function SupportSpace({ link, userId, alertTarget }) {
     element.focus({ preventScroll: true })
     element.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'center' })
     clearTimeout(highlightTimer.current)
-    highlightTimer.current = setTimeout(() => setHighlighted(null), 4500)
+    highlightTimer.current = setTimeout(() => setHighlighted(null), 12000)
   }, [alertTarget, section, status, tasks, messages])
 
   useEffect(() => () => clearTimeout(highlightTimer.current), [])

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { dispatchCarePush, scheduledDispatch, validSubscription } from '../api/_care-push.js'
+import { carePushPayload, dispatchCarePush, scheduledDispatch, validSubscription } from '../api/_care-push.js'
 
 const schedulerSecret = 'fixture-only-not-a-real-secret-123456789'
 const scheduledRequest = { method: 'POST', body: { action: 'dispatch' }, headers: { authorization: `Bearer ${schedulerSecret}` } }
@@ -45,7 +45,20 @@ function database({ active = true, recipient = 'client', sendError = null } = {}
 }
 let fake = database()
 assert.equal(await dispatchCarePush(fake.db, fake.send, 'practitioner'), 1)
-assert.deepEqual(fake.payloads, [{ kind: 'task', id: 'job', recipientId: 'client', eventId: 'event', clientId: 'client', practitionerId: 'practitioner' }])
+assert.equal(fake.payloads[0].kind, 'task')
+assert.equal(fake.payloads[0].web_push, 8030)
+assert.equal(fake.payloads[0].notification.navigate, 'https://regulatedapp.co/care?tab=tasks')
+assert.deepEqual(fake.payloads[0].notification, {
+  title: 'Regulated', body: 'Tasks', tag: 'job', navigate: 'https://regulatedapp.co/care?tab=tasks',
+  icon: 'https://regulatedapp.co/icon-192.png?v=night-2',
+})
+const job = { kind: 'message', id: 'fixture', event_id: '11111111-1111-4111-8111-111111111111',
+  client_id: '22222222-2222-4222-8222-222222222222', practitioner_id: '33333333-3333-4333-8333-333333333333',
+  body: 'Private message', client_label: 'Private name' }
+const native = carePushPayload(job)
+assert.equal(new URL(native.notification.navigate).searchParams.get('item'), job.event_id)
+assert.equal(new URL(native.notification.navigate).searchParams.get('tab'), 'messages')
+assert.ok(!JSON.stringify(native).includes('Private'))
 assert.deepEqual(fake.writes[0].value, { state: 'sent' })
 for (const settings of [{ active: false }, { recipient: 'other' }]) {
   fake = database(settings)
