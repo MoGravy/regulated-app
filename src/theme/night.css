@@ -70,7 +70,10 @@
   --night-deep: #0B1124;
   --gold-sheen: linear-gradient(180deg, rgba(255, 248, 224, 0.32), rgba(255, 248, 224, 0) 52%, rgba(40, 24, 0, 0.14));
   --arch-w: min(346px, calc(100vw - 44px));
-  --arch-h: clamp(220px, calc(100dvh - 560px), 350px);
+  --arch-h: clamp(200px, calc(100vh - 580px), 350px);
+}
+@supports (height: 100dvh) {
+  :root[data-look='night'] { --arch-h: clamp(200px, calc(100dvh - 580px), 350px); }
 }
 
 /* ---------------------------------------------------------------------------
@@ -95,6 +98,8 @@
   animation: night-pass 10s cubic-bezier(.45, 0, .55, 1) infinite;
   will-change: transform;
 }
+/* The player covers the ground, so the band rests there (the screen stays awake through a session). */
+:root[data-look='night'] body:has([aria-label='Close player'])::before { animation: none; opacity: 0; }
 @keyframes night-pass {
   0% { transform: translateX(0); opacity: 0; }
   8% { opacity: 1; }
@@ -102,7 +107,6 @@
   50%, 100% { transform: translateX(120%); opacity: 0; }
 }
 :root[data-look='night'] ::selection { background: #C9A55E; color: #111830; }
-:root[data-look='night'] :focus-visible { box-shadow: 0 0 0 2px #111830, 0 0 0 4px var(--gold-hi); }
 :root[data-look='night'] ::-webkit-scrollbar-thumb { background: rgba(201, 165, 94, 0.35); }
 
 /* ---------------------------------------------------------------------------
@@ -115,6 +119,19 @@
 :root[data-look='night'] .t-caption { font-weight: 300; }
 
 /* The wordmark in the top strip, in gold capitals. */
+:root[data-look='night'] .status-bar a[aria-label='Home'],
+:root[data-look='night'] div:has(+ .night-arch) { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+/* The mark: crescent and star (option B), drawn before the wordmark. */
+:root[data-look='night'] .status-bar a[aria-label='Home']::before,
+:root[data-look='night'] div:has(+ .night-arch)::before {
+  content: '';
+  width: 22px;
+  height: 22px;
+  flex: none;
+  background: url('./night-mark.svg') no-repeat center / contain;
+}
+:root[data-look='night'] div:has(+ .night-arch) { align-self: center; }
+:root[data-look='night'] div:has(+ .night-arch)::before { width: 28px; height: 28px; }
 :root[data-look='night'] .status-bar a[aria-label='Home'] {
   color: var(--gold-hi) !important;
   font: 500 11px/16px var(--font-ui);
@@ -320,7 +337,7 @@
 }
 :root[data-look='night'] .player-glow::before,
 :root[data-look='night'] .player-glow::after { display: none; }
-@media (min-height: 741px) {
+@media (min-height: 800px) {
   :root[data-look='night'] .player-glow {
     top: 108px;
     left: 50%;
@@ -391,3 +408,8 @@
   :root[data-look='night'] body::before { animation: none; opacity: 0; }
   :root[data-look='night'] .player-glow ~ div .btn-play::after { animation: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   Keyboard focus. Last, and important, so the buttons' own shadows cannot hide it.
+   --------------------------------------------------------------------------- */
+:root[data-look='night'] :focus-visible { box-shadow: 0 0 0 2px #111830, 0 0 0 4px var(--gold-hi) !important; }

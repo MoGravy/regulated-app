@@ -1,5 +1,6 @@
+import { useEffect } from 'react'
 import { useApp } from '../hooks/useApp'
-import { currentStreak, streakWithToday } from '../lib/streak'
+import { currentStreak, recordPracticeDay, streakWithToday } from '../lib/streak'
 import { streakCopy } from '../config/streakCopy'
 
 // Night Sleeper look only; night.css hides both in the classic look.
@@ -14,7 +15,10 @@ export function StreakPill() {
   return text ? <div className="night-only streak-pill">{text}</div> : null
 }
 
+// Sits in the completion heading, so it also saves the night there: the
+// check-out that follows may never be answered by someone who fell asleep.
 export function StreakNote() {
+  useEffect(() => { recordPracticeDay() }, [])
   const run = streakWithToday()
   return run >= 2 ? <span className="night-only streak-note">{streakCopy.inARow(run)}</span> : null
 }
