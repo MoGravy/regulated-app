@@ -27,7 +27,7 @@ function database({ active = true, recipient = 'client', sendError = null } = {}
   const db = {
     rpc: async (name, args) => {
       assert.equal(name, 'claim_care_push'); assert.deepEqual(args, { actor: 'practitioner' })
-      return { data: [{ id: 'job', recipient_id: 'client', client_id: 'client', practitioner_id: 'practitioner', subscription_id: 'device', kind: 'task' }], error: null }
+      return { data: [{ id: 'job', event_id: 'event', recipient_id: 'client', client_id: 'client', practitioner_id: 'practitioner', subscription_id: 'device', kind: 'task' }], error: null }
     },
     from(table) {
       const chain = {
@@ -45,7 +45,7 @@ function database({ active = true, recipient = 'client', sendError = null } = {}
 }
 let fake = database()
 assert.equal(await dispatchCarePush(fake.db, fake.send, 'practitioner'), 1)
-assert.deepEqual(fake.payloads, [{ kind: 'task', id: 'job' }])
+assert.deepEqual(fake.payloads, [{ kind: 'task', id: 'job', eventId: 'event', clientId: 'client', practitionerId: 'practitioner' }])
 assert.deepEqual(fake.writes[0].value, { state: 'sent' })
 for (const settings of [{ active: false }, { recipient: 'other' }]) {
   fake = database(settings)

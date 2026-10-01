@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { supabase } from '../lib/supabase'
 import { careCopy } from '../config/careCopy'
@@ -8,6 +8,7 @@ import CareAlerts from '../components/CareAlerts'
 import CareConnect from '../components/CareConnect'
 import { carePushRequest } from '../lib/carePush'
 import { careReactions } from '../config/careReactions'
+import { careAlertTarget } from '../lib/careAlertTarget'
 
 function SupportFrame({ children }) {
   const navigate = useNavigate()
@@ -23,7 +24,7 @@ function SupportFrame({ children }) {
   </div>
 }
 
-function SupportSpace({ link, userId }) {
+function SupportSpace({ link, userId, alertTarget }) {
   const isPractitioner = userId === link.practitioner_id
   const otherName = isPractitioner ? link.client_label : link.practitioner_label
   const [section, setSection] = useState('tasks')
@@ -39,6 +40,9 @@ function SupportSpace({ link, userId }) {
   const [instructions, setInstructions] = useState('')
   const [notes, setNotes] = useState({})
   const [messageText, setMessageText] = useState('')
+  const [highlighted, setHighlighted] = useState(null)
+  const shownAlert = useRef(null)
+  const highlightTimer = useRef(null)
 
   const loadTasks = useCallback(async () => {
     const { data: taskRows, error: taskError } = await supabase.from('care_tasks')
@@ -74,6 +78,7 @@ function SupportSpace({ link, userId }) {
   }, [link.client_id, link.practitioner_id])
 
   useEffect(() => {
+    if (alertTarget.section) setSection(alertTarget.section)
     Promise.all([loadTasks(), loadMessages()])
       .then(() => setStatus('ready'))
       .catch(() => setStatus('error'))
@@ -84,7 +89,25 @@ function SupportSpace({ link, userId }) {
       carePushRequest('dispatch').catch(() => {})
     }, 15000)
     return () => clearInterval(poll)
-  }, [loadTasks, loadMessages])
+  }, [loadTasks, loadMessages, alertTarget.key, alertTarget.section])
+
+  useEffect(() => {
+    if (status !== 'ready' || !alertTarget.section || section !== alertTarget.section || shownAlert.current === alertTarget.key) return
+    const rows = section === 'tasks' ? tasks : messages
+    const row = alertTarget.item ? rows.find(item => item.id === alertTarget.item)
+      : section === 'tasks' ? rows[0] : rows.at(-1)
+    if (!row) return
+    const element = document.getElementById(`care-${section}-${row.id}`)
+    if (!element) return
+    shownAlert.current = alertTarget.key
+    setHighlighted(row.id)
+    element.focus({ preventScroll: true })
+    element.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'center' })
+    clearTimeout(highlightTimer.current)
+    highlightTimer.current = setTimeout(() => setHighlighted(null), 4500)
+  }, [alertTarget, section, status, tasks, messages])
+
+  useEffect(() => () => clearTimeout(highlightTimer.current), [])
 
   async function assignTask(event) {
     event.preventDefault()
@@ -190,7 +213,8 @@ function SupportSpace({ link, userId }) {
       {tasks.map(task => {
         const taskEntries = entries.filter(entry => entry.task_id === task.id)
         const complete = taskEntries.some(entry => entry.entry_type === 'complete')
-        return <article key={task.id} className="card" style={{ marginBottom: 14 }}>
+        return <article key={task.id} id={`care-tasks-${task.id}`} tabIndex={-1}
+          className={`card${highlighted === task.id ? ' care-alert-target' : ''}`} style={{ marginBottom: 14 }}>
           <h3 style={{ marginTop: 0 }}>{task.title}</h3>
           {task.instructions && <p style={{ whiteSpace: 'pre-wrap' }}>{task.instructions}</p>}
           {complete && <p role="status">{careCopy.completionLabel}</p>}
@@ -216,7 +240,8 @@ function SupportSpace({ link, userId }) {
     {status === 'ready' && section === 'messages' && <div role="tabpanel" id="care-messages-panel" aria-labelledby="care-messages-tab">
       <p style={{ fontSize: 14 }}>{careCopy.urgentNotice}</p>
       {messages.length === 0 && <p>{careCopy.emptyMessages}</p>}
-      {messages.map(message => <div key={message.id} className="card"
+      {messages.map(message => <div key={message.id} id={`care-messages-${message.id}`} tabIndex={-1}
+        className={`card${highlighted === message.id ? ' care-alert-target' : ''}`}
         style={{ margin: '10px 0', maxWidth: '90%', marginLeft: message.sender_id === userId ? 'auto' : 0 }}>
         <small>{message.sender_id === userId ? 'You' : otherName} · {new Date(message.created_at).toLocaleString()}</small>
         <p style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>{message.body}</p>
@@ -243,10 +268,24 @@ function SupportSpace({ link, userId }) {
 
 export default function Care() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const alertTarget = useMemo(() => ({ ...careAlertTarget(location.search), key: location.key }), [location.search, location.key])
   const { authUser, authReady } = useApp()
   const [result, setResult] = useState({ status: 'loading', rows: [], userId: null })
   const [selectedPair, setSelectedPair] = useState(null)
   const [reloadVersion, setReloadVersion] = useState(0)
+
+  useEffect(() => {
+    const onNotification = event => {
+      if (event.data?.type !== 'care-notification' || typeof event.data.url !== 'string') return
+      try {
+        const url = new URL(event.data.url, window.location.origin)
+        if (url.origin === window.location.origin && url.pathname === '/care') navigate(url.pathname + url.search)
+      } catch { /* Ignore malformed notification destinations. */ }
+    }
+    navigator.serviceWorker?.addEventListener('message', onNotification)
+    return () => navigator.serviceWorker?.removeEventListener('message', onNotification)
+  }, [navigate])
 
   useEffect(() => {
     if (!authReady) return
@@ -271,7 +310,7 @@ export default function Care() {
   const status = !authReady ? 'loading' : !authUser ? 'sign_in'
     : result.userId === authUser.id ? result.status : 'loading'
   const pairKey = link => `${link.client_id}:${link.practitioner_id}`
-  const selected = result.rows.find(link => pairKey(link) === selectedPair) || result.rows[0]
+  const selected = result.rows.find(link => pairKey(link) === (alertTarget.pair || selectedPair)) || result.rows[0]
 
   return <SupportFrame>
     {status === 'loading' && <p role="status">{careCopy.loading}</p>}
@@ -290,10 +329,10 @@ export default function Care() {
     {status === 'ready' && result.rows.length > 1 && <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
       {result.rows.map(link => <button key={pairKey(link)} className="card care-client-link"
         aria-current={selected === link ? 'true' : undefined}
-        onClick={() => setSelectedPair(pairKey(link))}>
+        onClick={() => { navigate('/care', { replace: true }); setSelectedPair(pairKey(link)) }}>
         {authUser.id === link.practitioner_id ? link.client_label : link.practitioner_label}
       </button>)}
     </div>}
-    {status === 'ready' && selected && <SupportSpace key={pairKey(selected)} link={selected} userId={authUser.id} />}
+    {status === 'ready' && selected && <SupportSpace key={pairKey(selected)} link={selected} userId={authUser.id} alertTarget={alertTarget} />}
   </SupportFrame>
 }
