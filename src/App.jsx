@@ -14,6 +14,7 @@ import Onboarding from './pages/Onboarding'
 import Program from './pages/Program'
 import Courses, { Course } from './pages/Courses'
 import Care from './pages/Care'
+import CareNotificationRouter from './components/CareNotificationRouter'
 import DapPurchase from './pages/DapPurchase'
 import SignIn from './pages/SignIn'
 
@@ -21,6 +22,7 @@ export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
+        <CareNotificationRouter />
         <AppShell />
       </BrowserRouter>
     </AppProvider>
