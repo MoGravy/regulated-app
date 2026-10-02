@@ -53,7 +53,7 @@ async function sdkFor(account, captured) {
   const { appUserID } = await Purchases.getAppUserID()
   if (!current(account, captured)) return null
   if (appUserID !== account) throw new Error('billing-identity')
-  return Purchases
+  return { sdk: Purchases }
 }
 
 export function setBillingAccount(account) {
@@ -81,7 +81,8 @@ export function loadPackages(account) {
   return queue(async () => {
     if (!current(account, captured)) return stale
     const config = configuration()
-    const sdk = await sdkFor(account, captured)
+    const connection = await sdkFor(account, captured)
+    const sdk = connection?.sdk
     if (!sdk) return stale
     const offerings = await sdk.getOfferings()
     if (!current(account, captured)) return stale
@@ -110,7 +111,8 @@ async function storeOperation(account, packageId, restoring) {
       if (!current(account, captured)) return stale
       const cached = packages.get(packageId)
       if (!restoring && (!cached || cached.revision !== captured)) throw new Error('billing-packages')
-      const sdk = await sdkFor(account, captured)
+      const connection = await sdkFor(account, captured)
+      const sdk = connection?.sdk
       if (!sdk) return stale
       const { data, error } = await supabase.auth.getSession()
       if (!current(account, captured)) return stale

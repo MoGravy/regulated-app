@@ -25,7 +25,9 @@ function fixture(environment = valid) {
     purchasePackage: async o => { assert.equal(o.aPackage, pack); calls.push(['buy', id]) },
     restorePurchases: async () => { calls.push(['restore', id]) },
   }
-  const context = vm.createContext({ environment, Capacitor: { getPlatform: () => 'ios', isNativePlatform: () => true }, supabase: { auth: { getSession: async () => ({ data: { session: { user: { id: session } } } }) } }, getSDK: async () => ({ Purchases: sdk }) })
+  // Capacitor exposes unknown properties as methods, including then.
+  const proxy = new Proxy(sdk, { get: (target, key) => key === 'then' ? () => {} : target[key] })
+  const context = vm.createContext({ environment, Capacitor: { getPlatform: () => 'ios', isNativePlatform: () => true }, supabase: { auth: { getSession: async () => ({ data: { session: { user: { id: session } } } }) } }, getSDK: async () => ({ Purchases: proxy }) })
   vm.runInContext(`${source}\nglobalThis.billing = {setBillingAccount, loadPackages, purchase, restore}`, context)
   return { billing: context.billing, sdk, calls, session: value => { session = value }, identity: value => { id = value } }
 }
@@ -36,7 +38,7 @@ for (const env of [{}, { ...valid, VITE_BILLING_IOS_PUBLIC_KEY: 'test_fixture' }
   assert.equal(f.calls.length, 0)
 }
 const f = fixture()
-await f.billing.setBillingAccount(A)
+await Promise.race([f.billing.setBillingAccount(A), new Promise((_, reject) => setTimeout(() => reject(new Error('Capacitor proxy stalled billing')), 100))])
 await f.billing.setBillingAccount(A)
 assert.equal(f.calls.filter(c => c[0] === 'configure').length, 1)
 assert.equal((await f.billing.loadPackages(A)).packages[0].price, 'A$19.00')
