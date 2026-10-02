@@ -94,10 +94,11 @@ function SupportSpace({ link, userId, alertTarget }) {
   useEffect(() => {
     if (status !== 'ready' || !alertTarget.section || section !== alertTarget.section || shownAlert.current === alertTarget.key) return
     const rows = section === 'tasks' ? tasks : messages
-    const row = alertTarget.item ? rows.find(item => item.id === alertTarget.item)
+    const entry = section === 'tasks' ? entries.find(item => item.id === alertTarget.item) : null
+    const row = alertTarget.item ? rows.find(item => item.id === (entry?.task_id || alertTarget.item))
       : section === 'tasks' ? rows[0] : rows.at(-1)
     if (!row) return
-    const element = document.getElementById(`care-${section}-${row.id}`)
+    const element = document.getElementById(entry?.entry_type === 'note' ? `care-entry-${entry.id}` : `care-${section}-${row.id}`)
     if (!element) return
     shownAlert.current = alertTarget.key
     setHighlighted(row.id)
@@ -105,7 +106,7 @@ function SupportSpace({ link, userId, alertTarget }) {
     element.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'center' })
     clearTimeout(highlightTimer.current)
     highlightTimer.current = setTimeout(() => setHighlighted(null), 12000)
-  }, [alertTarget, section, status, tasks, messages])
+  }, [alertTarget, section, status, tasks, entries, messages])
 
   useEffect(() => () => clearTimeout(highlightTimer.current), [])
 
@@ -139,6 +140,7 @@ function SupportSpace({ link, userId, alertTarget }) {
       })
       if (writeError) throw writeError
       setNotes(current => ({ ...current, [taskId]: '' }))
+      await carePushRequest('dispatch').catch(() => {})
       await loadTasks()
     } catch { setError(true) }
     finally { setSaving(false) }
@@ -219,7 +221,8 @@ function SupportSpace({ link, userId, alertTarget }) {
           {task.instructions && <p style={{ whiteSpace: 'pre-wrap' }}>{task.instructions}</p>}
           {complete && <p role="status">{careCopy.completionLabel}</p>}
           {taskEntries.filter(entry => entry.entry_type === 'note').map(entry =>
-            <p key={entry.id} style={{ whiteSpace: 'pre-wrap', borderTop: '1px solid var(--line)', paddingTop: 10 }}>
+            <p key={entry.id} id={`care-entry-${entry.id}`} tabIndex={-1}
+              style={{ whiteSpace: 'pre-wrap', borderTop: '1px solid var(--line)', paddingTop: 10 }}>
               <small>{new Date(entry.created_at).toLocaleString()}</small><br />{entry.body}
             </p>)}
           {!isPractitioner && <>
