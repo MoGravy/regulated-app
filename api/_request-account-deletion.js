@@ -38,9 +38,18 @@ export async function handleRequest(req, res, supabase) {
 }
 
 export default function handler(req, res) {
-  const supabase = createClient(
-    process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
-  return handleRequest(req, res, supabase)
+  if (req.method !== 'POST' || !req.headers?.authorization?.startsWith('Bearer ')) {
+    return handleRequest(req, res, null)
+  }
+  try {
+    const supabase = createClient(
+      process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+    return handleRequest(req, res, supabase)
+  } catch {
+    setNativeCors(req, res)
+    res.setHeader('Cache-Control', 'no-store')
+    return res.status(500).json({ error: 'Could not record the request' })
+  }
 }
