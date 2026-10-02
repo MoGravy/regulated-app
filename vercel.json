@@ -14,17 +14,17 @@
       ]
     },
     {
-      "source": "/api/get-audio-url",
+      "source": "/api/(get-audio-url|request-account-deletion)",
       "has": [{ "type": "header", "key": "origin", "value": "^capacitor://localhost$" }],
       "headers": [{ "key": "Access-Control-Allow-Origin", "value": "capacitor://localhost" }]
     },
     {
-      "source": "/api/get-audio-url",
+      "source": "/api/(get-audio-url|request-account-deletion)",
       "has": [{ "type": "header", "key": "origin", "value": "^http://localhost$" }],
       "headers": [{ "key": "Access-Control-Allow-Origin", "value": "http://localhost" }]
     },
     {
-      "source": "/api/get-audio-url",
+      "source": "/api/(get-audio-url|request-account-deletion)",
       "has": [{ "type": "header", "key": "origin", "value": "^https://localhost$" }],
       "headers": [{ "key": "Access-Control-Allow-Origin", "value": "https://localhost" }]
     },
