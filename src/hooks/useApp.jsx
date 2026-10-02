@@ -5,6 +5,7 @@ import { programAt } from '../config/program'
 import { disableCarePush } from '../lib/carePush'
 import { signInError } from '../lib/signInFlow'
 import { recordPracticeDay } from '../lib/streak'
+import { usePractice } from './usePractice'
 
 const AppContext = createContext(null)
 
@@ -29,6 +30,7 @@ export function AppProvider({ children }) {
   const [authUser, setAuthUser] = useState(null)
   const [authReady, setAuthReady] = useState(false)
   const [authError, setAuthError] = useState('')
+  const practice = usePractice(authReady ? authUser?.id || 'guest' : null)
 
   // Auth is additive. Signed out, everything below behaves exactly as it did
   // before phase 3: the localStorage email still drives the premium check.
@@ -147,6 +149,7 @@ export function AppProvider({ children }) {
       onboardingDone, setOnboardingDone,
       mode, setMode,
       programDay,
+      ...practice,
       toasts, addToast,
     }}>
       {children}

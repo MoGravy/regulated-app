@@ -17,6 +17,7 @@ import Care from './pages/Care'
 import CareNotificationRouter from './components/CareNotificationRouter'
 import DapPurchase from './pages/DapPurchase'
 import SignIn from './pages/SignIn'
+import QuickReset from './pages/QuickReset'
 
 export default function App() {
   return (
@@ -41,7 +42,7 @@ function AppShell() {
   }
   const showNavigation = ['/', '/program', '/courses', '/care', '/sessions', '/premium'].includes(pathname)
     || pathname.startsWith('/courses/')
-  const isPlayer = pathname.startsWith('/sessions/') && pathname.endsWith('/play')
+  const isPlayer = pathname === '/reset' || pathname.startsWith('/sessions/') && pathname.endsWith('/play')
   return (
     <div className={`app-shell${showNavigation ? ' app-shell-with-nav' : ''}${isPlayer ? ' app-shell-player' : ''}`}>
       <Toast />
@@ -50,6 +51,7 @@ function AppShell() {
         <Route path="/welcome" element={<Onboarding />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/" element={<Home />} />
+        <Route path="/reset" element={<QuickReset />} />
         <Route path="/program" element={<Program />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/courses/:courseId" element={<Course />} />

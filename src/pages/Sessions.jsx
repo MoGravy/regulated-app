@@ -52,17 +52,19 @@ export default function Sessions() {
     .sort((a, b) => counts[b] - counts[a] || labels[a].localeCompare(labels[b]))
     .map(k => labels[k])
 
+  const visible = params.get('free') === '1' ? sessions.filter(s => s.free === true) : sessions
   const filtered = active === 'All'
-    ? sessions
-    : sessions.filter(s => categoriesOf(s).some(c => c.toLowerCase() === active.toLowerCase()))
+    ? visible
+    : visible.filter(s => categoriesOf(s).some(c => c.toLowerCase() === active.toLowerCase()))
 
   // Unlocked first, locked below — design 1d.
   const unlocked = filtered.filter(s => s.free || isPremium)
   const locked = filtered.filter(s => !s.free && !isPremium)
 
   function select(cat) {
-    if (cat === 'All') setParams({}, { replace: true })
-    else setParams({ category: cat }, { replace: true })
+    const next = params.get('free') === '1' ? { free: '1' } : {}
+    if (cat !== 'All') next.category = cat
+    setParams(next, { replace: true })
   }
 
   return (

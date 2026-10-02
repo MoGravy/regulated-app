@@ -1,0 +1,24 @@
+.quick-reset-card { display: grid; gap: 12px; margin-bottom: 16px; }
+.quick-reset-card p { color: var(--ink-muted); }
+.practice-summary { margin-bottom: 24px; }
+.practice-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.practice-stats dt { font: 500 13px/19px var(--font-ui); color: var(--ink-muted); min-height: 38px; }
+.practice-stats dd { font: 400 30px/38px var(--font-display); color: var(--ink); }
+.practice-summary p { margin-top: 14px; }
+:root[data-look='night'] .practice-summary .t-caption { font-weight: 400; }
+.practice-milestones { margin-top: 16px; border-top: 1px solid var(--line); }
+.practice-milestones summary { padding: 14px 0; cursor: pointer; font-weight: 600; }
+.practice-milestones ul { list-style: none; }
+.practice-milestones li { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; color: var(--ink-muted); border-top: 1px solid var(--line); }
+.practice-milestones li[data-earned="true"] { color: var(--ink); }
+.practice-milestones li strong { font-size: 14px; }
+.reset-empty { display: grid; gap: 20px; padding-top: 24px; }
+.reset-choice { position: relative; padding: 0 32px 16px; color: var(--player-muted); }
+.reset-choice h2 { color: var(--player-title); margin-bottom: 12px; }
+.reset-choice label { display: block; font-size: 13px; margin-bottom: 6px; }
+.reset-choice select { width: 100%; min-height: 44px; padding: 10px; border-radius: var(--r-row); border: 1px solid var(--player-muted); background: var(--player-bg); color: var(--player-body); font-size: 14px; }
+.reset-seek { width: 100%; min-height: 44px; accent-color: var(--control); cursor: pointer; }
+.reset-recorded { margin-top: 16px; color: var(--player-title); font: 500 14px/21px var(--font-ui); }
+/* The extra reset selector needs the space used by the ordinary player's window. */
+:root[data-look='night'] .quick-reset-player .player-glow { display: none; }
+:root[data-look='night'] .quick-reset-player .player-glow + div { padding-top: 0 !important; justify-content: center !important; }

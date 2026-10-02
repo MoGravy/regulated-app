@@ -10,20 +10,29 @@ import { StreakNote } from '../components/Streak'
 import MoodTracker from '../components/MoodTracker'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
 import { haptic } from '../lib/haptic'
+import { createListeningAttempt } from '../lib/qualifiedListening'
+import { resetCopy } from '../config/resetCopy'
 
 const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', COMPLETE: 'complete', CHECKOUT: 'checkout', DONE: 'done' }
 
-export default function SessionPlayer() {
+export default function SessionPlayer(props) {
+  const { id } = useParams()
+  const { practiceScope } = useApp()
+  return <Playback key={`${props.resetSession?.id || id}:${practiceScope}`} {...props} />
+}
+
+function Playback({ resetSession, resetUrl, resetControls, onResetError }) {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { userEmail, markSessionComplete, saveProgress, completedSessions } = useApp()
+  const { userEmail, markSessionComplete, saveProgress, completedSessions, beginPractice, updatePractice, practiceScope, practiceStorageOK } = useApp()
+  const quickReset = !!resetSession
 
-  const [session, setSession] = useState(null)
-  const [audioUrl, setAudioUrl] = useState(null)
+  const [session, setSession] = useState(resetSession || null)
+  const [audioUrl, setAudioUrl] = useState(resetUrl || null)
   const [loadError, setLoadError] = useState(false)   // session row missing
   const [audioError, setAudioError] = useState(null)  // session fine, audio would not resolve
   const [retry, setRetry] = useState(0)
-  const [step, setStep] = useState(STEP.PRE_MOOD)
+  const [step, setStep] = useState(quickReset ? STEP.PLAYING : STEP.PRE_MOOD)
   const [moodBefore, setMoodBefore] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -31,8 +40,11 @@ export default function SessionPlayer() {
   const [showCustomPrompt, setShowCustomPrompt] = useState(false)
 
   const audioRef = useRef(null)
-  const startRef = useRef(null)
-  const timerRef = useRef(null)
+  const attemptRef = useRef(null)
+  const sampleRevision = useRef(0)
+  const playbackStatus = useRef('paused')
+  const soughtEnd = useRef(false)
+  const [practiceRecorded, setPracticeRecorded] = useState(false)
   const wakeLockRef = useRef(null)
   const progressRef = useRef({ id: null, position: 0, duration: 0 })
 
@@ -40,6 +52,7 @@ export default function SessionPlayer() {
   // Load session: cache, then Supabase, then hardcoded fallback
   // ---------------------------------------------------------------------------
   useEffect(() => {
+    if (resetSession) return
     let cancelled = false
     const trimmed = decodeURIComponent(String(id || '')).trim()
     if (!trimmed) { setLoadError(true); return }
@@ -79,12 +92,13 @@ export default function SessionPlayer() {
 
     fetchSession()
     return () => { cancelled = true }
-  }, [id])
+  }, [id, resetSession])
 
   // Resolve the playable URL once the session is loaded. ALL audio goes through
   // /api/get-audio-url for a freshly signed short-lived URL — no baked tokens on
   // the client. Endpoint itself is untouched.
   useEffect(() => {
+    if (resetUrl) return
     if (!session) return
     const hasAudio = session.has_audio ?? !!session.audio_url
     if (!hasAudio) return
@@ -115,7 +129,7 @@ export default function SessionPlayer() {
     }
     resolveUrl()
     return () => { cancelled = true }
-  }, [session, retry])
+  }, [session, retry, resetUrl])
 
   // Seed the duration from the row until the audio reports its real length.
   // The pre-mood step used to auto-advance after 1200ms, which made the question
@@ -127,25 +141,56 @@ export default function SessionPlayer() {
   }, [session])
 
   useEffect(() => {
+    if (quickReset) return
     if (step !== STEP.PLAYING || !audioUrl || !audioRef.current) return
     audioRef.current.play().catch(() => {})
-  }, [step, audioUrl])
+  }, [step, audioUrl, quickReset])
 
   useEffect(() => {
-    if (!isPlaying || step !== STEP.PLAYING) return
-    startRef.current = Date.now() - currentTime * 1000
-    clearInterval(timerRef.current)
-    timerRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startRef.current) / 1000
-      setCurrentTime(elapsed)
-      if (elapsed >= (duration || 1200)) {
-        clearInterval(timerRef.current)
-        setIsPlaying(false)
-        setStep(STEP.COMPLETE)
-      }
-    }, 500)
-    return () => clearInterval(timerRef.current)
-  }, [isPlaying, step, duration])
+    if (!session?.id || !audioUrl || !practiceScope) return
+    const prior = beginPractice(session.id)
+    attemptRef.current = {
+      scope: prior.scope, mediaId: session.id, attemptId: prior.attemptId,
+      lastHeardAt: prior.updatedAt || Date.now(),
+      accumulator: createListeningAttempt({ ...prior, durationSeconds: NaN }),
+    }
+    sampleRevision.current = 0
+    playbackStatus.current = 'paused'
+    return () => {
+      const a = audioRef.current
+      const attempt = attemptRef.current
+      if (a) a.pause()
+      if (attempt) updatePractice(attempt.scope, {
+        ...attempt, heardSeconds: attempt.accumulator.heardSeconds,
+        durationSeconds: a?.duration, qualified: attempt.accumulator.qualified, updatedAt: attempt.lastHeardAt,
+      })
+      attemptRef.current = null
+    }
+  }, [session?.id, audioUrl, practiceScope, beginPractice, updatePractice])
+
+  function sampleAudio(status = playbackStatus.current) {
+    const a = audioRef.current
+    const attempt = attemptRef.current
+    if (!a || !attempt) return
+    const played = Array.from({ length: a.played.length }, (_, n) => [a.played.start(n), a.played.end(n)])
+    const actualStatus = a.seeking ? 'seeking' : a.muted || a.volume === 0 ? 'paused' : status
+    const heardBefore = attempt.accumulator.heardSeconds
+    const event = attempt.accumulator.consume({
+      attemptId: attempt.attemptId, revision: ++sampleRevision.current,
+      position: a.currentTime, durationSeconds: a.duration, status: actualStatus,
+      played, atMs: performance.now(), rate: a.playbackRate,
+    })
+    if (attempt.accumulator.heardSeconds > heardBefore) attempt.lastHeardAt = Date.now()
+    playbackStatus.current = actualStatus
+    setCurrentTime(a.currentTime)
+    if (Number.isFinite(a.duration) && a.duration > 0) setDuration(a.duration)
+    updatePractice(attempt.scope, {
+      mediaId: attempt.mediaId, attemptId: attempt.attemptId,
+      heardSeconds: attempt.accumulator.heardSeconds, durationSeconds: a.duration,
+      updatedAt: attempt.lastHeardAt, qualified: attempt.accumulator.qualified,
+    }, event)
+    if (event) setPracticeRecorded(true)
+  }
 
   // The completion moment holds for two seconds, then the check-out.
   useEffect(() => {
@@ -201,27 +246,32 @@ export default function SessionPlayer() {
     const a = audioRef.current
     if (!a) return
     haptic()
-    if (isPlaying) { a.pause(); setIsPlaying(false) }
-    else { a.play().catch(() => {}); setIsPlaying(true) }
+    if (!a.paused) a.pause()
+    else a.play().catch(error => {
+      // Pausing while play is pending cancels that request normally.
+      if (error.name !== 'AbortError') setAudioError('Playback unavailable')
+    })
   }
 
   function skip(secs) {
     const a = audioRef.current
     if (!a) return
     const next = Math.max(0, Math.min(a.currentTime + secs, duration))
+    sampleAudio('seeking')
+    soughtEnd.current = next >= a.duration
     a.currentTime = next
     setCurrentTime(next)
-    startRef.current = Date.now() - next * 1000
   }
 
   function seek(e) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const ratio = (e.clientX - rect.left) / rect.width
-    const t = ratio * (duration || 0)
+    const t = Number(e.target.value)
     if (!Number.isFinite(t)) return
     setCurrentTime(t)
-    if (audioRef.current) audioRef.current.currentTime = t
-    startRef.current = Date.now() - t * 1000
+    sampleAudio('seeking')
+    if (audioRef.current) {
+      soughtEnd.current = t >= audioRef.current.duration
+      audioRef.current.currentTime = t
+    }
   }
 
   function fmt(seconds) {
@@ -293,19 +343,25 @@ export default function SessionPlayer() {
   }
 
   const { label } = categoryOf(session.category)
-  const pct = duration ? Math.min(100, (currentTime / duration) * 100) : 0
 
   return (
-    <Shell>
+    <Shell className={quickReset ? 'quick-reset-player' : ''}>
       {audioUrl && (
         <audio
           ref={audioRef}
           src={audioUrl}
           preload="auto"
           onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          onPlaying={() => { sampleAudio('playing'); setIsPlaying(true) }}
+          onTimeUpdate={() => sampleAudio()}
+          onWaiting={() => sampleAudio('buffering')}
+          onSeeking={() => { soughtEnd.current = audioRef.current.currentTime >= audioRef.current.duration; sampleAudio('seeking') }}
+          onSeeked={() => sampleAudio(audioRef.current.paused ? 'paused' : 'playing')}
+          onPause={() => { sampleAudio('paused'); setIsPlaying(false) }}
+          onVolumeChange={() => sampleAudio(audioRef.current.paused ? 'paused' : 'playing')}
           onLoadedMetadata={e => { if (Number.isFinite(e.currentTarget.duration)) setDuration(e.currentTarget.duration) }}
-          onEnded={() => { setIsPlaying(false); setStep(STEP.COMPLETE) }}
+          onError={() => { sampleAudio('error'); setIsPlaying(false); if (onResetError) onResetError(); else setAudioError('Playback unavailable') }}
+          onEnded={() => { sampleAudio('ended'); setIsPlaying(false); if (!soughtEnd.current) setStep(STEP.COMPLETE) }}
         />
       )}
 
@@ -318,6 +374,8 @@ export default function SessionPlayer() {
           </svg>
         </button>
       </div>
+
+      {resetControls}
 
       {step === STEP.PRE_MOOD && (
         <MoodTracker label="Before we start, where are you now?" onSubmit={handlePreMood} optional />
@@ -386,8 +444,9 @@ export default function SessionPlayer() {
               {session.title}
             </h1>
             <p style={{ margin: '16px 0 0', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)', maxWidth: 300, textWrap: 'pretty' }}>
-              Lie down. Let the audio do the work. If you fall asleep, that is fine.
+              {quickReset ? resetCopy.listening : 'Lie down. Let the audio do the work. If you fall asleep, that is fine.'}
             </p>
+            {practiceRecorded && <p className="reset-recorded" role="status">{practiceStorageOK ? resetCopy.qualified : resetCopy.storage}</p>}
           </div>
 
           <div style={{ position: 'relative', flex: 'none', padding: '0 32px 48px' }}>
@@ -413,17 +472,14 @@ export default function SessionPlayer() {
               <SkipButton dir="forward" onClick={() => skip(15)} />
             </div>
 
-            <div
-              onClick={seek}
-              role="progressbar"
+            <input
+              type="range"
+              className="reset-seek"
+              onChange={seek}
               aria-label="Session progress"
-              aria-valuenow={Math.round(pct)}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              style={{ height: 3, background: 'var(--player-track)', borderRadius: 'var(--r-pill)', marginBottom: 12, cursor: 'pointer' }}
-            >
-              <div style={{ width: `${pct}%`, height: 3, background: 'var(--control)', borderRadius: 'var(--r-pill)' }} />
-            </div>
+              value={Math.min(currentTime, duration)} min={0} max={duration || 0} step="0.1"
+              aria-valuetext={`${fmt(currentTime)} / ${fmt(duration)}`}
+            />
             <div style={{ display: 'flex', justifyContent: 'space-between', font: '400 13px/18px var(--font-ui)', color: 'var(--player-faint)' }}>
               <span>{fmt(currentTime)}</span>
               <span>{fmt(duration)}</span>
@@ -436,9 +492,9 @@ export default function SessionPlayer() {
 }
 
 // The only dark surface in the system — design 1b.
-function Shell({ children }) {
+function Shell({ children, className = '' }) {
   return (
-    <div className="page-frame" style={{ background: 'var(--player-bg)', position: 'relative', color: 'var(--player-body)', overflowX: 'hidden' }}>
+    <div className={`page-frame ${className}`} style={{ background: 'var(--player-bg)', position: 'relative', color: 'var(--player-body)', overflowX: 'hidden' }}>
       <div aria-hidden="true" className="blob blob-a blob-drift" style={{ position: 'absolute', width: 320, height: 260, left: -60, top: 120, background: 'var(--player-blob-a)', filter: 'blur(40px)' }} />
       <div aria-hidden="true" className="blob blob-b" style={{ position: 'absolute', width: 240, height: 200, right: -50, bottom: 180, background: 'var(--player-blob-b)', filter: 'blur(36px)' }} />
       {children}
