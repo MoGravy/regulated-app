@@ -19,10 +19,9 @@ export default function Navigation() {
     <nav
       aria-label="Primary"
       style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        position: 'relative',
+        flex: 'none',
+        width: '100%',
         margin: '0 auto',
         maxWidth: 480,
         display: 'flex',

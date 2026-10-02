@@ -438,7 +438,7 @@ export default function SessionPlayer() {
 // The only dark surface in the system — design 1b.
 function Shell({ children }) {
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--player-bg)', position: 'relative', display: 'flex', flexDirection: 'column', color: 'var(--player-body)', overflow: 'hidden' }}>
+    <div className="page-frame" style={{ background: 'var(--player-bg)', position: 'relative', color: 'var(--player-body)', overflowX: 'hidden' }}>
       <div aria-hidden="true" className="blob blob-a blob-drift" style={{ position: 'absolute', width: 320, height: 260, left: -60, top: 120, background: 'var(--player-blob-a)', filter: 'blur(40px)' }} />
       <div aria-hidden="true" className="blob blob-b" style={{ position: 'absolute', width: 240, height: 200, right: -50, bottom: 180, background: 'var(--player-blob-b)', filter: 'blur(36px)' }} />
       {children}
