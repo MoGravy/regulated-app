@@ -29,7 +29,11 @@ async function snapshot(tx, requestId, accountId) {
     || row.object === 'trigger:public.user_progress.freeze_deleted_progress'
     || row.object === 'trigger:public.course_progress.freeze_deleted_progress'))
   // Approval can select rows, but cannot replace the cleanup safety controls.
-  if (hash(controls) !== hash(trusted.objects)) refuse()
+  if (controls.length !== trusted.objects.length || controls.some((row, index) => {
+    const expected = trusted.objects[index]
+    return row.object !== expected.object || (row.fingerprint !== expected.fingerprint
+      && !expected.alternateFingerprints?.includes(row.fingerprint))
+  })) refuse()
   const executableIndex = (await tx.query(`select exists(select 1 from pg_index
     where indrelid='public.deletion_progress_plans'::regclass
       and (indexprs is not null or indpred is not null)) as unsafe`)).rows[0]

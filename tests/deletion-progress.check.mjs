@@ -146,6 +146,9 @@ await db.exec('alter table public.deletion_progress_plans drop constraint fixtur
 await db.exec('create index fixture_expression on public.deletion_progress_plans ((coalesce(approved_by,\'\')))')
 await refusal(() => reviewedPlan())
 await db.exec('drop index public.fixture_expression')
+await db.exec('grant select on public.deletion_progress_plans to authenticated')
+await refusal(() => reviewedPlan())
+await db.exec('revoke select on public.deletion_progress_plans from authenticated')
 await db.exec(`create table public.fixture_child (
   progress_id uuid references public.user_progress(id) on delete cascade);
   insert into public.fixture_child select id from public.user_progress where user_id='00000000-0000-4000-8000-000000000001';`)

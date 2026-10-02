@@ -43,7 +43,10 @@
     },
     {
       "object": "relation:public.deletion_progress_plans",
-      "fingerprint": "985bbfb81e7146d4dc4e4f8c707cf05cc69d1fa95ea0d6e84ac5d0ab0a942f16"
+      "fingerprint": "985bbfb81e7146d4dc4e4f8c707cf05cc69d1fa95ea0d6e84ac5d0ab0a942f16",
+      "alternateFingerprints": [
+        "85106c6c74e2f0f4326c349161adbf3ec7764a7b97c2c1781fb4e975f7e28ef6"
+      ]
     },
     {
       "object": "trigger:public.course_progress.freeze_deleted_progress",
@@ -57,5 +60,9 @@
       "object": "trigger:public.user_progress.freeze_deleted_progress",
       "fingerprint": "578f30301fa1dc9b1f8983c8e71ded3947e05272ab63ff4a0d23a099f979db25"
     }
+  ],
+  "databaseFixtures": [
+    "PostgreSQL 18.3 PGlite",
+    "PostgreSQL 16 native"
   ]
 }
