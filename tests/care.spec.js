@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
 import { skipOnboarding, signedIn } from './helpers.js'
 
 const CLIENT_ID = 'u1'
@@ -120,7 +120,8 @@ test('Refresh recovers after an initial task-load outage', async ({ page }) => {
   await signedIn(page)
   const data = await fakeCare(page, true)
   await page.goto('/care')
-  await expect(page.getByRole('alert')).toHaveText('Something went wrong. Please try again.')
+  // The SDK retries transient 503 responses after 1, 2 and 4 seconds.
+  await expect(page.getByRole('alert')).toHaveText('Something went wrong. Please try again.', { timeout: 15000 })
   await expect(page.getByText('Notice one calm moment')).toHaveCount(0)
   data.recover()
   await page.getByRole('button', { name: 'Refresh', exact: true }).click()

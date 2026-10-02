@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
 import { skipOnboarding, noProductionWrites, storage } from './helpers.js'
 
 test.use({ viewport: { width: 380, height: 820 } })
@@ -19,8 +19,8 @@ test('check-in surfaces a matched session and stores nothing', async ({ page }) 
 
   await page.getByRole('button', { name: 'Just checking in' }).click()
   await expect(page.getByText('Your daily reset')).toBeVisible()
-  await expect(page.locator('.row', { hasText: 'Daily Nervous System Reset' })).toBeVisible()
-  await expect(page.locator('.row', { hasText: 'Stress Off Switch' })).toHaveCount(0)
+  await expect(page.getByLabel('Check-in').locator('.row', { hasText: 'Daily Nervous System Reset' })).toBeVisible()
+  await expect(page.getByLabel('Check-in').locator('.row', { hasText: 'Stress Off Switch' })).toHaveCount(0)
 
   // Tapping the pressed pill clears it; the library was there the whole time.
   await page.getByRole('button', { name: 'Just checking in' }).click()

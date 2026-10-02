@@ -12,7 +12,7 @@ export default {
   ],
   use: { ...base.use, baseURL: 'http://localhost:4381', storageState: undefined },
   webServer: {
-    command: 'VITE_SUPABASE_URL=https://local-preview.supabase.invalid VITE_SUPABASE_ANON_KEY=preview-public-only VITE_STRIPE_PUBLISHABLE_KEY=pk_test_local npm run build && npm run preview -- --host 127.0.0.1 --port 4381 --strictPort',
+    command: 'VITE_SUPABASE_URL=https://local-preview.supabase.invalid VITE_SUPABASE_ANON_KEY=preview-public-only VITE_STRIPE_PUBLISHABLE_KEY=pk_test_local npm run build -- --outDir .tmp/reset-build && npm run preview -- --outDir .tmp/reset-build --host 127.0.0.1 --port 4381 --strictPort',
     url: 'http://localhost:4381', reuseExistingServer: false, timeout: 180000,
   },
 }

@@ -24,16 +24,19 @@ Real media check in the built-in browser: duration 666 seconds, readyState 4, po
 ## Fresh verification
 
 - 16 domain and retained-streak checks PASS.
-- 22 browser checks PASS in Chromium and iPhone WebKit at 390x844.
+- Full local suite: 81 passed, 6 remote-only checks skipped, 0 failed. Includes 11 Chromium Quick Reset checks.
+- Separate iPhone WebKit suite: 11 Quick Reset checks PASS. Feature coverage remains 22 browser checks at 390x844.
 - Both looks checked visually. Selector, title and Play controls fit; milestone explanations remain readable.
 - Build, lint and git diff check PASS.
-- One fresh independent review; all Important findings repaired; no Critical or Important findings remain.
+- Independent feature and test harness reviews complete; no Critical or Important findings remain.
+- Local preview boundary check PASS: page, free-only catalogue and mutation rejection.
 
 Browser tests render a real 100-second local PCM sample. Playback at 4x requires 80 seconds of rendered media while shortening the test to about 20 seconds. Coverage includes no autoplay, seek rejection, decoder failure and free fallback, persisted qualification, account changes, refused storage and expired retry credit.
 
 ```sh
 node --test src/lib/qualifiedListening.test.mjs src/lib/practiceLedger.test.mjs src/lib/quickReset.test.mjs src/lib/streak.test.mjs
 npx playwright test --config playwright.reset.config.js
+npx playwright test --workers=4
 npm run lint
 git diff --check
 node tests/check-reset-preview.mjs
@@ -41,7 +44,9 @@ node tests/check-reset-preview.mjs
 
 ## Remaining boundary
 
-The old `npm test` suite cannot collect its older specs: `tests/helpers.js` imports Vite-only `import.meta.env` configuration into Node. This pre-existing harness failure remains a gate. The isolated feature checks above pass. No merge or deployment was attempted.
+The old Node/Vite test collection failure is fixed. Local tests use synthetic public configuration and fixtures, block external browser requests and build into separate temporary folders. App code and the user's preview build are unchanged by this harness fix. Config backups are in `.tmp/harness-backup`.
+
+Six checks require a deployed API or real database and are skipped locally: real free audio, invalid session API response, checkout, unknown-event rejection, waitlist/annual-offer endpoint and database access isolation. They are not claimed as passed. No merge or deployment was attempted.
 
 Actual iPhone/native background playback, locked-phone alerts, purchase/refund checks and the parked launch checklist are separate. Practice history is device-local. Clearing browser data removes it; it does not follow someone to another device.
 

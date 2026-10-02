@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
 import { skipOnboarding, noProductionWrites } from './helpers.js'
 
 test.use({ viewport: { width: 380, height: 820 } })
@@ -15,7 +15,7 @@ test('pricing shows the custom session, the guarantee, and a live counter', asyn
   await expect(annual).toContainText('Complete the 6-week program. If you do not feel a difference, full refund.')
 
   const counter = page.getByTestId('library-counter')
-  await expect(counter).toHaveText(/^\d+ of 40 sessions until the price rises to \$199$/)
+  await expect(counter).toHaveText(/^\d+ of 40 sessions until the price rises to A\$199$/)
   const n = Number((await counter.textContent()).split(' ')[0])
   expect(n).toBeGreaterThan(0)
   expect(n).toBeLessThanOrEqual(40)

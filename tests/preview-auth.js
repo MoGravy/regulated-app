@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { request } from '@playwright/test'
+import { BASE_URL, IS_LOCAL } from './runtime.js'
 
 // Where the saved bypass cookie lands. Outside the repo on purpose.
 export const STATE_PATH = join(tmpdir(), 'regulated-preview-state.json')
@@ -19,8 +20,8 @@ export function bypassSecret() {
 // preflight and the fonts never load. Asking Vercel to set its cookie once and
 // reusing that cookie keeps the secret on our own origin, where it belongs.
 export default async function globalSetup() {
-  const base = process.env.BASE_URL
-  if (!base || base.includes('localhost')) return
+  const base = BASE_URL
+  if (IS_LOCAL) return
 
   const secret = bypassSecret()
   if (!secret) throw new Error('no ~/.regulated-bypass — preview deployments are SSO protected')

@@ -2,7 +2,7 @@
 // customer who is already using production? It runs against the built bundle,
 // not the dev server, and no test in this file may write to the database —
 // noProductionWrites() fulfils every non-GET to Supabase locally.
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
 import {
   skipOnboarding, enterProgram, watchConsole, expectNoConsoleErrors,
   noProductionWrites, asPremium, fakeAudio, storage, signedIn, FAKE_JWT,
@@ -139,16 +139,22 @@ test('reload and back/forward survive on every route', async ({ page }) => {
 test('a premium customer sees no locked rows and no paywall', async ({ page }) => {
   await asPremium(page)
   const errors = watchConsole(page)
+  let checks = 0
+  await page.route('**/api/check-subscription', route => {
+    checks += 1
+    return route.fulfill({ json: { active: true } })
+  })
 
   await page.goto('/sessions')
   await page.waitForLoadState('networkidle')
   await expect(page.locator('.row').first()).toBeVisible()
+  await expect.poll(() => checks, { message: 'Signed-in reload checks the subscription' }).toBeGreaterThan(0)
   await expect(page.locator('.row-locked')).toHaveCount(0)
 
   await page.goto('/premium')
   await page.waitForLoadState('networkidle')
   await expect(page.getByRole('heading', { name: 'You have premium' })).toBeVisible()
-  await expect(page.getByRole('button', { name: /Continue at \$/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Continue at A\$/ })).toHaveCount(0)
   await expectNoConsoleErrors(errors)
 })
 
@@ -176,7 +182,7 @@ test('the paywall refuses a bad email before it opens checkout', async ({ page }
   await page.goto('/premium')
   await page.waitForLoadState('networkidle')
   await page.locator('#premium-email').fill('nope')
-  await page.getByRole('button', { name: /Continue at \$/ }).click()
+  await page.getByRole('button', { name: /Continue at A\$/ }).click()
 
   await expect(page.getByRole('alert')).toContainText('Enter the email')
   expect(checkout, 'a malformed address reached create-checkout').toBe(false)
@@ -260,15 +266,11 @@ test('a part-played session shows up in Continue listening', async ({ page }) =>
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible({ timeout: 20_000 })
 
-  // The player's clock is its own, not the audio element's, so the position has
-  // to be moved through the control the user would actually press. Wait for the
-  // real duration first, or the 15 seconds lands under the resume threshold.
-  await page.waitForFunction(() => {
-    const a = document.querySelector('audio')
-    return a && Number.isFinite(a.duration) && a.duration > 50
-  }, null, { timeout: 20_000 })
-  await page.getByRole('button', { name: 'Forward 15 seconds' }).click()
+  // Resume follows rendered media time. Metadata or a requested seek is not
+  // evidence that any of the clip has actually played.
+  await expect.poll(() => page.locator('audio').evaluate(a => a.currentTime)).toBeGreaterThan(2)
   await page.getByRole('button', { name: 'Close player' }).click()
+  await expect.poll(async () => JSON.parse((await storage(page)).regulated_progress || '{}')[FREE_ID]?.position || 0).toBeGreaterThan(2)
   await page.goto('/')
   await page.waitForLoadState('networkidle')
 
