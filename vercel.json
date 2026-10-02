@@ -1,4 +1,5 @@
 {
+  "crons": [{ "path": "/api/deletion-dispatch", "schedule": "0 5 * * *" }],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }

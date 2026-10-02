@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 
-function authorized(header, secret) {
+export function authorized(header, secret) {
   if (typeof secret !== 'string' || secret.length < 16) return false
   const received = Buffer.from(header || '')
   const expected = Buffer.from(`Bearer ${secret}`)
