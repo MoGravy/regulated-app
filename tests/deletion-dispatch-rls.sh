@@ -15,7 +15,7 @@ create role authenticated nologin;
 create role service_role nologin;
 create table auth.users(id uuid primary key);
 SQL
-for file in 008_account_deletion_requests.sql 011_account_deletion_workflow.sql 017_deletion_dispatch.sql; do
+for file in 008_account_deletion_requests.sql 011_account_deletion_workflow.sql 019_deletion_dispatch.sql; do
   docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 < "$repo_dir/migrations/$file"
 done
 docker exec -i "$container" psql -U postgres -v ON_ERROR_STOP=1 <<'SQL'

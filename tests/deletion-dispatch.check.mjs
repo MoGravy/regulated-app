@@ -8,10 +8,10 @@ const { PGlite } = await import(pathToFileURL(runtime))
 const db = new PGlite()
 const source = path => readFile(new URL(path, import.meta.url), 'utf8')
 await db.exec('create role anon; create role authenticated; create role service_role bypassrls; create schema auth; create table auth.users(id uuid primary key)')
-for (const file of ['008_account_deletion_requests.sql', '011_account_deletion_workflow.sql', '017_deletion_dispatch.sql']) {
+for (const file of ['008_account_deletion_requests.sql', '011_account_deletion_workflow.sql', '019_deletion_dispatch.sql']) {
   await db.exec(await source(`../migrations/${file}`))
 }
-await db.exec(await source('../migrations/017_deletion_dispatch.sql'))
+await db.exec(await source('../migrations/019_deletion_dispatch.sql'))
 const account = '00000000-0000-4000-8000-000000000001'
 await db.query(`insert into public.account_deletion_requests(account_id,requested_at) values ($1,now()-interval '31 days')`, [account])
 const original = (await db.query('select requested_at,review_due_at,ordinary_due_at from public.account_deletion_requests')).rows
