@@ -1,0 +1,61 @@
+{
+  "scope": "migration020-source-fixture-only",
+  "objects": [
+    {
+      "object": "constraint:public.deletion_progress_plans.deletion_progress_plans_account_id_key",
+      "fingerprint": "fe8a0ecfa4b15dd743e23c317b54332dd3e87fbb564896f1215263c2dc9d7e8b"
+    },
+    {
+      "object": "constraint:public.deletion_progress_plans.deletion_progress_plans_check",
+      "fingerprint": "82e2a0346f02a010111c59cc391605e3526e9d1d2387e157fa298e9e1255a783"
+    },
+    {
+      "object": "constraint:public.deletion_progress_plans.deletion_progress_plans_check1",
+      "fingerprint": "b5c53de65c279cafe9c8783a6994d0a72e8621bf799be86cc8fc6ada84d6b927"
+    },
+    {
+      "object": "constraint:public.deletion_progress_plans.deletion_progress_plans_pkey",
+      "fingerprint": "a48ee77b6823bdfce7d1b066c3e092b9b1dd062fcd191b8210038e60fea64b38"
+    },
+    {
+      "object": "constraint:public.deletion_progress_plans.deletion_progress_plans_plan_hash_check",
+      "fingerprint": "44866db22fcebe6af643b96edc78ff8f964cc5156060acb1688f4d8eb7435cf4"
+    },
+    {
+      "object": "constraint:public.deletion_progress_plans.deletion_progress_plans_request_id_fkey",
+      "fingerprint": "dd05bb329e175dfaaf5d9555d1d189f30dba44dcb5441d63416937c959ad3121"
+    },
+    {
+      "object": "constraint:public.deletion_progress_plans.deletion_progress_plans_rows_hash_check",
+      "fingerprint": "5d2680b4eb0a8fb58e767a81a1f8d8697a23def803f5ab07da1e42ac4dd19605"
+    },
+    {
+      "object": "constraint:public.deletion_progress_plans.deletion_progress_plans_schema_hash_check",
+      "fingerprint": "098a656afe497cc2759736d2aeacf7baa49eba87cad8adc0c8ac11720a60256c"
+    },
+    {
+      "object": "function:public.freeze_deleted_progress()",
+      "fingerprint": "ce21bd2505afafe0f3a504d815df422b06ca4747a90bcdc3dc02614b005fd04d"
+    },
+    {
+      "object": "function:public.guard_progress_plan()",
+      "fingerprint": "8c4f5105c60c2df0c7e5730b8de54fe745a4ab25d4eaa698dac43131839541f9"
+    },
+    {
+      "object": "relation:public.deletion_progress_plans",
+      "fingerprint": "985bbfb81e7146d4dc4e4f8c707cf05cc69d1fa95ea0d6e84ac5d0ab0a942f16"
+    },
+    {
+      "object": "trigger:public.course_progress.freeze_deleted_progress",
+      "fingerprint": "e7d9521218ab63c3934a7e5643ac013b9cef05ca86df88f98b0819cc888fb669"
+    },
+    {
+      "object": "trigger:public.deletion_progress_plans.guard_progress_plan",
+      "fingerprint": "4dde01fd4af97dcd5195d00cc1dd74b6cba7614bcf5506a731f63bb2721b04ed"
+    },
+    {
+      "object": "trigger:public.user_progress.freeze_deleted_progress",
+      "fingerprint": "578f30301fa1dc9b1f8983c8e71ded3947e05272ab63ff4a0d23a099f979db25"
+    }
+  ]
+}
