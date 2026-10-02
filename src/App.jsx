@@ -41,8 +41,9 @@ function AppShell() {
   }
   const showNavigation = ['/', '/program', '/courses', '/care', '/sessions', '/premium'].includes(pathname)
     || pathname.startsWith('/courses/')
+  const isPlayer = pathname.startsWith('/sessions/') && pathname.endsWith('/play')
   return (
-    <div className={`app-shell${showNavigation ? ' app-shell-with-nav' : ''}`}>
+    <div className={`app-shell${showNavigation ? ' app-shell-with-nav' : ''}${isPlayer ? ' app-shell-player' : ''}`}>
       <Toast />
       <div className="screen" key={pathname}>
       <Routes>

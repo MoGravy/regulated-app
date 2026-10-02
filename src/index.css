@@ -42,6 +42,10 @@ body {
   padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
 }
 
+.app-shell-player {
+  background: var(--player-bg);
+}
+
 .app-shell:not(.app-shell-with-nav) {
   padding-bottom: var(--safe-bottom);
 }
