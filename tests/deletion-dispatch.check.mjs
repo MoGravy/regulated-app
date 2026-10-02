@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
-import { handleDeletionDispatch } from '../api/deletion-dispatch.js'
+import { handleDeletionDispatch } from '../api/_deletion-dispatch.js'
 
 const runtime = process.env.PGLITE_MODULE || '/Users/matthew/AgentWorkspace/regulated-device-check/postgres-check/node_modules/@electric-sql/pglite/dist/index.js'
 const { PGlite } = await import(pathToFileURL(runtime))

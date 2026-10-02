@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { handleRequest } from '../api/request-account-deletion.js'
+import { handleRequest } from '../api/_request-account-deletion.js'
 
 function database() {
   const rows = new Map()

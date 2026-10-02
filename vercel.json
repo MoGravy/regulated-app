@@ -1,6 +1,9 @@
 {
   "crons": [{ "path": "/api/deletion-dispatch", "schedule": "0 5 * * *" }],
   "rewrites": [
+    { "source": "/api/request-account-deletion", "destination": "/api/care-connect?operation=deletion-request" },
+    { "source": "/api/deletion-alert", "destination": "/api/care-connect?operation=deletion-alert" },
+    { "source": "/api/deletion-dispatch", "destination": "/api/care-connect?operation=deletion-dispatch" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],

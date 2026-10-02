@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { inventoryDeletion } from '../scripts/deletion-inventory.mjs'
-import { handleDeletionAlert, authorized } from './deletion-alert.js'
+import { handleDeletionAlert, authorized } from './_deletion-alert.js'
 
 export async function handleDeletionDispatch(req, res, {
   env = process.env,

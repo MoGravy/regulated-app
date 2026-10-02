@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { handleDeletionAlert } from '../api/deletion-alert.js'
+import { handleDeletionAlert } from '../api/_deletion-alert.js'
 
 const secret = 'local-test-cron-secret'
 const env = {
