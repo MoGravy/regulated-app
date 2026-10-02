@@ -2,5 +2,10 @@
   "appId": "co.regulatedapp.app",
   "appName": "Regulated",
   "webDir": "dist",
-  "loggingBehavior": "none"
+  "loggingBehavior": "none",
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK"
+    }
+  }
 }
