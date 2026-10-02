@@ -1,10 +1,11 @@
-import { ui } from '../content/reviewedCopy.js'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import Texture from '../components/Texture'
-import { sendMagicLink, signInWithPassword, signUpWithPassword } from '../lib/supabase'
+import { confirmEmailLink, sendMagicLink, signInWithPassword, signUpWithPassword } from '../lib/supabase'
+import { emailConfirmation, signInDestination, signInError } from '../lib/signInFlow'
+import { signInCopy } from '../config/signInCopy'
 
 // Design board "ONBOARDING": the note under it reads "Sign-in is the same
 // screen without the paragraph", so this is onboarding step 1 with the
@@ -15,35 +16,59 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function SignIn() {
   const navigate = useNavigate()
-  const { userEmail, authUser, addToast } = useApp()
+  const { hash } = useLocation()
+  const [params] = useSearchParams()
+  const next = signInDestination(params.get('next'))
+  const { userEmail, authUser, authError, addToast } = useApp()
   const [email, setEmail] = useState(userEmail || '')
   const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
   const [mode, setMode] = useState('link') // link | password | register
   const [sent, setSent] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(authError || '')
   const [loading, setLoading] = useState(false)
+  const submitting = useRef(false)
+  const [confirmation, setConfirmation] = useState(() => emailConfirmation(window.location.hash))
+
+  useEffect(() => {
+    const incoming = emailConfirmation(hash)
+    // Keep the one-time credential out of copied URLs and browser history.
+    if (incoming) {
+      setConfirmation(incoming)
+      setError('')
+      navigate(`/signin?next=${encodeURIComponent(next)}`, { replace: true })
+    }
+  }, [hash, navigate, next])
+
+  useEffect(() => {
+    if (authError) {
+      setError(authError)
+      setSent(false)
+    }
+  }, [authError])
 
   useEffect(() => {
     function showLinkError() {
       sessionStorage.removeItem('regulated_auth_error')
-      setError('That did not work. Try again.')
+      setError(signInError(null, true))
+      setSent(false)
     }
     if (sessionStorage.getItem('regulated_auth_error')) showLinkError()
     window.addEventListener('regulated-auth-link-error', showLinkError)
     return () => window.removeEventListener('regulated-auth-link-error', showLinkError)
   }, [])
 
-  if (authUser) {
+  if (authUser && !confirmation) {
     return (
       <div className="page-plain" style={{ padding: '80px 24px' }}>
-        <div style={{ maxWidth: 'var(--form-width, 480px)', margin: '0 auto' }}>
+        <div style={{ maxWidth: 480, margin: '0 auto' }}>
           <h1 style={{ margin: '0 0 10px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em' }}>
             You are signed in
           </h1>
           <p style={{ margin: '0 0 24px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)' }}>
             As {authUser.email}.
           </p>
-          <button className="btn-primary btn-lg" onClick={() => navigate('/premium')}>
+          <button className="btn-primary btn-lg" onClick={() => navigate(next)}>
             Go to your account
           </button>
         </div>
@@ -51,7 +76,29 @@ export default function SignIn() {
     )
   }
 
+  async function confirm(credential = confirmation) {
+    if (submitting.current) return
+    if (credential?.token !== undefined && !/^\d{6}$/.test(credential.token)) {
+      setError(signInCopy.invalidCode)
+      return
+    }
+    submitting.current = true
+    setLoading(true)
+    setError('')
+    try {
+      await confirmEmailLink(credential)
+      navigate(next, { replace: true })
+    } catch (err) {
+      setConfirmation(null)
+      setError(credential?.token !== undefined ? signInCopy.codeError : signInError(err, true))
+    } finally {
+      submitting.current = false
+      setLoading(false)
+    }
+  }
+
   async function submit() {
+    if (submitting.current) return
     if (!EMAIL_RE.test(email)) {
       setError('Enter an email we can reach you on.')
       return
@@ -61,41 +108,43 @@ export default function SignIn() {
       return
     }
     setError('')
+    submitting.current = true
     setLoading(true)
     try {
       if (mode === 'link') {
-        await sendMagicLink(email)
+        await sendMagicLink(email, next)
+        setCode('')
         setSent(true)
       } else if (mode === 'password') {
         await signInWithPassword(email, password)
         addToast('Signed in.', 'success')
-        navigate('/premium')
+        navigate(next)
       } else {
-        const { needsConfirmation } = await signUpWithPassword(email, password)
+        const { needsConfirmation } = await signUpWithPassword(email, password, next)
         if (needsConfirmation) setSent(true)
         else {
           addToast('Account created.', 'success')
-          navigate('/premium')
+          navigate(next)
         }
       }
     } catch (err) {
-      console.error('[SignIn] failed:', err)
-      setError(err.message || 'That did not work. Try again.')
+      setError(signInError(err))
     } finally {
+      submitting.current = false
       setLoading(false)
     }
   }
 
   return (
     <div
-      className="texture"
-      style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg)' }}
+      className="page-plain texture"
+      style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto', background: 'var(--bg)' }}
     >
       <Texture ink="#24344D" variant="page" />
 
       <div className="status-bar" style={{ position: 'relative' }}><span /><span /></div>
 
-      <div style={{ position: 'relative', height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 'var(--form-width, 480px)', margin: '0 auto', width: '100%' }}>
+      <div style={{ position: 'relative', height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
         <button className="btn-icon" onClick={() => goBack(navigate)} aria-label="Back">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M10 3l-5 5 5 5" stroke="var(--ink-muted)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
@@ -103,21 +152,44 @@ export default function SignIn() {
         </button>
       </div>
 
-      <div className="entry-content" style={{ position: 'relative', flex: 'var(--entry-flex, 1)', padding: '24px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 'var(--form-width, 480px)', margin: '0 auto', width: '100%' }}>
+      <div style={{ position: 'relative', flex: 1, padding: '24px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', width: '100%' }}>
         <div style={{ font: '500 13px/18px var(--font-ui)', color: 'var(--ink-muted)' }}>Regulated</div>
         <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>
-          {ui.onboarding_heading}
+          {confirmation ? signInCopy.confirmTitle : 'Feel safe in your own body'}
         </h1>
 
-        {sent ? (
-          <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
+        {confirmation ? (
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
+            <p>{signInCopy.confirmBody}</p>
+            <button className="btn-primary btn-lg" onClick={() => confirm()} disabled={loading}>
+              {loading ? 'One moment…' : signInCopy.confirmButton}
+            </button>
+          </div>
+        ) : sent ? (
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
             <p style={{ margin: 0, font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              Check {email}. {ui.signin_device}
+              {(mode === 'link' ? signInCopy.codeSentBody : signInCopy.sentBody).replace('{email}', email)}
             </p>
-            <button className="btn-ghost" onClick={() => setSent(false)}>Use a different email</button>
+            {mode === 'link' && (
+              <>
+                <label className="form-label" htmlFor="signin-code">{signInCopy.codeLabel}</label>
+                <input id="signin-code" className="form-input form-input-lg" type="text"
+                  inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                  value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={e => e.key === 'Enter' && confirm({ email, token: code, type: 'email' })}
+                  aria-invalid={!!error} aria-describedby={error ? 'signin-code-error' : 'signin-code-hint'} />
+                <p id="signin-code-hint">{signInCopy.codeHint}</p>
+                {error && <div id="signin-code-error" role="alert">{error}</div>}
+                <button className="btn-primary btn-lg" disabled={loading || code.length !== 6}
+                  onClick={() => confirm({ email, token: code, type: 'email' })}>
+                  {loading ? 'One moment…' : signInCopy.codeButton}
+                </button>
+              </>
+            )}
+            <button className="btn-ghost" onClick={() => { setSent(false); setCode(''); setError('') }}>Use a different email</button>
           </div>
         ) : (
-          <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 40 }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" htmlFor="signin-email">Email</label>
               <input
@@ -162,8 +234,8 @@ export default function SignIn() {
 
             <div style={{ font: '400 13px/20px var(--font-ui)', color: 'var(--ink-faint)', textWrap: 'pretty' }}>
               {mode === 'link'
-                ? ui.signin_device
-                : ui.signin_progress}
+                ? signInCopy.emailHelp
+                : 'Your password only unlocks this account. Sessions stay on the device either way.'}
             </div>
 
             <button

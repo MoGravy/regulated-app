@@ -32,7 +32,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="texture" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg)' }}>
+    <div className="page-plain texture" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto', background: 'var(--bg)' }}>
       <Texture ink="#24344D" variant="page" />
 
       <div className="status-bar" style={{ position: 'relative' }}><span /><span /></div>
@@ -40,6 +40,7 @@ export default function Onboarding() {
       <div className="entry-content" style={{ position: 'relative', flex: 'var(--entry-flex, 1)', padding: '40px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 'var(--form-width, 480px)', margin: '0 auto', width: '100%' }}>
         <div style={{ font: '500 13px/18px var(--font-ui)', color: 'var(--ink-muted)' }}>Regulated</div>
 
+        {step === 0 && <div className="night-arch" aria-hidden="true" />}
         {step === 0 && (
           <>
             <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>

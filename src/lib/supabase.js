@@ -5,35 +5,8 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/credentials'
 import { apiUrl } from './apiUrl'
 import { Capacitor } from '@capacitor/core'
 import { NATIVE_AUTH_REDIRECT } from './nativeAuthUrl'
+import { emailReturnUrl } from './signInFlow'
 
-// ---------------------------------------------------------------------------
-// Key inspection helper
-// Supabase JWTs are base64url-encoded. Decoding the payload reveals the `role`
-// claim. If it says "service_role" the wrong key is in use.
-// ---------------------------------------------------------------------------
-function inspectSupabaseKey(key) {
-  if (!key) return { role: null, error: 'key is empty' }
-  try {
-    const parts = key.split('.')
-    if (parts.length !== 3) return { role: null, error: 'not a JWT' }
-    // base64url → base64 → JSON
-    const padded = parts[1].replace(/-/g, '+').replace(/_/g, '/').padEnd(
-      parts[1].length + (4 - parts[1].length % 4) % 4, '='
-    )
-    const payload = JSON.parse(atob(padded))
-    return { role: payload.role, iss: payload.iss, payload }
-  } catch (e) {
-    return { role: null, error: e.message }
-  }
-}
-
-// Credentials imported from src/config/credentials.js (hardcoded, no env vars)
-console.log('[supabase.js] URL:', SUPABASE_URL)
-console.log('[supabase.js] Anon key role:', inspectSupabaseKey(SUPABASE_ANON_KEY).role)
-
-// ---------------------------------------------------------------------------
-// Create client
-// ---------------------------------------------------------------------------
 export const supabase = createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
@@ -45,8 +18,6 @@ export const supabase = createClient(
     },
   }
 )
-
-console.log('[Supabase] Client initialized:', !!supabase)
 
 // ---------------------------------------------------------------------------
 // Session helpers
@@ -198,12 +169,18 @@ export async function getAudioSignedUrl(path) {
 // fragment and detectSessionInUrl consumes it on load. No callback route.
 // ---------------------------------------------------------------------------
 
-export async function sendMagicLink(email) {
+export async function sendMagicLink(email, next = '') {
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: Capacitor.isNativePlatform() ? NATIVE_AUTH_REDIRECT : window.location.origin },
+    options: { emailRedirectTo: Capacitor.isNativePlatform() ? NATIVE_AUTH_REDIRECT : emailReturnUrl(window.location.origin, next) },
   })
   if (error) throw error
+}
+
+export async function confirmEmailLink(confirmation) {
+  const { data, error } = await supabase.auth.verifyOtp(confirmation)
+  if (error) throw error
+  if (!data.session) throw new Error('No authenticated session')
 }
 
 export async function signInWithPassword(email, password) {
@@ -212,11 +189,11 @@ export async function signInWithPassword(email, password) {
   return data.user
 }
 
-export async function signUpWithPassword(email, password) {
+export async function signUpWithPassword(email, password, next = '') {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: Capacitor.isNativePlatform() ? NATIVE_AUTH_REDIRECT : window.location.origin },
+    options: { emailRedirectTo: Capacitor.isNativePlatform() ? NATIVE_AUTH_REDIRECT : emailReturnUrl(window.location.origin, next) },
   })
   if (error) throw error
   // A null session means the project is set to confirm the address first.

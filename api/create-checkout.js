@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import { annualFreeCheck, annualFreeCheckout, saveAnnualFreeSession, ANNUAL_FREE } from './_annualfree.js'
 import { normalEmail } from './_identity.js'
+import dapCheckout from './_dap-checkout.js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
@@ -14,7 +15,7 @@ const supabase = createClient(
 // Custom audio price is server-authoritative. The client never sends an amount.
 import { CUSTOM_AUDIO_PRICE_CENTS, CURRENCY, ANNUAL_FOUNDING_PRICE_CENTS, MONTHLY_PRICE_CENTS } from '../src/config/pricing.js'
 
-// Look up a coupon code in the coupons table — same rules as /api/validate-coupon.
+// Look up a coupon code in the coupons table, same rules as /api/validate-coupon.
 // Returns the coupon row, or null if the code is missing/inactive/expired/exhausted.
 async function lookupCoupon(code) {
   if (!code) return null
@@ -46,6 +47,8 @@ function getAppUrl(req) {
 }
 
 export default async function handler(req, res) {
+  // ponytail: share the existing checkout function to stay within the Hobby function limit.
+  if (req.query?.product === 'dap') return dapCheckout(req, res)
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
   }
@@ -63,7 +66,7 @@ export default async function handler(req, res) {
   // NOTE: price and discount values are never read from the client. Price is a
   // server constant; discounts come from the coupons table via lookupCoupon().
 
-  // Stripe metadata values are capped at 500 chars — truncate long free-text fields
+  // Stripe metadata values are capped at 500 chars, truncate long free-text fields
   const trunc = (str, max = 490) =>
     str && str.length > max ? str.slice(0, max) + '…' : (str || '')
 
@@ -91,7 +94,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // Build Stripe discount object from the coupons table — client-sent discount
+    // Build Stripe discount object from the coupons table, client-sent discount
     // values are ignored. An invalid/expired code is a hard error rather than a
     // silent full-price charge: the client validated it moments ago, so a miss
     // here means tampering or a race on expiry/usage limits.
@@ -152,7 +155,7 @@ export default async function handler(req, res) {
         metadata: {
           type: 'custom_audio',
           user_email: email,
-          // Full order details — webhook reads these to create the DB row
+          // Full order details, webhook reads these to create the DB row
           pattern:       trunc(pattern),
           trigger:       trunc(trigger),
           desired_state: trunc(desiredState),

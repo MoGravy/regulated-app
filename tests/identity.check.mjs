@@ -10,6 +10,7 @@ assert.equal((await callerUser({ headers: { authorization: 'Bearer good' } }, sb
 
 // Token wins over the body, and is normalised.
 assert.equal(await callerEmail({ headers: { authorization: 'Bearer good' }, body: { email: 'other@example.com' } }, sb), 'kat@example.com')
+assert.equal(await callerEmail({ headers: { authorization: 'Bearer good' } }, stub({ good: { email: 'kat@example.com' } })), null)
 // A bad token is refused, never downgraded to the body email.
 assert.equal(await callerEmail({ headers: { authorization: 'Bearer nope' }, body: { email: 'other@example.com' } }, sb), null)
 // No token: the body email counts for nothing.

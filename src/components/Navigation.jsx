@@ -1,11 +1,13 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import { courseCopy } from '../config/courseCopy'
+import { careCopy } from '../config/careCopy'
 
-// Three tabs, label-only with a 16x2 underline on the active one — design 1b/1d.
-// "You" is the premium/account screen, which carries the Custom audio card, so
-// /custom stays one tap away without a fourth tab the design does not have.
+// The You screen carries Custom audio, so it stays one tap away.
 const TABS = [
   { path: '/', label: 'Today' },
   { path: '/sessions', label: 'Browse' },
+  { path: '/courses', label: courseCopy.nav },
+  { path: '/care', label: careCopy.nav },
   { path: '/premium', label: 'You' },
 ]
 
@@ -17,10 +19,9 @@ export default function Navigation() {
     <nav
       aria-label="Primary"
       style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        position: 'relative',
+        flex: 'none',
+        width: '100%',
         margin: '0 auto',
         maxWidth: 'var(--content-width, 480px)',
         display: 'flex',
@@ -34,6 +35,7 @@ export default function Navigation() {
     >
       {TABS.map(tab => {
         const active = location.pathname === tab.path
+          || (tab.path === '/courses' && location.pathname.startsWith('/courses/'))
         return (
           <button
             key={tab.path}

@@ -3,6 +3,9 @@ import { useLocalStorage } from './useLocalStorage'
 import { supabase, checkSubscription, ensureProfile, signOutUser } from '../lib/supabase'
 import { setBillingAccount } from '../lib/nativeBilling'
 import { programAt } from '../config/program'
+import { disableCarePush } from '../lib/carePush'
+import { signInError } from '../lib/signInFlow'
+import { recordPracticeDay } from '../lib/streak'
 
 const AppContext = createContext(null)
 
@@ -18,13 +21,15 @@ export function AppProvider({ children }) {
   const [isPremium, setIsPremium] = useState(false)
   const [onboardingDone, setOnboardingDone] = useLocalStorage('regulated_onboarding', false)
   // 'program' | 'browse'. Browse is the default and stays the default while
-  // the program is unapproved — brief phase 4.
+  // the program is unapproved, brief phase 4.
   const [mode, setMode] = useLocalStorage('regulated_mode', 'browse')
   // How many program days are finished. See src/config/program.js for why this
   // is a counter rather than a set of session ids.
   const [programDay, setProgramDay] = useLocalStorage('regulated_program_day', 0)
   const [toasts, setToasts] = useState([])
   const [authUser, setAuthUser] = useState(null)
+  const [authReady, setAuthReady] = useState(false)
+  const [authError, setAuthError] = useState('')
 
   const accountId = useRef(null)
   const premiumRevision = useRef(0)
@@ -62,18 +67,27 @@ export function AppProvider({ children }) {
       accountId.current = user?.id ?? null
       void setBillingAccount(accountId.current).catch(() => {})
       setAuthUser(user ? { ...user } : null)
+      setAuthReady(true)
+      if (user) setAuthError('')
       if (user?.email) {
         setUserEmail(user.email)
         ensureProfile(user)
       }
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (initialRevision === authRevision.current) adopt(data.session)
-    }).catch(() => { if (initialRevision === authRevision.current) adopt(null) })
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      adopt(session)
-    })
+    supabase.auth.initialize()
+      .then(async ({ error }) => {
+        const { data } = await supabase.auth.getSession()
+        if (initialRevision !== authRevision.current) return
+        adopt(data.session)
+        if (live && !data.session && error) setAuthError(signInError(error, true))
+      })
+      .catch(() => {
+        if (initialRevision !== authRevision.current) return
+        adopt(null)
+        if (live) setAuthError(signInError(null, true))
+      })
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => adopt(session))
 
     return () => {
       live = false
@@ -83,7 +97,6 @@ export function AppProvider({ children }) {
       sub.subscription.unsubscribe()
     }
     // setUserEmail changes each render; the auth listener must stay mounted.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -98,6 +111,7 @@ export function AppProvider({ children }) {
     setAuthUser(null)
     setUserEmail(null)
     setIsPremium(false)
+    await disableCarePush().catch(() => {})
     await signOutUser()
   }
 
@@ -105,6 +119,7 @@ export function AppProvider({ children }) {
     if (!completedSessions.includes(sessionId)) {
       setCompletedSessions([...completedSessions, sessionId])
     }
+    recordPracticeDay()
     // The program only moves when the session just finished is the one it was
     // waiting on, so listening ahead in Browse never skips a day.
     const { today } = programAt(programDay)
@@ -119,7 +134,7 @@ export function AppProvider({ children }) {
   }
 
   // Position in seconds. Drives the in-progress row state and the design's
-  // "Continue listening" card. Local only — nothing is written to Supabase.
+  // "Continue listening" card. Local only, nothing is written to Supabase.
   function saveProgress(sessionId, position, duration) {
     if (!sessionId || !duration || !Number.isFinite(position)) return
     const ratio = position / duration
@@ -155,7 +170,7 @@ export function AppProvider({ children }) {
       completedSessions, markSessionComplete,
       progress, saveProgress, lastInProgress,
       isPremium, refreshPremium,
-      authUser, signOut,
+      authUser, authReady, authError, signOut,
       onboardingDone, setOnboardingDone,
       mode, setMode,
       programDay,

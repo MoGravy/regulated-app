@@ -55,7 +55,7 @@ function Receipt({ sessionId }) {
     : custom ? ui.payment_confirmed_body.split('.')[0].replace(' as paid', '') + '.' : ui.payment_confirmed_body
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 28px', textAlign: 'center' }}>
+    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 28px', textAlign: 'center' }}>
       <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--ink)', marginBottom: 12, lineHeight: 1.2 }}>{title}</h1>
       <p role="status" style={{ fontSize: 16, color: 'var(--ink-muted)', lineHeight: 1.7, marginBottom: 24, maxWidth: 440 }}>{body}</p>
       {confirmed && !custom && isPremium && <p>{ui.purchase_active}</p>}

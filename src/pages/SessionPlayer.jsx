@@ -8,6 +8,7 @@ import { supabase, trackSessionCompletion, SESSION_COLUMNS, getCachedSession, au
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import { categoryOf } from '../lib/categories'
+import { StreakNote } from '../components/Streak'
 import MoodTracker from '../components/MoodTracker'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
 import { haptic } from '../lib/haptic'
@@ -274,6 +275,7 @@ function SessionAttempt({ id }) {
           <div className="bloom" aria-hidden="true" />
           <h1 className="fade-in" style={{ position: 'relative', font: '300 32px/38px var(--font-display)', color: 'var(--player-title)', animationDelay: '600ms' }}>
             Day {completedSessions.includes(session.id) ? completedSessions.length : completedSessions.length + 1} of your practice
+            <StreakNote />
           </h1>
         </div>
       )}
@@ -382,7 +384,7 @@ function SessionAttempt({ id }) {
 
 function Shell({ children }) {
   return (
-    <div className="player-page" style={{ minHeight: '100dvh', background: 'var(--player-bg)', position: 'relative', display: 'flex', flexDirection: 'column', color: 'var(--player-body)', overflow: 'hidden' }}>
+    <div className="page-frame player-page" style={{ background: 'var(--player-bg)', position: 'relative', color: 'var(--player-body)', overflowX: 'hidden' }}>
       <div aria-hidden="true" className="blob blob-a blob-drift" style={{ position: 'absolute', width: 320, height: 260, left: -60, top: 120, background: 'var(--player-blob-a)', filter: 'blur(40px)' }} />
       <div aria-hidden="true" className="blob blob-b" style={{ position: 'absolute', width: 240, height: 200, right: -50, bottom: 180, background: 'var(--player-blob-b)', filter: 'blur(36px)' }} />
       {children}

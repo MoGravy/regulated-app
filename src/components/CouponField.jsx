@@ -56,7 +56,7 @@ export default function CouponField({ onApply, onRemove, appliedCoupon }) {
             <div style={{ fontSize: 12, color: 'var(--ink-faint)' }}>
               {appliedCoupon.discount_type === 'percentage'
                 ? `${appliedCoupon.discount_amount}% off`
-                : `$${appliedCoupon.discount_amount} off`}
+                : `A$${appliedCoupon.discount_amount} off`}
               {appliedCoupon.partner_name ? ` · ${appliedCoupon.partner_name}` : ''}
             </div>
           </div>

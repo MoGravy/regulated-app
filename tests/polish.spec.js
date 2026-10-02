@@ -1,6 +1,6 @@
 import { ui } from '../src/content/reviewedCopy.js'
 import { test, expect } from '@playwright/test'
-import { skipOnboarding, signedIn, asPremium, fakeAudio, noProductionWrites } from './helpers.js'
+import { skipOnboarding, asPremium, fakeAudio, noProductionWrites } from './helpers.js'
 import path from 'node:path'
 
 // Screenshot set for the design polish pass. SHOT_TAG=before|after picks the

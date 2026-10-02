@@ -13,7 +13,7 @@ import billingCopy from '../content/billing.json'
 import { apiUrl } from '../lib/apiUrl'
 
 // Three price points, annual first. The design marks the preferred card by
-// border weight only — no badge, no countdown, no struck-through price.
+// border weight only, no badge, no countdown, no struck-through price.
 const PLANS = [
   {
     id: 'annual',

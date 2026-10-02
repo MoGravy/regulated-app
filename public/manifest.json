@@ -4,18 +4,18 @@
   "description": "Personalized nervous system regulation",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F5F2EC",
-  "theme_color": "#F5F2EC",
+  "background_color": "#0B1124",
+  "theme_color": "#0B1124",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icon-192.png?v=night-2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-512.png?v=night-2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

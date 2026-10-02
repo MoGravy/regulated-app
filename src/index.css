@@ -34,6 +34,44 @@ body {
   flex-direction: column;
 }
 
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  height: 100%;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
+}
+
+/* Installed WebKit can exclude safe areas from dvh on launch. */
+@media (display-mode: standalone) {
+  .app-shell {
+    height: 100vh;
+  }
+}
+
+.app-shell-player {
+  background: var(--player-bg);
+}
+
+.app-shell:not(.app-shell-with-nav) {
+  padding-bottom: var(--safe-bottom);
+}
+
+.app-shell-with-nav .page {
+  padding-bottom: 16px;
+}
+
+.page-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
 a {
   color: var(--accent);
   text-decoration: none;
@@ -95,6 +133,7 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
    --------------------------------------------------------------------------- */
 .page {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--bg);
@@ -104,6 +143,7 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
 /* Page with a pinned footer CTA instead of the tab bar */
 .page-plain {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--bg);
@@ -207,6 +247,32 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
   transition: color var(--t-press), transform var(--t-press);
 }
 .btn-ghost:hover { color: var(--ink); }
+
+.course-guide { line-height: 1.55; }
+.course-guide > p { margin: 0 0 20px; }
+.course-guide ol { margin: 0 0 24px; padding-left: 26px; }
+.course-guide li { padding-left: 4px; margin-bottom: 16px; }
+.course-guide li::marker { font-weight: 700; color: var(--accent); }
+.course-guide strong { font: 700 16px/24px var(--font-ui); }
+.course-guide li p { margin: 4px 0 0; }
+.course-legacy-copy { white-space: pre-wrap; line-height: 1.6; }
+.course-lesson-copy { font: 400 16px/1.65 var(--font-ui); color: var(--ink); }
+.course-lesson-copy h3 { margin: 28px 0 10px; font: 600 23px/1.25 var(--font-display); color: var(--accent); }
+.course-lesson-copy h3:first-child { margin-top: 8px; }
+.course-lesson-copy p { margin: 0 0 18px; }
+.course-lesson-copy ul { margin: 0 0 20px; padding-left: 24px; }
+.course-lesson-copy li { margin: 0 0 10px; padding-left: 4px; }
+.course-lesson-copy a { color: var(--accent); text-decoration: underline; overflow-wrap: anywhere; }
+.course-media-item { margin: 24px 0; }
+.course-media-title { margin: 0 0 10px; font-weight: 600; }
+.course-pdf { display: block; width: 100%; height: min(70vh, 700px); min-height: 420px; margin: 0 0 12px; border: 1px solid var(--line); border-radius: var(--r-row); background: var(--surface); }
+.course-active-lesson { padding-bottom: 28px; margin-bottom: 28px; border-bottom: 1px solid var(--line); }
+.course-content button.card { color: var(--ink); font: 400 16px/24px var(--font-ui); }
+.course-content .card.course-lesson-link { transition: background var(--t-enter), border-color var(--t-enter), box-shadow var(--t-enter); }
+.course-content .card.course-lesson-link[aria-current="step"] { background: var(--accent-soft); border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); color: var(--accent); font-weight: 700; }
+.course-complete-action { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); }
+.course-complete-action:hover:not(:disabled) { background: var(--sunk); }
+.course-complete-action:disabled { background: var(--sunk); color: var(--ink-disabled); }
 
 /* 44px icon button — back, close, player chrome */
 .btn-icon {
@@ -460,7 +526,7 @@ h1, h2, h3 { font-weight: 400; font-family: var(--font-display); color: var(--in
    --------------------------------------------------------------------------- */
 .toast-container {
   position: fixed;
-  top: 20px;
+  top: calc(20px + var(--safe-top));
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -601,3 +667,35 @@ button:active:not(:disabled),
     padding-right: max(32px, env(safe-area-inset-right));
   }
 }
+.care-role { padding: 18px 20px; margin: 8px 0 24px; background: var(--accent-soft); border-left: 4px solid var(--accent); border-radius: var(--r-row); font-weight: 700; line-height: 1.5; }
+.care-role-practitioner { background: var(--care-role-bg); border-left-color: var(--care-role-bg); color: var(--care-role-ink); }
+.care-content h2 { margin-bottom: 12px; }
+.care-content h3 { margin-bottom: 12px; }
+.care-content [role="tabpanel"] > p { margin: 0 0 16px; }
+.course-active-lesson > h2 { margin-bottom: 16px; }
+.care-client-link { flex: 0 0 auto; cursor: pointer; }
+.care-client-link[aria-current="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.care-reactions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.care-reactions button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; min-height: 44px; padding: 6px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--surface); color: var(--ink); font-size: 18px; }
+.care-reactions button[aria-pressed="true"] { background: var(--accent-tint); border-color: var(--accent); }
+.care-reactions button:disabled { opacity: .6; cursor: wait; }
+/* Alert targets keep a visible outline when reduced motion is preferred. */
+.care-alert-target {
+  outline: 3px solid var(--care-alert);
+  outline-offset: 3px;
+  scroll-margin-block: 100px;
+  animation: care-alert-wiggle 650ms ease-in-out;
+}
+@keyframes care-alert-wiggle {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-3px); }
+  40%, 80% { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .care-alert-target { animation: none; }
+}
+
+.course-content, .care-content { overflow-wrap: anywhere; }
+.care-content details[open] > summary { margin-bottom: 16px; }
+.care-content details p { margin-bottom: 14px; }
+.care-content details p:last-child { margin-bottom: 0; }

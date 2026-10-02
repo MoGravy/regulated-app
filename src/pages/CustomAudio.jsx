@@ -382,7 +382,7 @@ function CustomAudioIntro({ onStart, onBack }) {
     ['Yours to keep', ui.custom_access],
   ]
   return (
-    <div className="readable-page custom-intro" style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--bg)' }}>
+    <div className="page-frame" style={{ background: 'var(--bg)' }}>
       <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
       <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 'var(--content-width, 480px)', margin: '0 auto', width: '100%' }}>

@@ -14,7 +14,7 @@ const SCREENS = [
 
 test.describe('every screen renders clean at 390x844', () => {
   for (const [name, path] of SCREENS) {
-    test(`${name} — no console errors, screenshot`, async ({ page }, testInfo) => {
+    test(`${name}: no console errors, screenshot`, async ({ page }, testInfo) => {
       await skipOnboarding(page)
       const errors = watchConsole(page)
 
@@ -68,7 +68,7 @@ test('signed out: premium sessions show the locked state', async ({ page }) => {
   const locked = page.locator('.row-locked')
   await expect(locked.first()).toBeVisible()
 
-  // Locked rows are dimmed, not badged — the design is explicit about this.
+  // Locked rows are dimmed, not badged, and the design is explicit about this.
   await expect(page.getByText('Premium', { exact: false }).first()).toBeVisible()
 
   // A locked row routes to the paywall, it never opens the player.
@@ -112,13 +112,19 @@ test('program stays gated until the map is approved', async ({ page }) => {
   await expect(page.getByText('Week 1', { exact: false })).toHaveCount(0)
 })
 
-test('tab bar moves between the three tabs', async ({ page }) => {
+test('tab bar moves between the five tabs', async ({ page }) => {
   await skipOnboarding(page)
   await page.goto('/')
   await page.waitForLoadState('networkidle')
 
   await page.getByRole('button', { name: 'Browse', exact: true }).click()
   await expect(page).toHaveURL(/\/sessions$/)
+
+  await page.getByRole('button', { name: 'My courses', exact: true }).click()
+  await expect(page).toHaveURL(/\/courses$/)
+
+  await page.getByRole('button', { name: 'Support', exact: true }).click()
+  await expect(page).toHaveURL(/\/care$/)
 
   await page.getByRole('button', { name: 'You', exact: true }).click()
   await expect(page).toHaveURL(/\/premium$/)
@@ -180,7 +186,7 @@ test('sign in rejects a malformed email before calling out', async ({ page }) =>
 // These need the serverless functions, so they only run against a deployment.
 // ---------------------------------------------------------------------------
 test.describe('needs /api', () => {
-  test.skip(!HAS_API, 'set BASE_URL to a deployment — vite preview does not serve /api')
+  test.skip(!HAS_API, 'set BASE_URL to a deployment, since vite preview does not serve /api')
 
   test('a free session gets a signed URL and the audio reaches canplay', async ({ page }) => {
     await skipOnboarding(page)
@@ -222,7 +228,7 @@ test.describe('needs /api', () => {
     expect(res.status()).toBe(400)
   })
 
-  test('checkout redirects to Stripe — never completes a payment', async ({ page }) => {
+  test('checkout redirects to Stripe without completing a payment', async ({ page }) => {
     // Subscribing upserts a users row before it calls out, and the server
     // creates a real live-mode Checkout Session. Against a real deployment both
     // land in production, so the Supabase write and the checkout call are both
@@ -259,7 +265,7 @@ test('today shows the next day, not a calendar day', async ({ page }, testInfo) 
   await page.goto('/')
   await page.waitForLoadState('networkidle')
 
-  // Nine days done means week 2 day 3 is next — no date arithmetic involved.
+  // Nine days done means week 2 day 3 is next, with no date arithmetic involved.
   await expect(page.getByText('Today · Week 2, day 3')).toBeVisible()
   await expect(page.getByRole('button', { name: /Start today's session/ })).toBeVisible()
   await expect(page.getByText('2 of 7 done')).toBeVisible()

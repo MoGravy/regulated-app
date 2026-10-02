@@ -125,7 +125,7 @@ assert.equal((await rejected({}, 'receipt', 'missing')).trace.length, 1)
 await rejected({ missingUser: true }, 'auth')
 await rejected({ user: { id: 'account-2' } }, 'auth')
 await rejected({ authError: true }, 'auth')
-await rejected({ respond: q => { throw new Error(privateText) } }, 'receipt')
+await rejected({ respond: _q => { throw new Error(privateText) } }, 'receipt')
 await rejected({ respond: (q, r) => q.table === 'account_deletion_requests' ? { data: { id: 'wrong', account_id: accountId } } : r }, 'receipt')
 
 for (const user of [{ email: null }, { email: '' }, { email_confirmed_at: null }]) {

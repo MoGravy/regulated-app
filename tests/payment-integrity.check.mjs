@@ -6,6 +6,7 @@ import vm from 'node:vm'
 import { callerUser, activeSubscriptions, sameEmail, normalEmail } from '../api/_identity.js'
 import { receiptStatus } from '../api/_checkout-receipt.js'
 import { ui } from '../src/content/reviewedCopy.js'
+import { CUSTOM_AUDIO_PRICE, ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE } from '../src/config/pricing.js'
 
 const runtime = process.env.PGLITE_MODULE || '/Users/matthew/AgentWorkspace/regulated-device-check/postgres-check/node_modules/@electric-sql/pglite/dist/index.js'
 const { PGlite } = await import(pathToFileURL(runtime))
@@ -117,6 +118,7 @@ if (process.argv[2] !== 'email') {
   let event
   const webhookSource = (await source('../api/stripe-webhook.js')).replace(/^import .*$/gm, '').replace('export default async function handler', 'async function handler').replaceAll('export ', '')
   const context = vm.createContext({ process: { env: {} }, Buffer, receiptStatus, ui, normalEmail,
+    CUSTOM_AUDIO_PRICE, ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE,
     createClient: () => supabase,
     Stripe: class { constructor() { return { webhooks: { constructEvent: () => event }, subscriptions: { retrieve: async id => ({ id, current_period_end: 4102444800 }) } } } },
     Resend: class { constructor() { return { emails: { send: async () => ({}) } } } }, console: { error() {}, log() {} } })

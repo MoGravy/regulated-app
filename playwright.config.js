@@ -17,12 +17,11 @@ export default defineConfig({
   timeout: 45_000,
   use: {
     baseURL: BASE_URL,
-    // Mobile first, at the width the design is drawn at.
-    viewport: { width: 390, height: 844 },
     colorScheme: 'light',
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
     ...devices['Desktop Chrome'],
+    // Mobile first, at the width the design is drawn at.
     viewport: { width: 390, height: 844 },
     // The preview bypass rides on a cookie, not a header, so it is never sent
     // to third-party origins like fonts.gstatic.com.

@@ -1,4 +1,4 @@
-// Single source of truth for all prices — frontend pages AND api/ functions
+// Single source of truth for all prices, frontend pages AND api/ functions
 // import from here. Update values here only.
 export const CURRENCY = 'aud'
 export const ANNUAL_FOUNDING_PRICE       = 149

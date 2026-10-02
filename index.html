@@ -2,18 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/icon-192.png?v=night-2" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#F5F2EC" />
+    <meta name="theme-color" content="#0B1124" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Regulated" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=night-2" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="description" content="Regulated – Personalized nervous system regulation. Custom audio sessions built for your specific patterns." />
+    <script>
+      // Look switch: classic (default) or night (Night Sleeper). VITE_LOOK sets the build default;
+      // ?look=night or ?look=classic overrides it and is remembered on this device. Runs before first paint.
+      (function () {
+        var look = '%VITE_LOOK%' === 'night' ? 'night' : 'classic'
+        try {
+          var asked = new URLSearchParams(location.search).get('look')
+          if (asked === 'night' || asked === 'classic') localStorage.setItem('regulated_look', asked)
+          var saved = localStorage.getItem('regulated_look')
+          if (saved === 'night' || saved === 'classic') look = saved
+        } catch (e) {}
+        document.documentElement.setAttribute('data-look', look)
+        if (look !== 'night') return
+        var tint = document.querySelector('meta[name="theme-color"]')
+        if (tint) tint.setAttribute('content', '#0B1124')
+        var fonts = document.createElement('link')
+        fonts.rel = 'stylesheet'
+        fonts.href = 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..600&family=Jost:wght@300..600&display=swap'
+        document.head.appendChild(fonts)
+      })()
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..600&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/theme/night.css" />
     <title>Regulated</title>
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
