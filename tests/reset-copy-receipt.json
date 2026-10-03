@@ -1,0 +1,30 @@
+{
+  "models": [
+    {
+      "providerID": "opencode-go",
+      "modelID": "glm-5.3"
+    },
+    {
+      "providerID": "opencode-go",
+      "modelID": "glm-5.3"
+    },
+    {
+      "providerID": "opencode-go",
+      "modelID": "glm-5.3"
+    },
+    {
+      "providerID": "opencode-go",
+      "modelID": "glm-5.3"
+    },
+    {
+      "providerID": "opencode-go",
+      "modelID": "glm-5.3"
+    }
+  ],
+  "humanizers": [
+    "Matthew",
+    "Hermes humanizer2.5.1",
+    "unslop"
+  ],
+  "status": "unpublished local preview"
+}

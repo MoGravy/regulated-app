@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
 import { readFile } from 'node:fs/promises'
 import { skipOnboarding, signedIn, silentWav } from './helpers.js'
 
@@ -159,7 +159,12 @@ test('a long course shows chapter headings and brings the chosen lesson into vie
   await expect(page.getByRole('heading', { name: 'Lesson 2', exact: true })).toBeInViewport()
   await expect(page.getByRole('button', { name: 'Lesson 2', exact: true })).toHaveAttribute('aria-current', 'step')
   await expect(page.getByRole('button', { name: 'Lesson 1', exact: true })).not.toHaveAttribute('aria-current', 'step')
-  await expect(page.getByRole('button', { name: 'Lesson 2', exact: true })).toHaveCSS('border-color', 'rgb(36, 52, 77)')
+  await expect(page.getByRole('button', { name: 'Lesson 2', exact: true })).toHaveCSS('font-weight', '700')
+  await expect.poll(async () => {
+    const selected = await page.getByRole('button', { name: 'Lesson 2', exact: true }).evaluate(el => getComputedStyle(el).borderColor)
+    const other = await page.getByRole('button', { name: 'Lesson 1', exact: true }).evaluate(el => getComputedStyle(el).borderColor)
+    return selected !== other
+  }).toBe(true)
   await expect(page.getByRole('heading', { name: 'What to do' })).toBeVisible()
   await expect(page.getByText('Start here', { exact: true })).toBeVisible()
   await expect(page.getByText('Text of lesson 2.')).toBeVisible()

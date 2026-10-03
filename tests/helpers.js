@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test'
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../src/config/credentials.js'
+import { IS_LOCAL, SUPABASE_URL, SUPABASE_ANON_KEY } from './runtime.js'
 
-export const HAS_API = !!process.env.BASE_URL && !process.env.BASE_URL.includes('localhost')
+export const HAS_API = !IS_LOCAL
 
 // Puts the app past onboarding so tests land on the real screens.
 export async function skipOnboarding(page) {
@@ -89,6 +89,7 @@ export async function signedIn(page, user = FAKE_USER) {
   await page.route(/\/rest\/v1\/|\/rpc\//, route => {
     const req = route.request()
     if (req.method() === 'GET' || req.method() === 'HEAD') {
+      if (IS_LOCAL) return route.fallback()
       return route.continue({ headers: { ...req.headers(), authorization: `Bearer ${SUPABASE_ANON_KEY}` } })
     }
     route.fulfill({ status: 201, contentType: 'application/json', body: '[]' })

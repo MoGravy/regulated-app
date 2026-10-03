@@ -1,5 +1,18 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
 import { skipOnboarding, enterProgram, watchConsole, expectNoConsoleErrors, noProductionWrites, HAS_API } from './helpers.js'
+import { SUPABASE_URL } from './runtime.js'
+
+test('local checks block outside browser requests and real account writes', async ({ page }) => {
+  test.skip(HAS_API, 'local fixture boundary')
+  await page.goto('/')
+  const blocked = page.waitForEvent('requestfailed', request => request.url() === 'https://outside.example.invalid/probe')
+  await page.evaluate(() => fetch('https://outside.example.invalid/probe').catch(() => {}))
+  expect((await blocked).failure().errorText).toMatch(/^net::ERR_BLOCKED_BY_CLIENT(?:\.Inspector)?$/)
+  const status = await page.evaluate(async base => (await fetch(`${base}/auth/v1/token`, {
+    method: 'POST', body: '{}',
+  })).status, SUPABASE_URL)
+  expect(status).toBe(401)
+})
 
 const SCREENS = [
   ['home', '/'],
@@ -252,7 +265,7 @@ test.describe('needs /api', () => {
       route.abort()
     })
 
-    await page.getByRole('button', { name: /continue at \$149/i }).click()
+    await page.getByRole('button', { name: /continue at A\$149/i }).click()
     await expect.poll(() => stripeUrl, { timeout: 20_000 }).toContain('checkout.stripe.com')
   })
 })

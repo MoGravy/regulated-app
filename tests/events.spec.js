@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
 import { skipOnboarding, noProductionWrites, HAS_API } from './helpers.js'
 
 test.use({ viewport: { width: 380, height: 820 } })
