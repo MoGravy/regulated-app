@@ -147,7 +147,10 @@ def fixture(container):
         "001_auth_and_program.sql", "007_courses.sql", "009_care.sql",
         "008_account_deletion_requests.sql", "011_account_deletion_workflow.sql",
         "019_deletion_dispatch.sql", "020_deletion_progress.sql", "021_deletion_progress_rpc.sql",
+        "022_deletion_trigger_access.sql",
     ]]:
+        if path.endswith("020_deletion_progress.sql"):
+            sql(container, "alter default privileges in schema public grant execute on functions to service_role")
         sql(container, (ROOT / path).read_text(), path)
     sql(container, f"""
       insert into auth.users(id) values ('{ACCOUNT}');

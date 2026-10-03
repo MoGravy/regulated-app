@@ -53,8 +53,12 @@ const protectedBefore = (await db.query(`select
 const deadlineBefore = (await db.query(`select requested_at,review_due_at,ordinary_due_at
   from public.account_deletion_requests where id=$1`, [receipt])).rows[0]
 
+await db.exec('alter default privileges in schema public grant execute on functions to service_role')
 await db.exec(await source('../migrations/020_deletion_progress.sql'))
 await db.exec(await source('../migrations/020_deletion_progress.sql'))
+assert.equal((await db.query("select has_function_privilege('service_role','public.freeze_deleted_progress()','EXECUTE') as allowed")).rows[0].allowed, true)
+await db.exec(await source('../migrations/022_deletion_trigger_access.sql'))
+await db.exec(await source('../migrations/022_deletion_trigger_access.sql'))
 const rpcMigration = await source('../migrations/021_deletion_progress_rpc.sql')
 assert.equal(rpcMigration, progressRpcMigration(), 'Generated migration must match its reviewed sources')
 await db.exec(rpcMigration)
@@ -240,8 +244,10 @@ const permissions = (await db.query(`select
   has_table_privilege('anon','public.deletion_progress_plans','SELECT') as anon,
   has_table_privilege('authenticated','public.deletion_progress_plans','INSERT') as client,
   has_function_privilege('authenticated','public.freeze_deleted_progress()','EXECUTE') as trigger,
+  has_function_privilege('service_role','public.freeze_deleted_progress()','EXECUTE') as server_trigger,
+  has_function_privilege('service_role','public.guard_progress_plan()','EXECUTE') as server_guard,
   has_table_privilege('service_role','public.deletion_progress_plans','SELECT,INSERT,UPDATE') as server`)).rows[0]
-assert.deepEqual(permissions, { anon: false, client: false, trigger: false, server: true })
+assert.deepEqual(permissions, { anon: false, client: false, trigger: false, server_trigger: false, server_guard: false, server: true })
 const rpcPermissions = (await db.query(`select
   has_function_privilege('service_role','public.prepare_progress_cleanup(uuid)','EXECUTE') as prepare,
   has_function_privilege('service_role','public.execute_progress_cleanup(uuid,uuid,bigint,uuid,text)','EXECUTE') as execute,
