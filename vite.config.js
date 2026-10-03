@@ -15,8 +15,29 @@ for (const [source, target] of Object.entries(browserEnv)) {
   if (!process.env[target] && process.env[source]) process.env[target] = process.env[source]
 }
 
-export default defineConfig(({ command }) => ({
-  plugins: [react()],
+export function validateNativeBuild(env) {
+  let url
+  try { url = new URL(env.VITE_SUPABASE_URL) } catch { /* Checked below. */ }
+  if (!url || url.protocol !== 'https:' || url.username || url.password ||
+      url.pathname !== '/' || url.search || url.hash) {
+    throw new Error('Native build requires a valid HTTPS VITE_SUPABASE_URL')
+  }
+  const key = env.VITE_SUPABASE_ANON_KEY
+  if (typeof key !== 'string' || !key.trim() || key.startsWith('sb_secret_')) {
+    throw new Error('Native build requires a public VITE_SUPABASE_ANON_KEY')
+  }
+  if (key.split('.').length === 3) {
+    let role
+    try { role = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString()).role } catch { /* Refuse malformed keys. */ }
+    if (role !== 'anon') throw new Error('Native build requires an anon public key')
+  }
+}
+
+export default defineConfig(({ command, mode }) => ({
+  plugins: [react(), ...(command === 'build' && mode === 'native' ? [{
+    name: 'native-sign-in-preflight',
+    configResolved(config) { validateNativeBuild(config.env) },
+  }] : [])],
   server: {
     port: Number(process.env.PORT) || 3000,
   },
