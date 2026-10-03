@@ -14,9 +14,9 @@ function validCount(count) {
   return Number.isSafeInteger(count) && count >= 0
 }
 
-async function countRows(client, table, column, value, method = 'eq') {
-  const { count } = await read(table, () => client.from(table)
-    .select(column, { count: 'exact', head: true })[method](column, value))
+async function countRows(client, table, filter, columns) {
+  const { count } = await read(table, () => filter(client.from(table)
+    .select(columns, { count: 'exact', head: true })))
   if (!validCount(count)) throw unavailable(table)
   return count
 }
@@ -57,7 +57,8 @@ export async function inventoryDeletion(client, requestId) {
   if (typeof requestId !== 'string' || !requestId.trim()) throw unavailable('receipt')
   const { data: receipt } = await read('receipt', () => client.from('account_deletion_requests')
     .select('id,account_id').eq('id', requestId).single())
-  if (receipt?.id !== requestId || typeof receipt.account_id !== 'string' || !receipt.account_id) {
+  if (receipt?.id !== requestId || typeof receipt.account_id !== 'string' ||
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(receipt.account_id)) {
     throw unavailable('receipt')
   }
   const { data: auth } = await read('auth', () => client.auth.admin.getUserById(receipt.account_id))
@@ -68,6 +69,7 @@ export async function inventoryDeletion(client, requestId) {
     requestId: receipt.id,
     accountId: receipt.account_id,
     accountCounts: {},
+    protectedCareCounts: {},
     legacyCandidateCounts: null,
     mediaReferences: [],
     blockers: [
@@ -76,9 +78,33 @@ export async function inventoryDeletion(client, requestId) {
       'private_media_ownership', 'unmapped_data', 'retention_decision',
     ],
   }
-  for (const [table, column] of [['profiles', 'id'], ['user_progress', 'user_id'], ['store_entitlements', 'account_id'], ['revenuecat_sync_state', 'account_id'], ['annual_free_reservations', 'account_id']]) {
-    report.accountCounts[table] = await countRows(client, table, column, user.id)
+  for (const [table, column] of [
+    ['profiles', 'id'], ['user_progress', 'user_id'], ['store_entitlements', 'account_id'],
+    ['revenuecat_sync_state', 'account_id'], ['annual_free_reservations', 'account_id'],
+    ['course_grants', 'user_id'], ['course_progress', 'user_id'], ['dap_purchases', 'user_id'],
+  ]) {
+    report.accountCounts[table] = await countRows(client, table, query => query.eq(column, user.id), column)
   }
+
+  // These are shared or clinical associations, never deletion authority.
+  const participants = `client_id.eq.${user.id},practitioner_id.eq.${user.id}`
+  const messageAssociations = `${participants},sender_id.eq.${user.id}`
+  for (const [table, filter] of [['care_links', participants], ['care_tasks', participants], ['care_messages', messageAssociations]]) {
+    report.protectedCareCounts[table] = await countRows(client, table,
+      query => query.or(filter), 'client_id')
+  }
+  report.protectedCareCounts.care_task_entries = await countRows(client, 'care_task_entries',
+    query => query.or(participants, { referencedTable: 'care_tasks' }), 'id,care_tasks!inner()')
+  report.protectedCareCounts.care_message_reactions = await countRows(client, 'care_message_reactions',
+    query => query.or(messageAssociations, { referencedTable: 'care_messages' })
+      .or(`user_id.eq.${user.id},care_messages.not.is.null`), 'message_id,care_messages()')
+  report.protectedCareCounts.care_push_subscriptions = await countRows(client, 'care_push_subscriptions',
+    query => query.eq('user_id', user.id), 'user_id')
+  report.protectedCareCounts.care_push_jobs = await countRows(client, 'care_push_jobs',
+    query => query.eq('care_push_subscriptions.user_id', user.id)
+      .or(`${participants},sender_id.eq.${user.id},recipient_id.eq.${user.id},care_push_subscriptions.not.is.null`),
+    'id,care_push_subscriptions()')
+  if (Object.values(report.protectedCareCounts).some(count => count > 0)) report.blockers.push('shared_care_records')
 
   if (!user.email_confirmed_at || typeof user.email !== 'string' || !user.email.trim()) {
     report.blockers.push('current_email_unverified_or_missing')
@@ -91,8 +117,8 @@ export async function inventoryDeletion(client, requestId) {
   }
   const emailPattern = user.email.trim().replace(/[\\%_]/g, '\\$&')
   report.legacyCandidateCounts = {}
-  for (const [table, column] of [['users', 'email'], ['session_completions', 'user_email'], ['subscriptions', 'user_email'], ['session_waitlist', 'email']]) {
-    report.legacyCandidateCounts[table] = await countRows(client, table, column, emailPattern, 'ilike')
+  for (const [table, column] of [['users', 'email'], ['subscriptions', 'user_email'], ['session_waitlist', 'email']]) {
+    report.legacyCandidateCounts[table] = await countRows(client, table, query => query.ilike(column, emailPattern), column)
   }
   const orders = await customOrders(client, emailPattern)
   report.legacyCandidateCounts.custom_orders = orders.count
