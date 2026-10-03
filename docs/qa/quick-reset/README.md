@@ -2,7 +2,7 @@
 
 Branch: `codex/quick-reset-preview`. Base: main7d19c3e, PR48.
 
-This change is local only. PR48's launch checklist stays parked.
+Owner approved a PR and Vercel test preview on 4 October after accepting the local check. Production merge and migrations remain excluded. PR48's launch checklist stays parked.
 
 ## Open the preview
 
@@ -47,6 +47,8 @@ node tests/check-reset-preview.mjs
 The old Node/Vite test collection failure is fixed. Local tests use synthetic public configuration and fixtures, block external browser requests and build into separate temporary folders. App code and the user's preview build are unchanged by this harness fix. Config backups are in `.tmp/harness-backup`.
 
 Six checks require a deployed API or real database and are skipped locally: real free audio, invalid session API response, checkout, unknown-event rejection, waitlist/annual-offer endpoint and database access isolation. They are not claimed as passed. No merge or deployment was attempted.
+
+Pre-preview check on 4 October found that ESLint was also scanning the new temporary build outputs. `.tmp/**` now joins the existing generated-output exclusions. Lint passed with the build files present; application source rules were unchanged. The config was backed up in `.tmp/harness-backup/eslint.config.js.before-preview-20261004`.
 
 Actual iPhone/native background playback, locked-phone alerts, purchase/refund checks and the parked launch checklist are separate. Practice history is device-local. Clearing browser data removes it; it does not follow someone to another device.
 

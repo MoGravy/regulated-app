@@ -14,7 +14,7 @@ Owner instructed implementation on 2 October.
 - Task 1 Ruling: current main has the web audio owner, not Store's native owner. Adapt that existing element using played ranges and seek fences; do not port native files or infer audibility from status alone. Native acceptance remains separate.
 - Pre-flight: Task2 emits account-scoped qualified events; Task3 consumes those through AppProvider. Legacy key remains intact and imports only into guest provenance once. Checkout and completion buttons cannot award new preview practice.
 - File plan: qualifiedListening.js and practiceLedger.js plus deterministic tests; quickReset.js resolver and tests; useApp.jsx and existing SessionPlayer.jsx adapters; App.jsx, Home.jsx, QuickReset.jsx, PracticeSummary.jsx, copy module and token-only CSS; local browser tests and evidence.
-- Current: feature commit e44c3a3 is saved locally. The old full test runner is repaired and verified, with this follow-up saved as a separate local commit. Next: owner review of the local preview. No release is authorised.
+- Current: owner accepted the local preview on 3 October and approved a review PR plus Vercel test preview on 4 October. Production merge and migrations remain excluded.
 
 ## Task outcomes, 3 October
 
@@ -65,3 +65,11 @@ Config backups: .tmp/harness-backup/playwright.config.js and .tmp/harness-backup
 - Fresh read-only review by /root/test_harness_review: no Critical or Important findings.
 
 This follow-up changes tests, configuration and evidence only. No product code, dependency, migration or deployment change. Physical iPhone and remote-service acceptance remain separate. Next: owner review of the local preview; any push or deployment needs fresh release authorisation.
+
+## Preview approval, 4 October
+
+Owner confirmed the local test worked; the supplied screenshot shows one practice day, current run 1 and personal best 1. Owner then explicitly approved pushing the branch, opening its review PR and creating the Vercel test preview. Production remains excluded and PR48's checklist stays parked.
+
+Fresh main is still 7d19c3e, so no rebase was needed. Rechecking after test builds exposed generated bundles being scanned by ESLint. Add .tmp to the existing build-output exclusions; source rules remain unchanged. Backup: .tmp/harness-backup/eslint.config.js.before-preview-20261004. Lint then passed with both test builds present.
+
+Fresh verification: full local suite 81 passed, 6 remote-only skipped, 0 failed (1.3 minutes); separate iPhone WebKit feature suite 11 passed (43.8 seconds); domain/streak 16 passed; lint and diff checks passed. Build outputs remain isolated from the owner's local preview.
