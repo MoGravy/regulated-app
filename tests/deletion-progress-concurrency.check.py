@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Native PostgreSQL lock/trigger/schema checks, not a JS worker adapter test."""
+"""Native PostgreSQL checks of the deployed cleanup RPC and concurrent writes."""
 
 import argparse
 import json
@@ -88,7 +88,7 @@ def check(container, sessions, report):
     files = ["supabase-schema.sql"] + ["migrations/" + name for name in [
         "001_auth_and_program.sql", "007_courses.sql", "009_care.sql",
         "008_account_deletion_requests.sql", "011_account_deletion_workflow.sql",
-        "019_deletion_dispatch.sql", "020_deletion_progress.sql",
+        "019_deletion_dispatch.sql", "020_deletion_progress.sql", "021_deletion_progress_rpc.sql",
     ]]
     for path in files:
         sql(container, (ROOT / path).read_text(), path)
@@ -164,25 +164,32 @@ def check(container, sessions, report):
                 "Old snapshot must precede the plan")
         old_readers.append(session)
 
-    # This fixture seeds approval and runs the worker's lock/delete sequence directly.
-    # The JS worker's identity, snapshot and approval checks are covered separately.
+    plan = json.loads(sql(container, f"set role service_role; select public.prepare_progress_cleanup('{RECEIPT}');",
+                          "Service-role prepare RPC"))
+    require(plan["counts"] == {"user_progress": 1, "course_progress": 1} and plan["approved"] is False,
+            "Prepare RPC must count only the selected progress and cannot approve")
+    claim = json.loads(sql(container, "set role service_role; select row_to_json(c) from public.claim_deletion_requests(1) c;",
+                           "Service-role claim"))
+    require(claim["account_id"] == ACCOUNT and claim["request_id"] == RECEIPT, "Wrong fixture claim")
     sql(container, f"""
-      insert into public.deletion_progress_plans
-        (request_id,account_id,plan_hash,schema_hash,rows_hash,counts,approved_at,approved_by)
-        values ('{RECEIPT}','{ACCOUNT}',repeat('a',64),repeat('b',64),repeat('c',64),
-          '{{"user_progress":1,"course_progress":1}}',now(),'fixture operator');
+      update public.deletion_progress_plans set approved_at=now(),approved_by='fixture operator'
+        where request_id='{RECEIPT}';
+      update public.account_deletion_requests set reviewed_at=now(),reviewed_by='fixture operator'
+        where id='{RECEIPT}';
     """, "Fixture approval")
     cleanup = Session(container, "progress_cleanup")
     sessions.append(cleanup)
     cleanup_pid = int(cleanup.ready("begin; select pg_backend_pid();"))
     pids.append(cleanup_pid)
-    cleanup.ready(f"""
+    outcome = json.loads(cleanup.ready(f"""
       set local statement_timeout='20s';
-      lock table public.user_progress,public.course_progress,public.deletion_progress_plans in share row exclusive mode;
-      delete from public.user_progress where user_id='{ACCOUNT}';
-      delete from public.course_progress where user_id='{ACCOUNT}';
-      update public.deletion_progress_plans set completed_at=clock_timestamp() where request_id='{RECEIPT}';
-    """)
+      set local role service_role;
+      select public.execute_progress_cleanup('{RECEIPT}','{ACCOUNT}',{claim['generation']},
+        '{claim['lease_token']}','{plan['planHash']}');
+    """))
+    require(outcome == {"progressCleaned": True, "alreadyCleaned": False, "accountDeleted": False},
+            "Execute RPC result must describe only the progress stage")
+    report["service_role_rpc_cleanup"] = True
     writers = []
     for index, (table, column, first, _) in enumerate(RESOURCES):
         writer = Session(container, f"late_writer_{index}")
@@ -232,7 +239,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", type=Path)
     args = parser.parse_args()
-    report = {"scope": "local PostgreSQL 16 locks, triggers and schema; not JS worker adapter", "passed": False}
+    report = {"scope": "local PostgreSQL 16 cleanup RPC, locks, triggers and schema; no live API", "passed": False}
     sessions = []
     with tempfile.TemporaryDirectory(prefix="regulated-progress-check-") as scratch:
         cidfile = Path(scratch) / "container-id"

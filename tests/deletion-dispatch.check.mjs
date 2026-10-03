@@ -70,11 +70,61 @@ async function request(overrides = {}) {
 assert.equal((await request({ req: { method: 'POST' } })).status, 405)
 assert.deepEqual(await request({ req: { headers: {} } }), { status: 401, body: { error: 'Unauthorized' }, calls: 0 })
 assert.equal((await request({ dependencies: { env: { ...env, DELETION_DISPATCH_ENABLED: 'false' } } })).status, 503)
-assert.deepEqual((await request()).body, { ok: true, inventoried: 1, failed: 0, completed: 0 })
+assert.deepEqual((await request()).body, { ok: true, inventoried: 1, failed: 0, progressCleaned: 0, completed: 0 })
 assert.deepEqual((await request({ dependencies: { inventory: async () => { throw new Error('private detail') } } })).body,
-  { ok: true, inventoried: 0, failed: 1, completed: 0 })
+  { ok: true, inventoried: 0, failed: 1, progressCleaned: 0, completed: 0 })
 const failedAlert = await request({ dependencies: { alert: async (_req, res) => res.status(500).json({ error: 'private email' }) } })
 assert.equal(failedAlert.status, 500)
 assert.equal(JSON.stringify(failedAlert.body).includes('private'), false)
 assert.equal((await request({ dependencies: { database: () => ({ rpc: async () => ({ data: false }) }) } })).status, 500)
+
+let executions = 0
+const progressEnv = { ...env, DELETION_PROGRESS_ENABLED: 'true' }
+const approvedPlan = { plan_hash: 'a'.repeat(64) }
+function progressDatabase(plan = approvedPlan, error = null) {
+  return {
+    async rpc(name) { return name === 'claim_deletion_requests' ? { data: [first] } : { data: true } },
+    from(table) {
+      assert.equal(table, 'deletion_progress_plans')
+      return {
+        select(columns) { assert.equal(columns, 'plan_hash'); return this },
+        eq(column, value) { assert.equal(column, 'request_id'); assert.equal(value, first.request_id); return this },
+        not(column, operator, value) { assert.deepEqual([column, operator, value], ['approved_at', 'is', null]); return this },
+        async maybeSingle() { return { data: plan, error } },
+      }
+    },
+  }
+}
+const cleanupDependencies = {
+  env: progressEnv, database: () => progressDatabase(),
+  progress: async (_db, item, hash) => {
+    assert.deepEqual(item, first)
+    assert.equal(hash, approvedPlan.plan_hash)
+    executions++
+    return { progressCleaned: true, alreadyCleaned: false, accountDeleted: false }
+  },
+}
+const cleanup = await request({ dependencies: cleanupDependencies })
+assert.equal(executions, 1, 'Enabled dispatch must execute the separately approved progress plan')
+assert.equal(cleanup.body.progressCleaned, 1)
+assert.equal(cleanup.body.completed, 0, 'Progress cleanup cannot claim account deletion')
+for (const dependencies of [
+  { ...cleanupDependencies, env },
+  { ...cleanupDependencies, database: () => progressDatabase(null) },
+  { ...cleanupDependencies, inventory: async () => ({ accountId: 'wrong account' }) },
+]) await request({ dependencies })
+assert.equal(executions, 1, 'Disabled, unapproved and wrong-account work cannot execute')
+const retry = await request({ dependencies: { ...cleanupDependencies,
+  progress: async () => ({ progressCleaned: true, alreadyCleaned: true, accountDeleted: false }),
+} })
+assert.equal(retry.body.progressCleaned, 0, 'Retry does not count as a new cleanup')
+for (const dependencies of [
+  { ...cleanupDependencies, database: () => progressDatabase(null, { message: 'private detail' }) },
+  { ...cleanupDependencies, progress: async () => { throw new Error('private detail') } },
+]) {
+  const failed = await request({ dependencies })
+  assert.equal(failed.body.failed, 1)
+  assert.equal(failed.body.completed, 0)
+  assert.equal(JSON.stringify(failed.body).includes('private'), false)
+}
 console.log('PASS: durable dispatch leases, crash/reclaim, deadlines, protected holds, permissions, authentication and alert failures. No cleanup completion claimed.')
