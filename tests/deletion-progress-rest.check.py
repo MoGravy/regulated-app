@@ -176,6 +176,7 @@ def approve(container):
 
 
 def check(container, rest, origin, report):
+    require(sql(container, "show server_version_num") == "170006", "Expected PostgreSQL 17.6")
     plan = rpc(origin, "prepare", requestId=RECEIPT)
     require(plan["counts"] == {"user_progress": 1, "course_progress": 1} and plan["approved"] is False,
             "REST preparation returned the wrong plan")
@@ -228,7 +229,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", type=Path)
     args = parser.parse_args()
-    report = {"scope": "isolated local Supabase client/PostgREST/PostgreSQL", "image": IMAGE, "passed": False}
+    report = {"scope": "isolated local Supabase client/PostgREST/PostgreSQL", "image": IMAGE,
+              "postgres_image": native.POSTGRES_IMAGE, "passed": False}
     network = ""
     relay = None
     with tempfile.TemporaryDirectory(prefix="regulated-progress-rest-") as scratch:
@@ -241,7 +243,7 @@ def main():
             started = run(DOCKER + ["run", "--rm", "--pull=never", "-d", "--network", network,
                 "--network-alias", "database", "--cidfile", str(cidfiles[0]),
                 "--tmpfs", "/var/lib/postgresql/data:rw,nosuid,nodev,size=256m",
-                "-e", "POSTGRES_HOST_AUTH_METHOD=trust", "postgres:16-alpine"])
+                "-e", "POSTGRES_HOST_AUTH_METHOD=trust", native.POSTGRES_IMAGE])
             require(started.returncode == 0, "Local PostgreSQL start failed")
             container = cidfiles[0].read_text().strip()
             require(re.fullmatch(r"[a-f0-9]{64}", container), "Invalid PostgreSQL container ID")

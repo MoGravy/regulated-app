@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCKER = ["docker", "--host", "unix:///Users/matthew/.docker/run/docker.sock"]
+POSTGRES_IMAGE = "postgres:17.6-alpine"
 ACCOUNT = "00000000-0000-4000-8000-000000000001"
 OTHER = "00000000-0000-4000-8000-000000000002"
 RECEIPT = "00000000-0000-4000-8000-000000000011"
@@ -74,8 +75,8 @@ class Session:
 
 
 def check(container, sessions, report):
-    require(int(sql(container, "show server_version_num")) // 10000 == 16,
-            "Expected PostgreSQL 16")
+    require(sql(container, "show server_version_num") == "170006",
+            "Expected PostgreSQL 17.6, matching the live database")
     sql(container, """
       create role anon; create role authenticated; create role service_role bypassrls;
       create schema auth; create schema storage;
@@ -239,7 +240,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--evidence", type=Path)
     args = parser.parse_args()
-    report = {"scope": "local PostgreSQL 16 cleanup RPC, locks, triggers and schema; no live API", "passed": False}
+    report = {"scope": "local PostgreSQL 17.6 cleanup RPC, locks, triggers and schema; no live API", "passed": False}
     sessions = []
     with tempfile.TemporaryDirectory(prefix="regulated-progress-check-") as scratch:
         cidfile = Path(scratch) / "container-id"
@@ -247,7 +248,7 @@ def main():
             started = run(DOCKER + ["run", "--rm", "--pull=never", "-d", "--network", "none",
                 "--name", "regulated-progress-check-" + uuid.uuid4().hex[:12], "--cidfile", str(cidfile),
                 "--tmpfs", "/var/lib/postgresql/data:rw,nosuid,nodev,size=256m",
-                "-e", "POSTGRES_HOST_AUTH_METHOD=trust", "postgres:16-alpine", "-c", "listen_addresses="])
+                "-e", "POSTGRES_HOST_AUTH_METHOD=trust", POSTGRES_IMAGE, "-c", "listen_addresses="])
             require(started.returncode == 0, "Could not start isolated local PostgreSQL")
             container = cidfile.read_text().strip()
             require(re.fullmatch(r"[a-f0-9]{64}", container), "Invalid owned container identifier")
