@@ -28,8 +28,8 @@
   --line:          rgba(201, 165, 94, 0.30);
   --line-strong:   rgba(201, 165, 94, 0.50);
   --ink:           #F4ECD8;  /* 15:1 on #111830 */
-  --ink-muted:     #B8B0A0;  /* 7.9:1 */
-  --ink-faint:     #9C968A;  /* 5.9:1 */
+  --ink-muted:     #CFC7B6;  /* 10:1 */
+  --ink-faint:     #B3AB9C;  /* 7.8:1 */
   --ink-disabled:  #6F6A61;
   --on-accent:     #111830;
 
@@ -48,13 +48,15 @@
   --player-blob-b: transparent;
   --player-title:  #F4ECD8;
   --player-body:   #EDE5D0;
-  --player-muted:  #B8B0A0;
-  --player-faint:  #9C968A;
+  --player-muted:  #CFC7B6;
+  --player-faint:  #B3AB9C;
   --player-track:  rgba(201, 165, 94, 0.24);
 
   /* type */
-  --font-display: 'Bodoni Moda', Didot, 'Times New Roman', serif;
-  --font-ui:      Jost, 'Avenir Next', Futura, -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Chosen for readability without glasses: a sturdy screen serif and a
+     typeface drawn with the Braille Institute for low vision. */
+  --font-display: Literata, Georgia, 'Times New Roman', serif;
+  --font-ui:      'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* shape */
   --r-chip:  4px;
@@ -179,13 +181,13 @@
 }
 :root[data-look='night'] .segmented-item:disabled { color: var(--ink-disabled); }
 
-:root[data-look='night'] .chip { height: 44px; padding: 0 16px 0 13px; border-radius: 22px; font: 400 14px/20px var(--font-ui); }
+:root[data-look='night'] .chip { height: 44px; padding: 0 16px 0 13px; border-radius: 22px; font: 400 16px/22px var(--font-ui); }
 :root[data-look='night'] .chip-all { border: 1px solid rgba(201, 165, 94, 0.4) !important; background: rgba(241, 233, 214, 0.03); color: #EDE5D0 !important; }
 :root[data-look='night'] .chip-all svg { color: var(--gold-hi); }
 :root[data-look='night'] .chip-all[aria-pressed='true'] { background: var(--accent); border-color: var(--accent) !important; color: var(--on-accent) !important; font-weight: 500; }
 :root[data-look='night'] .chip-all[aria-pressed='true'] svg { color: var(--on-accent); }
 
-:root[data-look='night'] .form-label { font: 500 12px/16px var(--font-ui); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-muted); }
+:root[data-look='night'] .form-label { font: 600 13px/18px var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); }
 :root[data-look='night'] .form-input { background: rgba(241, 233, 214, 0.05); border-color: rgba(201, 165, 94, 0.5); border-radius: 6px; }
 :root[data-look='night'] .form-input:focus { border-color: var(--gold-hi); box-shadow: 0 0 0 3px var(--accent-ring); }
 
@@ -221,7 +223,7 @@
 
 :root[data-look='night'] .row { gap: 16px; padding: 14px 16px; }
 :root[data-look='night'] .row-title { font: 400 20px/26px var(--font-display); }
-:root[data-look='night'] .row-meta { font: 400 13px/18px var(--font-ui); }
+:root[data-look='night'] .row-meta { font: 400 15px/21px var(--font-ui); }
 :root[data-look='night'] .row-icon:not(.row-icon-locked) { background: var(--accent) var(--gold-sheen) !important; }
 :root[data-look='night'] .row-icon:not(.row-icon-locked) polygon { fill: var(--on-accent); }
 :root[data-look='night'] .row-icon-locked { border-color: rgba(201, 165, 94, 0.55); }
@@ -279,7 +281,6 @@
 :root[data-look='night'] .status-bar > .btn-ghost { width: auto; min-width: 44px; justify-content: flex-start; }
 /* Gold already marks the current tab, so the underline rests. */
 :root[data-look='night'] nav[aria-label='Primary'] button > span + span { display: none; }
-:root[data-look='night'] nav[aria-label='Primary'] button { font-size: 12px !important; }
 
 :root[data-look='night'] .footer-cta { background: rgba(11, 17, 36, 0.96); border-top-color: var(--line); }
 :root[data-look='night'] .toast { background: #18213F; border-color: var(--line-strong); }
@@ -410,15 +411,15 @@
   border: 1px solid rgba(201, 165, 94, 0.45);
   border-radius: 4px;
   color: var(--gold-hi);
-  font: 400 12px/16px var(--font-ui);
-  letter-spacing: 0.04em;
+  font: 500 14px/18px var(--font-ui);
+  letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
 }
 :root[data-look='night'] .streak-note {
   display: block;
   margin-top: 14px;
-  font: 400 15px/22px var(--font-ui);
-  letter-spacing: 0.06em;
+  font: 500 17px/24px var(--font-ui);
+  letter-spacing: 0.02em;
   color: var(--gold-hi);
 }
 
@@ -434,3 +435,22 @@
    Keyboard focus. Last, and important, so the buttons' own shadows cannot hide it.
    --------------------------------------------------------------------------- */
 :root[data-look='night'] :focus-visible { box-shadow: 0 0 0 2px #111830, 0 0 0 4px var(--gold-hi) !important; }
+
+/* ---------------------------------------------------------------------------
+   Readable sizes. Small text grows a step for long-sighted eyes: sentences to
+   17px, small print to 15px. Screens set many sizes inline, so those are
+   matched by their font shorthand.
+   --------------------------------------------------------------------------- */
+:root[data-look='night'] .t-body { font-size: 17px; line-height: 26px; }
+:root[data-look='night'] .t-label { font-size: 16px; line-height: 22px; }
+:root[data-look='night'] .t-caption { font-size: 15px; line-height: 22px; font-weight: 400; }
+:root[data-look='night'] .t-micro { font-size: 14px; line-height: 20px; }
+:root[data-look='night'] .btn-primary,
+:root[data-look='night'] .btn-ghost { font-size: 16px; }
+:root[data-look='night'] .form-input { font-size: 17px; }
+:root[data-look='night'] nav[aria-label='Primary'] button { font-size: clamp(12px, 3.4vw, 13px) !important; font-weight: 500 !important; letter-spacing: 0; white-space: nowrap; }
+:root[data-look='night'] [style*='12px/'][style*='--font-ui'],
+:root[data-look='night'] [style*='13px/'][style*='--font-ui'] { font-size: 15px !important; line-height: 1.45 !important; }
+:root[data-look='night'] [style*='14px/'][style*='--font-ui'] { font-size: 16px !important; line-height: 1.45 !important; }
+:root[data-look='night'] [style*='15px/'][style*='--font-ui'],
+:root[data-look='night'] [style*='16px/'][style*='--font-ui'] { font-size: 17px !important; line-height: 1.5 !important; }
