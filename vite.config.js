@@ -23,7 +23,7 @@ export function validateNativeBuild(env) {
     throw new Error('Native build requires a valid HTTPS VITE_SUPABASE_URL')
   }
   const key = env.VITE_SUPABASE_ANON_KEY
-  if (typeof key !== 'string' || !key.trim() || key.startsWith('sb_secret_')) {
+  if (typeof key !== 'string' || !key.trim() || key !== key.trim() || key.startsWith('sb_secret_')) {
     throw new Error('Native build requires a public VITE_SUPABASE_ANON_KEY')
   }
   if (key.split('.').length === 3) {
