@@ -4,8 +4,8 @@
   "description": "Personalized nervous system regulation",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0B1124",
-  "theme_color": "#0B1124",
+  "background_color": "#EFEFF7",
+  "theme_color": "#EFEFF7",
   "orientation": "portrait",
   "icons": [
     {
