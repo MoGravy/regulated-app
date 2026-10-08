@@ -30,7 +30,7 @@
         if (tint) tint.setAttribute('content', LOOKS[look])
         // Dark status bar text on the light paper look.
         var bar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
-        if (bar && look === 'admiralty') bar.setAttribute('content', 'default')
+        if (bar) bar.setAttribute('content', look === 'admiralty' ? 'default' : 'black-translucent')
         var fonts = document.createElement('link')
         fonts.rel = 'stylesheet'
         fonts.href = 'https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..500&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap'
