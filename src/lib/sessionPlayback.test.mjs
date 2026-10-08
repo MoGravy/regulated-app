@@ -41,6 +41,7 @@ test('old token and revision are ignored; foreground snapshot recovers retained 
   fixture.emit({ token: 'old', revision: 500, outcome: { kind: 'ended' } })
   fixture.emit({ token: 'current', revision: 0, outcome: { kind: 'ended' } })
   assert.equal(updates.length, 1)
+  assert.equal(updates[0].played, undefined, 'native snapshots must not invent browser playback evidence')
   fixture.end()
   await owner.refresh()
   assert.equal(updates.at(-1).outcome.kind, 'ended')
@@ -68,6 +69,14 @@ class AudioFake extends EventTarget {
   duration = 60
   paused = true
   readyState = 4
+  seeking = false
+  muted = false
+  volume = 1
+  playbackRate = 1
+  ranges = []
+  get played() {
+    return { length: this.ranges.length, start: i => this.ranges[i][0], end: i => this.ranges[i][1] }
+  }
   play() { this.paused = false; this.dispatchEvent(new Event('play')); return Promise.resolve() }
   pause() { this.paused = true; this.dispatchEvent(new Event('pause')) }
   removeAttribute() {}
@@ -108,4 +117,50 @@ test('web natural end retains completion', () => {
   owner.command('play')
   assert.equal(states.at(-1).outcome.serial, 1)
   owner.close()
+})
+
+test('web evidence copies rendered ranges and publishes seek, mute and rate boundaries', () => {
+  const audio = new AudioFake(), states = [], closed = []
+  const owner = webAttempt(audio, source('evidence'), s => states.push(s), assert.fail, s => closed.push(s))
+  owner.command('play')
+  audio.currentTime = 5
+  audio.ranges = [[0, 5]]
+  audio.dispatchEvent(new Event('timeupdate'))
+  const rendered = states.at(-1)
+  assert.deepEqual(rendered.played, [[0, 5]])
+  assert.equal(rendered.seeking, false)
+  assert.equal(rendered.muted, false)
+  assert.equal(rendered.volume, 1)
+  assert.equal(rendered.rate, 1)
+  assert.ok(Number.isFinite(rendered.atMs))
+  audio.ranges[0][1] = 9
+  assert.deepEqual(rendered.played, [[0, 5]], 'later media changes cannot rewrite earlier evidence')
+  audio.seeking = true
+  audio.currentTime = 40
+  audio.dispatchEvent(new Event('seeking'))
+  assert.equal(states.at(-1).seeking, true)
+  audio.seeking = false
+  audio.dispatchEvent(new Event('seeked'))
+  assert.equal(states.at(-1).seeking, false)
+  audio.muted = true
+  audio.volume = 0
+  audio.dispatchEvent(new Event('volumechange'))
+  assert.equal(states.at(-1).muted, true)
+  assert.equal(states.at(-1).volume, 0)
+  assert.equal(states.at(-1).status, 'playing', 'muting does not change the playback controls')
+  audio.playbackRate = 2
+  audio.dispatchEvent(new Event('ratechange'))
+  assert.equal(states.at(-1).rate, 2)
+  assert.ok(states.at(-1).atMs >= rendered.atMs)
+  audio.readyState = 2
+  audio.dispatchEvent(new Event('waiting'))
+  assert.equal(states.at(-1).status, 'buffering')
+  owner.command('pause')
+  assert.equal(states.at(-1).status, 'paused')
+  owner.close()
+  assert.deepEqual(closed[0].played, [[0, 9]])
+  const count = states.length
+  audio.dispatchEvent(new Event('volumechange'))
+  audio.dispatchEvent(new Event('seeked'))
+  assert.equal(states.length, count)
 })

@@ -45,6 +45,7 @@ export function useSessionPlayback({ session, url, enabled, onEnded, onError, on
   }, [session?.id, url, enabled])
 
   return {
+    snapshot,
     isPlaying: snapshot?.status === 'playing' || snapshot?.status === 'buffering',
     currentTime: snapshot?.position || 0,
     duration: snapshot?.duration || (session?.duration || 20) * 60,

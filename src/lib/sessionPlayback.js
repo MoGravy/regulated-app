@@ -53,6 +53,9 @@ export function webAttempt(audio, source, onSnapshot, onFailure, onClose) {
       status,
       position: Number.isFinite(audio.currentTime) ? audio.currentTime : 0,
       duration: Number.isFinite(audio.duration) ? audio.duration : 0,
+      played: Array.from({ length: audio.played.length }, (_, i) => [audio.played.start(i), audio.played.end(i)]),
+      seeking: audio.seeking, muted: audio.muted, volume: audio.volume,
+      rate: audio.playbackRate, atMs: performance.now(),
       outcome,
     }
   }
@@ -69,7 +72,7 @@ export function webAttempt(audio, source, onSnapshot, onFailure, onClose) {
     publish()
     onFailure()
   }
-  const listeners = { timeupdate: publish, loadedmetadata: publish, play: publish, pause: publish, waiting: publish, playing: publish, ended, error: failed }
+  const listeners = { timeupdate: publish, loadedmetadata: publish, play: publish, pause: publish, waiting: publish, playing: publish, seeking: publish, seeked: publish, volumechange: publish, ratechange: publish, ended, error: failed }
   for (const [name, fn] of Object.entries(listeners)) audio.addEventListener(name, fn)
   audio.preload = 'auto'
   audio.src = source.url
