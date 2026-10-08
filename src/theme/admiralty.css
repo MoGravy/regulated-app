@@ -1,0 +1,216 @@
+/* ---------------------------------------------------------------------------
+   Admiralty look: quiet paper and navy in the Matthew Tweedie Hypnosis colours.
+
+   Loaded in every build and only active when <html data-look="admiralty">,
+   which the switch in index.html sets. Same approach as night.css: override the
+   tokens in tokens.css, then restyle a short list of existing hooks. The tab
+   icons, the readable sizes and the streak lines are shared with the night
+   look and live in night.css.
+
+   Colour roles: navy for text and anything selected, gold only for play and
+   the main button. The player is the one dark surface. No textures.
+   Every text colour below is 6.5:1 or better on its ground.
+   --------------------------------------------------------------------------- */
+
+:root[data-look='admiralty'] {
+  color-scheme: light;
+  background: #EFEFF7;
+
+  /* base: MTH cream paper */
+  --bg:            #EFEFF7;
+  --surface:       #FAFAFE;
+  --sunk:          #E3E4EF;
+  --sunk-locked:   #E9EAF3;
+  --line:          #D9DAE7;
+  --line-strong:   #BFC1D6;
+  --ink:           #1C1E33;  /* 14.3:1 */
+  --ink-muted:     #464869;  /* 7.7:1 */
+  --ink-faint:     #4E5180;  /* 6.5:1 */
+  --ink-disabled:  #9C9EB8;
+  --on-accent:     #FAFAFE;
+
+  /* accent: MTH navy; control: MTH gold */
+  --accent:        #272941;  /* 12.4:1 */
+  --accent-hover:  #1C1E33;
+  --accent-soft:   rgba(39, 41, 65, 0.06);
+  --accent-ring:   rgba(39, 41, 65, 0.22);
+  --accent-tint:   rgba(39, 41, 65, 0.10);
+  --control:       #D4A537;
+  --on-control:    #141521;  /* 8:1 on gold */
+
+  /* player: MTH deep navy */
+  --player-bg:     #141521;
+  --player-blob-a: transparent;
+  --player-blob-b: transparent;
+  --player-title:  #EFEFF7;  /* 15.8:1 */
+  --player-body:   #E6E7F2;
+  --player-muted:  #C9CBDF;  /* 11.3:1 */
+  --player-faint:  #B4B6CF;  /* 9.1:1 */
+  --player-track:  rgba(212, 165, 55, 0.26);
+
+  /* type: the readable pair chosen for the night look */
+  --font-display: Literata, Georgia, 'Times New Roman', serif;
+  --font-ui:      'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* shape */
+  --r-chip:   6px;
+  --r-row:    8px;
+  --r-card:  10px;
+  --r-sheet: 16px;
+  --e1: none;
+  --e2: 0 8px 24px rgba(20, 21, 33, 0.08);
+  --e3: 0 -8px 28px rgba(20, 21, 33, 0.10);
+}
+
+:root[data-look='admiralty'] body { background: var(--bg); color: var(--ink); }
+:root[data-look='admiralty'] ::selection { background: #272941; color: #FAFAFE; }
+
+/* No textures anywhere. */
+:root[data-look='admiralty'] .blob { display: none; }
+
+/* ---------------------------------------------------------------------------
+   Type
+   --------------------------------------------------------------------------- */
+:root[data-look='admiralty'] h1,
+:root[data-look='admiralty'] h2 { font-weight: 500 !important; letter-spacing: -0.012em; color: var(--accent); }
+:root[data-look='admiralty'] .page > .page-content > h1 { font-size: 38px !important; line-height: 1.08 !important; }
+/* Section headings read as quiet serif headings, not small grey labels. */
+:root[data-look='admiralty'] .t-section { font: 500 21px/27px var(--font-display); color: var(--accent); }
+
+/* Wordmark with the crescent and star, in navy capitals. */
+:root[data-look='admiralty'] .status-bar a[aria-label='Home'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--accent) !important;
+  font: 600 11px/16px var(--font-ui);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+:root[data-look='admiralty'] .status-bar a[aria-label='Home']::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  flex: none;
+  background: url('./admiralty-mark.svg') no-repeat center / contain;
+}
+:root[data-look='admiralty'] .status-bar > .btn-ghost { width: auto; min-width: 44px; justify-content: flex-start; }
+
+/* Welcome: the mark above the wordmark. */
+:root[data-look='admiralty'] div:has(+ .night-arch) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  color: var(--accent) !important;
+  font: 600 12px/16px var(--font-ui) !important;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+:root[data-look='admiralty'] div:has(+ .night-arch)::before {
+  content: '';
+  width: 56px;
+  height: 56px;
+  background: url('./admiralty-mark.svg') no-repeat center / contain;
+}
+:root[data-look='admiralty'] .night-arch ~ div { padding-top: 24px; }
+
+/* ---------------------------------------------------------------------------
+   Controls
+   --------------------------------------------------------------------------- */
+/* The main button is gold with deep navy text, as on the MTH site. */
+:root[data-look='admiralty'] .btn-primary {
+  background: var(--control);
+  color: var(--on-control);
+  border-radius: 8px;
+  font-weight: 600;
+}
+:root[data-look='admiralty'] .btn-primary:hover:not(:disabled) { background: #C99A2E; }
+:root[data-look='admiralty'] .btn-primary:disabled { background: var(--sunk); color: var(--ink-disabled); }
+:root[data-look='admiralty'] .btn-ghost { color: var(--accent); font-weight: 500; }
+
+/* Program / Browse: a hairline frame, the chosen side filled navy. */
+:root[data-look='admiralty'] .segmented { height: 50px; padding: 4px; border: 1px solid var(--line-strong); border-radius: 8px; background: transparent; }
+:root[data-look='admiralty'] .segmented-item { height: 40px; border-radius: 5px; font-size: 16px; color: var(--ink-muted); }
+:root[data-look='admiralty'] .segmented-item[aria-selected='true'] { background: var(--accent); color: var(--on-accent); font-weight: 600; box-shadow: none; }
+:root[data-look='admiralty'] .segmented-item:disabled { color: var(--ink-faint); }
+
+:root[data-look='admiralty'] .chip { height: 44px; padding: 0 16px; border-radius: 22px; font: 400 16px/22px var(--font-ui); }
+:root[data-look='admiralty'] .chip-all { border: 1px solid var(--line-strong) !important; background: var(--surface); color: var(--ink) !important; }
+:root[data-look='admiralty'] .chip-all svg { color: var(--accent); }
+:root[data-look='admiralty'] .chip-all[aria-pressed='true'] { background: var(--accent); border-color: var(--accent) !important; color: var(--on-accent) !important; font-weight: 600; }
+:root[data-look='admiralty'] .chip-all[aria-pressed='true'] svg { color: var(--on-accent); }
+
+:root[data-look='admiralty'] section[aria-label='Check-in'] .chip-row { flex-wrap: wrap; gap: 8px; overflow: visible; }
+:root[data-look='admiralty'] section[aria-label='Check-in'] .rise > .t-caption:first-child { margin: 22px 0 10px !important; font-size: 16px; color: var(--ink-muted); }
+
+:root[data-look='admiralty'] .form-label { font: 500 15px/20px var(--font-ui); color: var(--ink-muted); }
+:root[data-look='admiralty'] .form-input { background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 8px; }
+:root[data-look='admiralty'] .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+
+/* ---------------------------------------------------------------------------
+   Surfaces
+   --------------------------------------------------------------------------- */
+:root[data-look='admiralty'] .card,
+:root[data-look='admiralty'] .card-flat { background: var(--surface); border: 1px solid var(--line); box-shadow: none; }
+:root[data-look='admiralty'] .card-current { border-color: var(--accent); }
+
+:root[data-look='admiralty'] .row { gap: 14px; }
+:root[data-look='admiralty'] .row-title { font: 500 19px/25px var(--font-display); color: var(--ink); }
+:root[data-look='admiralty'] .row-meta { font: 400 15px/21px var(--font-ui); }
+/* Rows keep the quiet navy play circle; only a session in progress turns gold. */
+:root[data-look='admiralty'] .row-icon-locked { border-color: var(--line-strong); background: var(--sunk) !important; }
+
+/* Today category tiles: plain paper, no tint. */
+:root[data-look='admiralty'] button.texture {
+  height: 92px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px !important;
+  background: var(--surface) !important;
+}
+:root[data-look='admiralty'] button.texture > span:first-of-type { font-weight: 500 !important; }
+
+:root[data-look='admiralty'] .day { border-color: var(--line-strong); }
+:root[data-look='admiralty'] .divider { background: var(--line); }
+:root[data-look='admiralty'] .footer-cta { background: var(--surface); border-top-color: var(--line); }
+
+/* Session detail header: a flat band of paper in place of the textured one. */
+:root[data-look='admiralty'] .status-bar + .texture { background: var(--sunk) !important; }
+
+/* Bottom menu: icons above labels (shared rule), navy for the current tab. */
+:root[data-look='admiralty'] nav[aria-label='Primary'] { border-top-color: var(--line) !important; }
+:root[data-look='admiralty'] nav[aria-label='Primary'] button { color: var(--ink-muted) !important; }
+:root[data-look='admiralty'] nav[aria-label='Primary'] button[aria-current='page'] { color: var(--accent) !important; font-weight: 600 !important; }
+:root[data-look='admiralty'] nav[aria-label='Primary'] button > span + span { display: none; }
+
+/* ---------------------------------------------------------------------------
+   Player: deep navy, a soft gold glow behind the title, gold controls.
+   --------------------------------------------------------------------------- */
+:root[data-look='admiralty'] .player-glow { opacity: 0.12; }
+:root[data-look='admiralty'] .player-glow ~ div button:not(.btn-play) { color: #E0BC6A !important; }
+:root[data-look='admiralty'] .player-glow ~ div button:not(.btn-play) path { stroke: #E0BC6A; }
+:root[data-look='admiralty'] .player-glow + div h1 { color: var(--player-title) !important; font-weight: 500 !important; }
+
+/* ---------------------------------------------------------------------------
+   Streak: the same pill and note as the night look, in navy on paper.
+   --------------------------------------------------------------------------- */
+:root[data-look='admiralty'] .streak-pill {
+  position: absolute;
+  top: -37px;
+  left: 20px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--accent);
+  font: 600 14px/18px var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+:root[data-look='admiralty'] .streak-note { display: block; margin-top: 14px; font: 500 17px/24px var(--font-ui); color: var(--accent); }
+/* On the player's navy, the streak line is soft gold. */
+:root[data-look='admiralty'] [style*='--player-bg'] .streak-note { color: #E0BC6A; }
+
+:root[data-look='admiralty'] :focus-visible { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent) !important; }

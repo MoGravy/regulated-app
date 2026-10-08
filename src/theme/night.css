@@ -13,7 +13,7 @@
    nav[aria-label='Primary'], .footer-cta, .night-arch, .night-only.
    --------------------------------------------------------------------------- */
 
-:root:not([data-look='night']) .night-only,
+:root:not([data-look='night']):not([data-look='admiralty']) .night-only,
 :root:not([data-look='night']) .night-arch { display: none !important; }
 
 :root[data-look='night'] {
@@ -263,7 +263,7 @@
 :root[data-look='night'] nav[aria-label='Primary'] button[aria-current='page'] { color: var(--gold-hi) !important; }
 /* Tab icons above the labels, as on the Night Sleeper boards. Drawn as masks so
    they take the tab's colour. Order follows TABS in Navigation.jsx. */
-:root[data-look='night'] nav[aria-label='Primary'] button::before {
+:root:is([data-look='night'], [data-look='admiralty']) nav[aria-label='Primary'] button::before {
   content: '';
   width: 22px;
   height: 22px;
@@ -272,11 +272,11 @@
   -webkit-mask: var(--tab-icon) no-repeat center / contain;
   mask: var(--tab-icon) no-repeat center / contain;
 }
-:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(1) { --tab-icon: url('./tab-today.svg'); }
-:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(2) { --tab-icon: url('./tab-browse.svg'); }
-:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(3) { --tab-icon: url('./tab-courses.svg'); }
-:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(4) { --tab-icon: url('./tab-support.svg'); }
-:root[data-look='night'] nav[aria-label='Primary'] button:nth-child(5) { --tab-icon: url('./tab-you.svg'); }
+:root:is([data-look='night'], [data-look='admiralty']) nav[aria-label='Primary'] button:nth-child(1) { --tab-icon: url('./tab-today.svg'); }
+:root:is([data-look='night'], [data-look='admiralty']) nav[aria-label='Primary'] button:nth-child(2) { --tab-icon: url('./tab-browse.svg'); }
+:root:is([data-look='night'], [data-look='admiralty']) nav[aria-label='Primary'] button:nth-child(3) { --tab-icon: url('./tab-courses.svg'); }
+:root:is([data-look='night'], [data-look='admiralty']) nav[aria-label='Primary'] button:nth-child(4) { --tab-icon: url('./tab-support.svg'); }
+:root:is([data-look='night'], [data-look='admiralty']) nav[aria-label='Primary'] button:nth-child(5) { --tab-icon: url('./tab-you.svg'); }
 /* A Back button in the top strip sits at the left edge, not centred in the space. */
 :root[data-look='night'] .status-bar > .btn-ghost { width: auto; min-width: 44px; justify-content: flex-start; }
 /* Gold already marks the current tab, so the underline rests. */
@@ -437,20 +437,20 @@
 :root[data-look='night'] :focus-visible { box-shadow: 0 0 0 2px #111830, 0 0 0 4px var(--gold-hi) !important; }
 
 /* ---------------------------------------------------------------------------
-   Readable sizes. Small text grows a step for long-sighted eyes: sentences to
+   Readable sizes, shared with the Admiralty look. Small text grows a step for long-sighted eyes: sentences to
    17px, small print to 15px. Screens set many sizes inline, so those are
    matched by their font shorthand.
    --------------------------------------------------------------------------- */
-:root[data-look='night'] .t-body { font-size: 17px; line-height: 26px; }
-:root[data-look='night'] .t-label { font-size: 16px; line-height: 22px; }
-:root[data-look='night'] .t-caption { font-size: 15px; line-height: 22px; font-weight: 400; }
-:root[data-look='night'] .t-micro { font-size: 14px; line-height: 20px; }
-:root[data-look='night'] .btn-primary,
-:root[data-look='night'] .btn-ghost { font-size: 16px; }
-:root[data-look='night'] .form-input { font-size: 17px; }
-:root[data-look='night'] nav[aria-label='Primary'] button { font-size: clamp(12px, 3.4vw, 13px) !important; font-weight: 500 !important; letter-spacing: 0; white-space: nowrap; }
-:root[data-look='night'] [style*='12px/'][style*='--font-ui'],
-:root[data-look='night'] [style*='13px/'][style*='--font-ui'] { font-size: 15px !important; line-height: 1.45 !important; }
-:root[data-look='night'] [style*='14px/'][style*='--font-ui'] { font-size: 16px !important; line-height: 1.45 !important; }
-:root[data-look='night'] [style*='15px/'][style*='--font-ui'],
-:root[data-look='night'] [style*='16px/'][style*='--font-ui'] { font-size: 17px !important; line-height: 1.5 !important; }
+:root:is([data-look='night'], [data-look='admiralty']) .t-body { font-size: 17px; line-height: 26px; }
+:root:is([data-look='night'], [data-look='admiralty']) .t-label { font-size: 16px; line-height: 22px; }
+:root:is([data-look='night'], [data-look='admiralty']) .t-caption { font-size: 15px; line-height: 22px; font-weight: 400; }
+:root:is([data-look='night'], [data-look='admiralty']) .t-micro { font-size: 14px; line-height: 20px; }
+:root:is([data-look='night'], [data-look='admiralty']) .btn-primary,
+:root:is([data-look='night'], [data-look='admiralty']) .btn-ghost { font-size: 16px; }
+:root:is([data-look='night'], [data-look='admiralty']) .form-input { font-size: 17px; }
+:root:is([data-look='night'], [data-look='admiralty']) nav[aria-label='Primary'] button { font-size: clamp(12px, 3.4vw, 13px) !important; font-weight: 500 !important; letter-spacing: 0; white-space: nowrap; }
+:root:is([data-look='night'], [data-look='admiralty']) [style*='12px/'][style*='--font-ui'],
+:root:is([data-look='night'], [data-look='admiralty']) [style*='13px/'][style*='--font-ui'] { font-size: 15px !important; line-height: 1.45 !important; }
+:root:is([data-look='night'], [data-look='admiralty']) [style*='14px/'][style*='--font-ui'] { font-size: 16px !important; line-height: 1.45 !important; }
+:root:is([data-look='night'], [data-look='admiralty']) [style*='15px/'][style*='--font-ui'],
+:root:is([data-look='night'], [data-look='admiralty']) [style*='16px/'][style*='--font-ui'] { font-size: 17px !important; line-height: 1.5 !important; }
