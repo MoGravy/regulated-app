@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/icon-192.png?v=night-2" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0B1124" />
+    <meta name="theme-color" content="#EFEFF7" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Regulated" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=night-2" />
     <link rel="manifest" href="/manifest.json" />
@@ -30,7 +30,7 @@
         if (tint) tint.setAttribute('content', LOOKS[look])
         // Dark status bar text on the light paper look.
         var bar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
-        if (bar && look === 'admiralty') bar.setAttribute('content', 'default')
+        if (bar) bar.setAttribute('content', look === 'admiralty' ? 'default' : 'black-translucent')
         var fonts = document.createElement('link')
         fonts.rel = 'stylesheet'
         fonts.href = 'https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..500&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap'
@@ -45,7 +45,7 @@
     <title>Regulated</title>
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body { height: 100%; background: #F5F2EC; }
+      html, body { height: 100%; background: #EFEFF7; }
       body { overflow-x: hidden; }
       #root { height: 100%; }
     </style>
