@@ -70,6 +70,7 @@ export async function inventoryDeletion(client, requestId) {
     accountId: receipt.account_id,
     accountCounts: {},
     protectedCareCounts: {},
+    notificationCounts: {},
     legacyCandidateCounts: null,
     mediaReferences: [],
     blockers: [
@@ -98,12 +99,16 @@ export async function inventoryDeletion(client, requestId) {
   report.protectedCareCounts.care_message_reactions = await countRows(client, 'care_message_reactions',
     query => query.or(messageAssociations, { referencedTable: 'care_messages' })
       .or(`user_id.eq.${user.id},care_messages.not.is.null`), 'message_id,care_messages()')
-  report.protectedCareCounts.care_push_subscriptions = await countRows(client, 'care_push_subscriptions',
+  report.notificationCounts.devices = await countRows(client, 'care_push_subscriptions',
     query => query.eq('user_id', user.id), 'user_id')
-  report.protectedCareCounts.care_push_jobs = await countRows(client, 'care_push_jobs',
+  report.notificationCounts.ownedJobs = await countRows(client, 'care_push_jobs',
+    query => query.eq('care_push_subscriptions.user_id', user.id), 'id,care_push_subscriptions!inner()')
+  report.notificationCounts.associatedJobs = await countRows(client, 'care_push_jobs',
     query => query.eq('care_push_subscriptions.user_id', user.id)
       .or(`${participants},sender_id.eq.${user.id},recipient_id.eq.${user.id},care_push_subscriptions.not.is.null`),
     'id,care_push_subscriptions()')
+  if (report.notificationCounts.associatedJobs < report.notificationCounts.ownedJobs) throw unavailable('care_push_jobs')
+  if (report.notificationCounts.associatedJobs > report.notificationCounts.ownedJobs) report.blockers.push('shared_notification_jobs')
   if (Object.values(report.protectedCareCounts).some(count => count > 0)) report.blockers.push('shared_care_records')
 
   if (!user.email_confirmed_at || typeof user.email !== 'string' || !user.email.trim()) {

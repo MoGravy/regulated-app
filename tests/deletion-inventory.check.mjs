@@ -161,7 +161,8 @@ function fixture(options = {}) {
 const normal = fixture()
 const report = await inventoryDeletion(normal.client, requestId)
 assert.deepEqual(report.accountCounts, { profiles: 1, user_progress: 1, store_entitlements: 1, revenuecat_sync_state: 1, annual_free_reservations: 1, course_grants: 1, course_progress: 1, dap_purchases: 1 })
-assert.deepEqual(report.protectedCareCounts, { care_links: 2, care_tasks: 2, care_messages: 3, care_task_entries: 3, care_message_reactions: 5, care_push_subscriptions: 1, care_push_jobs: 6 })
+assert.deepEqual(report.protectedCareCounts, { care_links: 2, care_tasks: 2, care_messages: 3, care_task_entries: 3, care_message_reactions: 5 })
+assert.deepEqual(report.notificationCounts, { devices: 1, ownedJobs: 2, associatedJobs: 6 })
 assert.deepEqual(report.legacyCandidateCounts, { users: 1, subscriptions: 1, session_waitlist: 1, custom_orders: 4 })
 assert.equal(normal.trace.some(q => q.table === 'session_completions'), false)
 assert.deepEqual(report.mediaReferences, [
@@ -218,7 +219,7 @@ const special = fixture({ user: { email: specialEmail }, tables: { users: [{ id:
 assert.equal((await inventoryDeletion(special.client, requestId)).legacyCandidateCounts.users, 1)
 assert.equal(special.trace.find(q => q.method === 'ilike').value, String.raw`percent\%under\_score\\@example.test`)
 
-for (const table of [...Object.keys(report.accountCounts), ...Object.keys(report.protectedCareCounts), ...Object.keys(report.legacyCandidateCounts)]) {
+for (const table of [...Object.keys(report.accountCounts), ...Object.keys(report.protectedCareCounts), ...Object.keys(report.legacyCandidateCounts), 'care_push_subscriptions', 'care_push_jobs']) {
   await rejected({ respond: (q, r) => q.table === table ? { error: { message: privateText } } : r }, table)
   await rejected({ respond: (q, r) => q.table === table ? { ...r, count: null } : r }, table)
   await rejected({ respond: (q, r) => { if (q.table === table) throw new Error(privateText); return r } }, table)
@@ -252,4 +253,16 @@ const noCare = fixture({ tables: Object.fromEntries(Object.keys(report.protected
 const noCareReport = await inventoryDeletion(noCare.client, requestId)
 assert.ok(Object.values(noCareReport.protectedCareCounts).every(count => count === 0))
 assert.equal(noCareReport.blockers.includes('shared_care_records'), false)
+assert.deepEqual(noCareReport.notificationCounts, { devices: 1, ownedJobs: 2, associatedJobs: 6 })
+assert.ok(noCareReport.blockers.includes('shared_notification_jobs'))
+const ownDeviceOnly = fixture({ tables: {
+  ...Object.fromEntries(Object.keys(report.protectedCareCounts).map(table => [table, []])),
+  care_push_jobs: [{ id: 'own-job', subscription_id: 'push-1' }, { id: 'other-job', subscription_id: 'push-2' }],
+} })
+const deviceReport = await inventoryDeletion(ownDeviceOnly.client, requestId)
+assert.deepEqual(deviceReport.notificationCounts, { devices: 1, ownedJobs: 1, associatedJobs: 1 })
+assert.equal(deviceReport.blockers.includes('shared_care_records'), false)
+assert.equal(deviceReport.blockers.includes('shared_notification_jobs'), false)
+ownDeviceOnly.unchanged()
+await rejected({ respond: (q, r) => q.table === 'care_push_jobs' && !q.columns.includes('!inner') ? { ...r, count: 0 } : r }, 'care_push_jobs')
 console.log('PASS: current tables, both Care roles, child joins, deduplicated associations, private output, paging and read failures.')
