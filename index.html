@@ -12,20 +12,25 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="description" content="Regulated – Personalized nervous system regulation. Custom audio sessions built for your specific patterns." />
     <script>
-      // Look switch: classic (default) or night (Night Sleeper). VITE_LOOK sets the build default;
-      // ?look=night or ?look=classic overrides it and is remembered on this device. Runs before first paint.
+      // Look switch: classic, night (Night Sleeper) or admiralty (paper and navy). VITE_LOOK sets the
+      // build default; ?look=night, ?look=admiralty or ?look=classic overrides it and is remembered on
+      // this device. Runs before first paint.
       (function () {
-        var look = '%VITE_LOOK%' === 'night' ? 'night' : 'classic'
+        var LOOKS = { night: '#0B1124', admiralty: '#EFEFF7', classic: '' }
+        var look = LOOKS.hasOwnProperty('%VITE_LOOK%') ? '%VITE_LOOK%' : 'classic'
         try {
           var asked = new URLSearchParams(location.search).get('look')
-          if (asked === 'night' || asked === 'classic') localStorage.setItem('regulated_look', asked)
+          if (LOOKS.hasOwnProperty(asked)) localStorage.setItem('regulated_look', asked)
           var saved = localStorage.getItem('regulated_look')
-          if (saved === 'night' || saved === 'classic') look = saved
+          if (LOOKS.hasOwnProperty(saved)) look = saved
         } catch (e) {}
         document.documentElement.setAttribute('data-look', look)
-        if (look !== 'night') return
+        if (look === 'classic') return
         var tint = document.querySelector('meta[name="theme-color"]')
-        if (tint) tint.setAttribute('content', '#0B1124')
+        if (tint) tint.setAttribute('content', LOOKS[look])
+        // Dark status bar text on the light paper look.
+        var bar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+        if (bar && look === 'admiralty') bar.setAttribute('content', 'default')
         var fonts = document.createElement('link')
         fonts.rel = 'stylesheet'
         fonts.href = 'https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..500&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap'
@@ -36,6 +41,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300..600&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/theme/night.css" />
+    <link rel="stylesheet" href="/src/theme/admiralty.css" />
     <title>Regulated</title>
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
