@@ -5,7 +5,7 @@
   "loggingBehavior": "none",
   "plugins": {
     "SystemBars": {
-      "style": "DARK"
+      "style": "LIGHT"
     }
   }
 }

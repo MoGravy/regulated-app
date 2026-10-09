@@ -79,7 +79,9 @@ export function webAttempt(audio, source, onSnapshot, onFailure, onClose) {
   return {
     command(action, position) {
       if (disposed || outcome) return
-      if (action === 'play' && !seekAtEnd) audio.play().catch(failed)
+      if (action === 'play' && !seekAtEnd) audio.play().catch(error => {
+        if (error?.name !== 'AbortError') failed()
+      })
       if (action === 'pause') audio.pause()
       if (action === 'seek' && Number.isFinite(position) && Number.isFinite(audio.duration)) {
         seekAtEnd = position >= audio.duration

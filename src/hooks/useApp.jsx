@@ -5,7 +5,7 @@ import { setBillingAccount } from '../lib/nativeBilling'
 import { programAt } from '../config/program'
 import { disableCarePush } from '../lib/carePush'
 import { signInError } from '../lib/signInFlow'
-import { recordPracticeDay } from '../lib/streak'
+import { usePractice } from './usePractice'
 
 const AppContext = createContext(null)
 
@@ -30,6 +30,7 @@ export function AppProvider({ children }) {
   const [authUser, setAuthUser] = useState(null)
   const [authReady, setAuthReady] = useState(false)
   const [authError, setAuthError] = useState('')
+  const practice = usePractice(authReady ? authUser?.id || 'guest' : null)
 
   const accountId = useRef(null)
   const premiumRevision = useRef(0)
@@ -119,7 +120,7 @@ export function AppProvider({ children }) {
     if (!completedSessions.includes(sessionId)) {
       setCompletedSessions([...completedSessions, sessionId])
     }
-    recordPracticeDay()
+    // Listening qualification owns practice credit; completion owns progress only.
     // The program only moves when the session just finished is the one it was
     // waiting on, so listening ahead in Browse never skips a day.
     const { today } = programAt(programDay)
@@ -174,6 +175,7 @@ export function AppProvider({ children }) {
       onboardingDone, setOnboardingDone,
       mode, setMode,
       programDay,
+      ...practice,
       toasts, addToast,
     }}>
       {children}

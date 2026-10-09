@@ -6,27 +6,32 @@ import { nativeAttempt, webAttempt } from '../lib/sessionPlayback'
 const NativeAudio = registerPlugin('SessionAudio')
 const native = Capacitor.isNativePlatform()
 
-export function useSessionPlayback({ session, url, enabled, onEnded, onError, onClose }) {
+export function useSessionPlayback({ session, url, enabled, createPractice, onEnded, onError, onClose }) {
   const [snapshot, setSnapshot] = useState(null)
   const attempt = useRef(null)
-  const callbacks = useRef({ onEnded, onError, onClose })
-  callbacks.current = { onEnded, onError, onClose }
+  const callbacks = useRef({ createPractice, onEnded, onError, onClose })
+  callbacks.current = { createPractice, onEnded, onError, onClose }
 
   useEffect(() => {
     if (!url || !session?.id || !enabled) return
     let ended = false
     let active = true
     let appListener
-    const source = { token: crypto.randomUUID(), sessionId: String(session.id), title: session.title, url }
+    // Capture this owner's callbacks. A delayed close must not checkpoint a
+    // replacement attempt or write into a replacement account's ledger.
+    const ownerCallbacks = callbacks.current
+    const practice = ownerCallbacks.createPractice?.()
+    const source = { token: crypto.randomUUID(), sessionId: String(session.id), title: session.title, url, priorCreditSeconds: practice?.priorCreditSeconds || 0 }
     const receive = state => {
+      practice?.receive(state)
       setSnapshot(state)
-      if (state.outcome?.kind === 'error') callbacks.current.onError()
+      if (state.outcome?.kind === 'error') ownerCallbacks.onError()
       if (state.outcome?.kind === 'ended' && !ended) {
         ended = true
-        callbacks.current.onEnded()
+        ownerCallbacks.onEnded()
       }
     }
-    const args = [source, receive, () => callbacks.current.onError(), state => callbacks.current.onClose(state)]
+    const args = [source, receive, () => ownerCallbacks.onError(), state => { practice?.close(state); ownerCallbacks.onClose(state) }]
     const owner = native ? nativeAttempt(NativeAudio, ...args) : webAttempt(new Audio(), ...args)
     attempt.current = owner
     owner.command('play')

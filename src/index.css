@@ -1,4 +1,5 @@
 @import './tokens.css';
+@import './quick-reset.css';
 
 :root { --safe-top: env(safe-area-inset-top, 0px); }
 
@@ -699,3 +700,6 @@ button:active:not(:disabled),
 .care-content details[open] > summary { margin-bottom: 16px; }
 .care-content details p { margin-bottom: 14px; }
 .care-content details p:last-child { margin-bottom: 0; }
+
+/* Native headings share readable spacing above their first card/control. */
+.app-shell-native :is(.page-content, .page-content-wide) > h1 { line-height: 1.25; margin-bottom: 16px; }

@@ -4,6 +4,7 @@ import { AppProvider, useApp } from './hooks/useApp'
 import { emailConfirmation, signInDestination } from './lib/signInFlow'
 import Navigation from './components/Navigation'
 import Toast from './components/Toast'
+import NativeAppearance from './components/NativeAppearance'
 import Home from './pages/Home'
 import Sessions from './pages/Sessions'
 import SessionDetail from './pages/SessionDetail'
@@ -19,12 +20,14 @@ import CareNotificationRouter from './components/CareNotificationRouter'
 import DapPurchase from './pages/DapPurchase'
 import SignIn from './pages/SignIn'
 import AccountDeletion from './pages/AccountDeletion'
+import QuickReset from './pages/QuickReset'
 
 export default function App() {
   return (
     <AppProvider>
       <BrowserRouter>
         <CareNotificationRouter />
+        <NativeAppearance />
         <AppShell />
       </BrowserRouter>
     </AppProvider>
@@ -43,9 +46,9 @@ function AppShell() {
   }
   const showNavigation = ['/', '/program', '/courses', '/care', '/sessions', '/premium'].includes(pathname)
     || pathname.startsWith('/courses/')
-  const isPlayer = pathname.startsWith('/sessions/') && pathname.endsWith('/play')
+  const isPlayer = pathname === '/reset' || pathname.startsWith('/sessions/') && pathname.endsWith('/play')
   return (
-    <div className={`app-shell${showNavigation ? ' app-shell-with-nav' : ''}${isPlayer ? ' app-shell-player' : ''}`}>
+    <div className={`app-shell${showNavigation ? ' app-shell-with-nav' : ''}${isPlayer ? ' app-shell-player' : ''}${Capacitor.isNativePlatform() ? ' app-shell-native' : ''}`}>
       <Toast />
       <div className="screen" key={pathname}>
       <Routes>
@@ -53,6 +56,7 @@ function AppShell() {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/delete-account" element={<AccountDeletion />} />
         <Route path="/" element={<Home />} />
+        <Route path="/reset" element={<QuickReset />} />
         <Route path="/program" element={<Program />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/courses/:courseId" element={<Course />} />

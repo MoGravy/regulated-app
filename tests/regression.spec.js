@@ -3,7 +3,7 @@ import { ui, reviewedSession } from '../src/content/reviewedCopy.js'
 // customer who is already using production? It runs against the built bundle,
 // not the dev server, and no test in this file may write to the database —
 // noProductionWrites() fulfils every non-GET to Supabase locally.
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
 import {
   skipOnboarding, enterProgram, watchConsole, expectNoConsoleErrors,
   noProductionWrites, asPremium, fakeAudio, storage, signedIn, FAKE_JWT,
@@ -185,10 +185,16 @@ test('reload and back/forward survive on every route', async ({ page }) => {
 test('a premium customer sees no locked rows and no paywall', async ({ page }) => {
   await asPremium(page)
   const errors = watchConsole(page)
+  let checks = 0
+  await page.route('**/api/check-subscription', route => {
+    checks += 1
+    return route.fulfill({ json: { active: true } })
+  })
 
   await page.goto('/sessions')
   await page.waitForLoadState('networkidle')
   await expect(page.locator('.row').first()).toBeVisible()
+  await expect.poll(() => checks, { message: 'Signed-in reload checks the subscription' }).toBeGreaterThan(0)
   await expect(page.locator('.row-locked')).toHaveCount(0)
 
   await page.goto('/premium')
@@ -293,7 +299,8 @@ test('a session played to the end is marked complete and leaves Continue listeni
   expect(JSON.parse(after.regulated_completed)).toContain(FREE_ID)
   expect(JSON.parse(after.regulated_progress || '{}')).not.toHaveProperty(FREE_ID)
 
-  expect(JSON.parse(after.regulated_practice_days)).toHaveLength(1)
+  expect(after.regulated_practice_days).toBeUndefined()
+  expect(JSON.parse(after['regulated_practice_preview_v1:guest']).events).toEqual([])
   // Completing a listen records local progress without uploading mood or email.
   expect(writes).toEqual([])
 })
@@ -331,6 +338,7 @@ test('a part-played session shows up in Continue listening', async ({ page }) =>
   // or the 15 seconds lands under the resume threshold.
   await expect(page.getByText('1:00', { exact: true })).toBeVisible({ timeout: 20_000 })
   await page.getByRole('button', { name: 'Forward 15 seconds' }).click()
+
   await page.getByRole('button', { name: 'Close player' }).click()
   await page.goto('/')
   await page.waitForLoadState('networkidle')

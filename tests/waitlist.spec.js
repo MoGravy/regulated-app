@@ -1,7 +1,8 @@
-import { HARDCODED_SESSIONS } from '../src/lib/hardcodedSessions.js'
 import { ui } from '../src/content/reviewedCopy.js'
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
+
 import { skipOnboarding, noProductionWrites, HAS_API } from './helpers.js'
+import { CATALOG } from './fixtures.js'
 
 test.use({ viewport: { width: 380, height: 820 } })
 
@@ -10,9 +11,13 @@ test.use({ viewport: { width: 380, height: 820 } })
 test('a session without audio takes an email for the waitlist', async ({ page }) => {
   await skipOnboarding(page)
   await noProductionWrites(page)
-  await page.route(/\/rest\/v1\/sessions/, route => route.fulfill({
-    status: 200, json: HARDCODED_SESSIONS.map(session => ({ ...session, has_audio: false })),
-  }))
+  await page.route(/\/rest\/v1\/sessions/, async route => {
+    if (!HAS_API) return route.fulfill({ json: CATALOG.map(row => ({ ...row, has_audio: false })) })
+    const res = await route.fetch()
+    const strip = x => Array.isArray(x) ? x.map(strip) : x && typeof x === 'object' ? { ...x, has_audio: false } : x
+    await route.fulfill({ response: res, json: strip(await res.json()) })
+  })
+
   const calls = []
   await page.route('**/api/waitlist', route => {
     calls.push(route.request().postDataJSON())

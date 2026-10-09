@@ -14,7 +14,7 @@ async function harness(native, signedIn = false, withOffer = false) {
       builder.onResolve({ filter: /(@revenuecat\/purchases-capacitor|@capacitor\/core|@capacitor\/app|supabase|lib\/analytics|lib\/stripe)$/ }, args => ({ path: args.path, namespace: 'fixture' }))
       builder.onLoad({ filter: /.*/, namespace: 'fixture' }, ({ path }) => {
         if (path === '@revenuecat/purchases-capacitor') return {contents: `export const Purchases = { configure: async () => {}, getAppUserID: async () => ({appUserID:'11111111-1111-4111-8111-111111111111'}), getOfferings: async () => (${JSON.stringify(withOffer ? {all:{main:{identifier:'main',availablePackages:[{identifier:'month',product:{identifier:'monthly',subscriptionPeriod:'P1M',title:'Store product',priceString:'A$19.00'}}]}}} : {all:{}})}), purchasePackage: async () => {throw {userCancelled:true}}, restorePurchases: async () => {window.restored = true} }`}
-        if (path === '@capacitor/core') return { contents: `export const Capacitor = { isNativePlatform: () => ${native}, getPlatform: () => '${native ? 'ios' : 'web'}' }; export class WebPlugin {}; export const registerPlugin = () => ({})` }
+        if (path === '@capacitor/core') return { contents: `export const Capacitor = { isNativePlatform: () => ${native}, getPlatform: () => '${native ? 'ios' : 'web'}' }; export const SystemBarsStyle = {Light:'LIGHT',Dark:'DARK'}; export const SystemBars = {setStyle: async (value) => {window.barStyle = value.style}}; export class WebPlugin {}; export const registerPlugin = () => ({})` }
         if (path === '@capacitor/app') return { contents: 'export const App = { addListener: async () => ({remove(){}}) }' }
         if (path.endsWith('/stripe')) return { contents: 'window.stripeLoaded = true; export const stripePromise = Promise.resolve({redirectToCheckout: async () => {window.stripeRedirected = true; return {}}})' }
         if (path.endsWith('/analytics')) return { contents: 'export const trackEvent = () => {}; export const Events = {}' }
@@ -24,6 +24,7 @@ async function harness(native, signedIn = false, withOffer = false) {
           export const ensureProfile = async () => {}
           export const signOutUser = async () => {}
           export const upsertUser = async () => {}
+          export const confirmEmailLink = async () => {}
           export const sendMagicLink = async () => {}
           export const authHeaders = async () => ({})
           export const getAllSessions = async () => []

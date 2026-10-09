@@ -82,8 +82,10 @@ public class SessionAudioTest {
                 waitFor("second", "playing");
                 main(() -> owner.command("second", "pause", 0));
                 assertTrue(state("second").isNull("outcome"));
+                double beforeSeek = state("second").getDouble("eligibleSeconds");
                 main(() -> owner.command("second", "seek", 4));
                 Thread.sleep(300);
+                assertTrue("seek-to-end must not earn listening credit", state("second").getDouble("eligibleSeconds") <= beforeSeek + 0.1);
                 assertTrue(state("second").isNull("outcome"));
                 assertEquals("paused", state("second").getString("status"));
                 main(() -> owner.command("second", "play", 0));
@@ -107,6 +109,9 @@ public class SessionAudioTest {
                 waitFor("second", "playing");
                 screen.onActivity(activity -> activity.moveTaskToBack(true));
                 JSObject ended = waitFor("second", "ended");
+                assertEquals("native-rendered", ended.getString("evidenceSource"));
+                assertTrue("background owner retained actual rendering", ended.getDouble("eligibleSeconds") > 3.5);
+                assertTrue("short audio does not award practice", ended.isNull("qualifiedAtMs"));
                 assertEquals("ended", ended.getJSObject("outcome").getString("kind"));
                 long serial = ended.getJSObject("outcome").getLong("serial");
                 main(() -> owner.command("second", "play", 0));

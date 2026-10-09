@@ -19,7 +19,7 @@ async function fixture(page, { fallback = false, audio = true } = {}) {
     if (url.pathname.startsWith('/api/') || url.pathname.includes('/rest/v1/') || url.pathname.includes('/auth/v1/')) return route.fulfill({ status: 200, json: {} })
     return ['localhost', '127.0.0.1'].includes(url.hostname) ? route.continue() : route.abort()
   })
-  await fakeAudio(page, 600)
+  await fakeAudio(page, 600, { fallbackCatalog: false })
   return reads
 }
 

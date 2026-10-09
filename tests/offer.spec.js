@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
 import { skipOnboarding, noProductionWrites } from './helpers.js'
 import { ui } from '../src/content/reviewedCopy.js'
 import { HARDCODED_SESSIONS } from '../src/lib/hardcodedSessions.js'

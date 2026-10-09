@@ -119,6 +119,26 @@ test('web natural end retains completion', () => {
   owner.close()
 })
 
+test('pausing a pending play for seek-to-end does not turn normal cancellation into an error', async () => {
+  class PendingAudio extends AudioFake {
+    play() {
+      this.paused = false
+      this.dispatchEvent(new Event('play'))
+      return new Promise((_resolve, reject) => { this.rejectPlay = reject })
+    }
+    pause() { super.pause(); this.rejectPlay?.(new DOMException('Cancelled play', 'AbortError')) }
+  }
+  const audio = new PendingAudio(), states = [], failures = []
+  const owner = webAttempt(audio, source('pending'), s => states.push(s), () => failures.push(true), () => {})
+  owner.command('play')
+  owner.command('seek', 60)
+  await Promise.resolve()
+  assert.equal(failures.length, 0)
+  assert.equal(states.at(-1).outcome, null)
+  assert.equal(audio.paused, true)
+  owner.close()
+})
+
 test('web evidence copies rendered ranges and publishes seek, mute and rate boundaries', () => {
   const audio = new AudioFake(), states = [], closed = []
   const owner = webAttempt(audio, source('evidence'), s => states.push(s), assert.fail, s => closed.push(s))

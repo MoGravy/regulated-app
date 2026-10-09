@@ -49,7 +49,8 @@ public class SessionAudioPlugin extends Plugin {
         if (token == null || token.isEmpty() || id == null || id.isEmpty() || url == null || !"https".equals(Uri.parse(url).getScheme())) {
             call.reject("Invalid session"); return;
         }
-        withService(call, owner -> call.resolve(owner.open(token, id, call.getString("title", "Regulated"), url)));
+        withService(call, owner -> call.resolve(owner.open(token, id, call.getString("title", "Regulated"), url,
+            call.getDouble("priorCreditSeconds", 0.0))));
     }
     @PluginMethod public void command(PluginCall call) {
         withService(call, owner -> call.resolve(owner.command(call.getString("token", ""), call.getString("action", ""), call.getDouble("position", 0.0))));

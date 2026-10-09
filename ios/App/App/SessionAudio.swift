@@ -25,7 +25,8 @@ public class SessionAudioPlugin: CAPPlugin, CAPBridgedPlugin {
               let source = call.getString("url"), let url = URL(string: source),
               url.scheme == "https", url.host != nil else { call.reject("Invalid session"); return }
         DispatchQueue.main.async {
-            call.resolve(SessionAudioOwner.shared.open(token: token, id: id, title: call.getString("title") ?? "Regulated", url: url))
+            call.resolve(SessionAudioOwner.shared.open(token: token, id: id, title: call.getString("title") ?? "Regulated", url: url,
+                                                     priorCreditSeconds: call.getDouble("priorCreditSeconds") ?? 0))
         }
     }
 
@@ -74,6 +75,8 @@ private final class SessionAudioOwner {
     private var systemNotifications: [NSObjectProtocol] = []
     private var timeObserver: Any?
     private var seekAtEnd = false
+    private var seeking = false
+    private var evidence = ListeningEvidence()
     private var wantsPlayback = false
     private var position = 0.0, duration = 0.0
 
@@ -116,7 +119,7 @@ private final class SessionAudioOwner {
         return Thread.isMainThread ? perform() : DispatchQueue.main.sync(execute: perform)
     }
 
-    func open(token: String, id: String, title: String, url: URL) -> [String: Any] {
+    func open(token: String, id: String, title: String, url: URL, priorCreditSeconds: Double = 0) -> [String: Any] {
         releasePlayer()
         self.token = token
         sessionId = id
@@ -124,6 +127,8 @@ private final class SessionAudioOwner {
         status = "loading"
         outcome = nil
         seekAtEnd = false
+        seeking = false
+        evidence = ListeningEvidence(priorCreditSeconds: priorCreditSeconds)
         wantsPlayback = false
         position = 0
         duration = 0
@@ -156,6 +161,9 @@ private final class SessionAudioOwner {
         itemNotifications.append(center.addObserver(forName: .AVPlayerItemFailedToPlayToEndTime, object: item, queue: .main) { [weak self] _ in
             if owns() { self?.fail() }
         })
+        itemNotifications.append(center.addObserver(forName: .AVPlayerItemTimeJumped, object: item, queue: .main) { [weak self] _ in
+            if owns() { self?.sample(discontinuity: true) }
+        })
         return snapshot(token)
     }
 
@@ -173,6 +181,7 @@ private final class SessionAudioOwner {
 
     func pause() {
         guard let player = player else { return }
+        sample()
         wantsPlayback = false
         player.pause()
         deactivate()
@@ -183,12 +192,16 @@ private final class SessionAudioOwner {
         guard let player = player, outcome == nil, seconds.isFinite else { return }
         sample()
         guard duration > 0 else { return }
+        seeking = true
+        sample(discontinuity: true)
         seekAtEnd = seconds >= duration
         if seekAtEnd { pause() }
         let ownToken = token
         player.seek(to: CMTime(seconds: max(0, min(seconds, duration)), preferredTimescale: 600), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self, weak player] _ in
             DispatchQueue.main.async {
                 guard let self = self, self.token == ownToken, self.player === player else { return }
+                self.seeking = false
+                self.sample(discontinuity: true)
                 self.publish()
             }
         }
@@ -199,7 +212,11 @@ private final class SessionAudioOwner {
         sample()
         revision += 1
         return ["token": token, "sessionId": sessionId, "revision": revision, "status": status,
-                "position": position, "duration": duration, "outcome": outcome as Any? ?? NSNull()]
+                "position": position, "duration": duration, "outcome": outcome as Any? ?? NSNull(),
+                "evidenceSource": "native-rendered", "eligibleSeconds": evidence.seconds, "atMs": evidence.atMs,
+                "qualifiedAtMs": evidence.qualifiedAtMs as Any? ?? NSNull(),
+                "offsetMinutes": evidence.offsetMinutes as Any? ?? NSNull(),
+                "lastRenderedAtMs": evidence.lastRenderedAtMs as Any? ?? NSNull()]
     }
 
     func close(_ requested: String) -> [String: Any] {
@@ -211,12 +228,15 @@ private final class SessionAudioOwner {
         return state
     }
 
-    private func sample() {
+    private func sample(discontinuity: Bool = false) {
         guard let player = player else { return }
         let seconds = player.currentTime().seconds
         let length = player.currentItem?.duration.seconds ?? 0
         position = seconds.isFinite ? max(0, seconds) : 0
         duration = length.isFinite ? max(0, length) : 0
+        evidence.sample(position: position, atMs: ProcessInfo.processInfo.systemUptime * 1000,
+                        eligible: player.timeControlStatus == .playing && !player.isMuted && player.volume > 0 && !seeking && outcome == nil,
+                        discontinuity: discontinuity, duration: duration, wallAtMs: Date().timeIntervalSince1970 * 1000)
         if outcome == nil {
             switch player.timeControlStatus {
             case .playing: status = "playing"

@@ -33,7 +33,7 @@ export const SESSION_COLUMNS = 'id, title, description, category, duration, free
 // tab switch. Cleared by a full reload; fallback results are never cached.
 let allSessionsCache = null
 
-export async function getAllSessions() {
+export async function getAllSessions({ fallback = true } = {}) {
   if (allSessionsCache) return allSessionsCache
   console.log('[Sessions] Fetching all sessions from Supabase...')
   const { data, error } = await supabase
@@ -43,11 +43,11 @@ export async function getAllSessions() {
 
   if (error) {
     console.error('[Sessions] getAllSessions() failed — full error:', JSON.stringify(error))
-    return HARDCODED_SESSIONS
+    return fallback ? HARDCODED_SESSIONS : []
   }
   if (!data?.length) {
     console.warn('[Sessions] getAllSessions() returned 0 rows — using hardcoded fallback')
-    return HARDCODED_SESSIONS
+    return fallback ? HARDCODED_SESSIONS : []
   }
   console.log('[Sessions] ✓', data.length, 'sessions from Supabase')
   allSessionsCache = data.map(reviewedSession)

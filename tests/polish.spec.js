@@ -1,5 +1,6 @@
 import { ui } from '../src/content/reviewedCopy.js'
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures.js'
+
 import { skipOnboarding, asPremium, fakeAudio, noProductionWrites } from './helpers.js'
 import path from 'node:path'
 

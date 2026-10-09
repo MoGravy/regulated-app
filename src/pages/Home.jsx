@@ -11,7 +11,9 @@ import SessionRow from '../components/SessionRow'
 import CheckIn from '../components/CheckIn'
 import Texture from '../components/Texture'
 import { haptic } from '../lib/haptic'
-import { StreakPill } from '../components/Streak'
+import PracticeSummary from '../components/PracticeSummary'
+import { resetCopy } from '../config/resetCopy'
+import { resetCandidates, resetChoiceKey } from '../lib/quickReset'
 
 function greeting() {
   const h = new Date().getHours()
@@ -30,9 +32,10 @@ function whenLabel() {
 
 export default function Home() {
   const navigate = useNavigate()
-  const { onboardingDone, lastInProgress, mode, setMode, programDay } = useApp()
+  const { onboardingDone, lastInProgress, mode, setMode, programDay, practiceScope } = useApp()
   const [sessions, setSessions] = useState(HARDCODED_SESSIONS)
   const [loading, setLoading] = useState(true)
+  const [verified, setVerified] = useState(false)
   const hasRedirected = useRef(false)
 
   useEffect(() => {
@@ -46,8 +49,8 @@ export default function Home() {
 
   async function loadSessions() {
     try {
-      const data = await getAllSessions()
-      if (data.length) setSessions(data)
+      const data = await getAllSessions({ fallback: false })
+      if (data.length) { setSessions(data); setVerified(true) }
     } catch (err) {
       console.error('[Home] getAllSessions failed:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
     } finally {
@@ -56,6 +59,9 @@ export default function Home() {
   }
 
   const resume = lastInProgress(sessions)
+  let resetId = null
+  try { resetId = localStorage.getItem(resetChoiceKey(practiceScope)) } catch { /* Use the default free reset. */ }
+  const reset = resetCandidates(verified ? sessions : [], resetId)[0]
 
   // Program mode only renders when the sequencing has been approved; until then
   // the switch is disabled and Browse is all there is.
@@ -87,7 +93,6 @@ export default function Home() {
         <h1 style={{ margin: '4px 0 20px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em' }}>
           {greeting()}
         </h1>
-        <StreakPill />
 
         <div className="segmented" role="tablist" aria-label="Mode" style={{ marginBottom: 24 }}>
           <button
@@ -109,6 +114,13 @@ export default function Home() {
             Browse
           </button>
         </div>
+
+        <section className="card quick-reset-card">
+          <h2 className="t-title">{resetCopy.title}</h2>
+          {reset && <p>{reset.title} · {reset.duration} {resetCopy.minutes}</p>}
+          <button className="btn-primary" onClick={() => navigate('/reset')}>{resetCopy.open}</button>
+        </section>
+        <PracticeSummary />
 
         {programMode && (
           <Today

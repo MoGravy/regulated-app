@@ -86,7 +86,8 @@
   * { transition-duration: 0ms !important; animation: none !important; }
 }
 
-:root[data-look="night"] {
+:root[data-look="night"],
+:root[data-look="admiralty"] {
   --care-role-bg: var(--accent);
   --care-role-ink: var(--on-accent);
   --care-alert: var(--accent);

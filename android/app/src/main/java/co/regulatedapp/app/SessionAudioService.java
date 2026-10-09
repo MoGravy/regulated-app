@@ -10,6 +10,7 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
 import androidx.media3.common.C;
 import androidx.media3.common.ForwardingPlayer;
 import androidx.media3.common.MediaItem;
@@ -36,6 +37,15 @@ public class SessionAudioService extends MediaSessionService {
     private long revision;
     private double position, duration;
     private boolean seekAtEnd;
+    private boolean seeking;
+    private ListeningEvidence evidence = new ListeningEvidence(0);
+    private final Runnable evidenceTimer = new Runnable() {
+        @Override public void run() {
+            if (player == null) return;
+            publish();
+            handler.postDelayed(this, 1000);
+        }
+    };
     Consumer<JSObject> observer;
 
     @Override public void onCreate() {
@@ -57,6 +67,10 @@ public class SessionAudioService extends MediaSessionService {
     @Override public MediaSession onGetSession(MediaSession.ControllerInfo info) { return mediaSession; }
 
     JSObject open(String nextToken, String id, String title, String url) {
+        return open(nextToken, id, title, url, 0);
+    }
+
+    JSObject open(String nextToken, String id, String title, String url, double priorCreditSeconds) {
         releasePlayer();
         token = nextToken;
         sessionId = id;
@@ -64,6 +78,8 @@ public class SessionAudioService extends MediaSessionService {
         position = 0;
         duration = 0;
         seekAtEnd = false;
+        seeking = false;
+        evidence = new ListeningEvidence(priorCreditSeconds);
         status = "loading";
         final ExoPlayer current = new ExoPlayer.Builder(this).build();
         player = current;
@@ -92,6 +108,12 @@ public class SessionAudioService extends MediaSessionService {
                 if (!owns()) return;
                 fail();
             }
+            @Override public void onPositionDiscontinuity(Player.PositionInfo oldPosition, Player.PositionInfo newPosition, int reason) {
+                if (!owns()) return;
+                seeking = false;
+                sample(true);
+                publish();
+            }
         });
         ForwardingPlayer controls = new ForwardingPlayer(current) {
             private boolean owns() { return player == current && token.equals(nextToken); }
@@ -119,6 +141,7 @@ public class SessionAudioService extends MediaSessionService {
         current.setMediaItem(new MediaItem.Builder().setMediaId(id).setUri(url)
             .setMediaMetadata(new MediaMetadata.Builder().setTitle(title).setArtist("Regulated").build()).build());
         current.prepare();
+        handler.postDelayed(evidenceTimer, 1000);
         return snapshot(nextToken);
     }
 
@@ -130,6 +153,7 @@ public class SessionAudioService extends MediaSessionService {
 
     private void pause() {
         if (player == null) return;
+        sample();
         player.pause();
         AudioManagerCompat.abandonAudioFocusRequest(audioManager, focusRequest);
         if (outcome == null) status = "paused";
@@ -140,6 +164,8 @@ public class SessionAudioService extends MediaSessionService {
         if (player == null || outcome != null || !Double.isFinite(seconds)) return;
         sample();
         if (duration <= 0) return;
+        seeking = true;
+        sample(true);
         seekAtEnd = seconds >= duration;
         if (seekAtEnd) pause();
         player.seekTo((long) (Math.max(0, Math.min(seconds, duration)) * 1000));
@@ -161,7 +187,10 @@ public class SessionAudioService extends MediaSessionService {
         if (!token.equals(requested)) return new JSObject();
         sample();
         return new JSObject().put("token", token).put("sessionId", sessionId).put("revision", ++revision)
-            .put("status", status).put("position", position).put("duration", duration).put("outcome", outcome);
+            .put("status", status).put("position", position).put("duration", duration).put("outcome", outcome)
+            .put("evidenceSource", "native-rendered").put("eligibleSeconds", evidence.seconds).put("atMs", evidence.atMs)
+            .put("qualifiedAtMs", evidence.qualifiedAtMs).put("offsetMinutes", evidence.offsetMinutes)
+            .put("lastRenderedAtMs", evidence.lastRenderedAtMs);
     }
 
     JSObject close(String requested) {
@@ -174,10 +203,17 @@ public class SessionAudioService extends MediaSessionService {
     }
 
     private void sample() {
+        sample(false);
+    }
+
+    private void sample(boolean discontinuity) {
         if (player == null) return;
         position = Math.max(0, player.getCurrentPosition()) / 1000.0;
         long length = player.getDuration();
         duration = length > 0 ? length / 1000.0 : 0;
+        evidence.sample(position, SystemClock.elapsedRealtime(),
+            player.isPlaying() && player.getVolume() > 0 && !seeking && outcome == null,
+            discontinuity, duration, System.currentTimeMillis());
     }
 
     private void publish() { if (observer != null) observer.accept(snapshot(token)); }
@@ -192,6 +228,7 @@ public class SessionAudioService extends MediaSessionService {
     }
 
     private void releasePlayer() {
+        handler.removeCallbacks(evidenceTimer);
         ExoPlayer old = player;
         player = null;
         if (mediaSession != null) { removeSession(mediaSession); mediaSession.release(); mediaSession = null; }
