@@ -41,7 +41,7 @@ function SessionAttempt({ id, resetSession, resetUrl, resetControls, onResetErro
   const wakeLockRef = useRef(null)
   const [practiceRecorded, setPracticeRecorded] = useState(false)
   const playback = useSessionPlayback({
-    session, url: audioUrl, enabled: step !== STEP.PRE_MOOD,
+    session, url: audioUrl, enabled: step !== STEP.PRE_MOOD, autoplay: !quickReset,
     createPractice: () => createPlaybackPractice({
       native: Capacitor.isNativePlatform(), mediaId: session.id, prior: beginPractice(session.id),
       updatePractice, onQualified: () => setPracticeRecorded(true),

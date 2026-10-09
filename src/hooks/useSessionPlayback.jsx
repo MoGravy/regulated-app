@@ -6,7 +6,7 @@ import { nativeAttempt, webAttempt } from '../lib/sessionPlayback'
 const NativeAudio = registerPlugin('SessionAudio')
 const native = Capacitor.isNativePlatform()
 
-export function useSessionPlayback({ session, url, enabled, createPractice, onEnded, onError, onClose }) {
+export function useSessionPlayback({ session, url, enabled, autoplay = true, createPractice, onEnded, onError, onClose }) {
   const [snapshot, setSnapshot] = useState(null)
   const attempt = useRef(null)
   const callbacks = useRef({ createPractice, onEnded, onError, onClose })
@@ -34,7 +34,8 @@ export function useSessionPlayback({ session, url, enabled, createPractice, onEn
     const args = [source, receive, () => ownerCallbacks.onError(), state => { practice?.close(state); ownerCallbacks.onClose(state) }]
     const owner = native ? nativeAttempt(NativeAudio, ...args) : webAttempt(new Audio(), ...args)
     attempt.current = owner
-    owner.command('play')
+    if (autoplay) owner.command('play')
+    else owner.refresh()
     const refresh = () => owner.refresh()
     const timer = native ? setInterval(refresh, 1000) : null
     if (native) App.addListener('appStateChange', state => {
@@ -47,7 +48,7 @@ export function useSessionPlayback({ session, url, enabled, createPractice, onEn
       owner.close()
       if (attempt.current === owner) attempt.current = null
     }
-  }, [session?.id, url, enabled])
+  }, [session?.id, url, enabled, autoplay])
 
   return {
     snapshot,

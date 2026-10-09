@@ -43,6 +43,8 @@ test('genuine Quick Reset listening qualifies once and completion cannot award a
   await page.route('**/rest/v1/sessions*', route => route.fulfill({ json: [reset] }))
   await skipOnboarding(page)
   await page.goto('/reset')
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Play', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible()
   await expect.poll(async () => {
     const saved = await storage(page)
