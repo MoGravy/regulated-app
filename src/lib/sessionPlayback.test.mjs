@@ -184,3 +184,28 @@ test('web evidence copies rendered ranges and publishes seek, mute and rate boun
   audio.dispatchEvent(new Event('seeked'))
   assert.equal(states.length, count)
 })
+
+test('replacement initializes retry credit only after queued native final-close checkpoint', async () => {
+  const fixture = bridgeFixture()
+  let releaseClose, prior = { attemptId: 'retry', heardSeconds: 20 }, initialized = false, opened
+  fixture.bridge.close = input => new Promise(resolve => { releaseClose = () => resolve({ token: input.token, heardSeconds: 32 }) })
+  const first = nativeAttempt(fixture.bridge, source('first-retry'), () => {}, assert.fail,
+    state => { prior = { ...prior, heardSeconds: state.heardSeconds } })
+  await first.ready
+  const closing = first.close()
+  const secondSource = source('second-retry')
+  const second = nativeAttempt(fixture.bridge, secondSource, () => {}, assert.fail, () => {}, () => {
+    initialized = true
+    opened = { ...prior }
+    return { priorCreditSeconds: prior.heardSeconds }
+  })
+  await Promise.resolve()
+  assert.equal(initialized, false)
+  releaseClose()
+  await closing
+  await second.ready
+  assert.deepEqual(opened, { attemptId: 'retry', heardSeconds: 32 })
+  assert.equal(secondSource.priorCreditSeconds, 32)
+  fixture.bridge.close = async () => ({})
+  await second.close()
+})

@@ -20,8 +20,8 @@ export function useSessionPlayback({ session, url, enabled, autoplay = true, cre
     // Capture this owner's callbacks. A delayed close must not checkpoint a
     // replacement attempt or write into a replacement account's ledger.
     const ownerCallbacks = callbacks.current
-    const practice = ownerCallbacks.createPractice?.()
-    const source = { token: crypto.randomUUID(), sessionId: String(session.id), title: session.title, url, priorCreditSeconds: practice?.priorCreditSeconds || 0 }
+    let practice
+    const source = { token: crypto.randomUUID(), sessionId: String(session.id), title: session.title, url, priorCreditSeconds: 0 }
     const receive = state => {
       practice?.receive(state)
       setSnapshot(state)
@@ -31,7 +31,10 @@ export function useSessionPlayback({ session, url, enabled, autoplay = true, cre
         ownerCallbacks.onEnded()
       }
     }
-    const args = [source, receive, () => ownerCallbacks.onError(), state => { practice?.close(state); ownerCallbacks.onClose(state) }]
+    const args = [source, receive, () => ownerCallbacks.onError(), state => { practice?.close(state); ownerCallbacks.onClose(state) }, () => {
+      practice = ownerCallbacks.createPractice?.()
+      return { priorCreditSeconds: practice?.priorCreditSeconds || 0 }
+    }]
     const owner = native ? nativeAttempt(NativeAudio, ...args) : webAttempt(new Audio(), ...args)
     attempt.current = owner
     if (autoplay) owner.command('play')

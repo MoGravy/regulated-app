@@ -1,6 +1,6 @@
 let nativeQueue = Promise.resolve()
 
-export function nativeAttempt(bridge, source, onSnapshot, onFailure, onClose) {
+export function nativeAttempt(bridge, source, onSnapshot, onFailure, onClose, beforeOpen = () => ({})) {
   let disposed = false
   let revision = -1
   let listener
@@ -21,6 +21,7 @@ export function nativeAttempt(bridge, source, onSnapshot, onFailure, onClose) {
   const ready = run(async () => {
     listener = await bridge.addListener('playback', accept)
     if (disposed) return
+    Object.assign(source, beforeOpen())
     return bridge.open(source)
   })
   return {
@@ -40,7 +41,8 @@ export function nativeAttempt(bridge, source, onSnapshot, onFailure, onClose) {
   }
 }
 
-export function webAttempt(audio, source, onSnapshot, onFailure, onClose) {
+export function webAttempt(audio, source, onSnapshot, onFailure, onClose, beforeOpen = () => ({})) {
+  Object.assign(source, beforeOpen())
   let revision = 0
   let outcome = null
   let disposed = false

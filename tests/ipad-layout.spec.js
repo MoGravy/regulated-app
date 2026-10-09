@@ -40,7 +40,8 @@ async function contentFits(page) {
 
 async function reachable(page, action) {
   await action.scrollIntoViewIfNeeded()
-  await expect(action).toBeInViewport({ ratio: 1 })
+  // Allow subpixel scroll rounding; the centre must still be unobscured below.
+  await expect(action).toBeInViewport({ ratio: 0.999 })
   const clear = await action.evaluate(element => {
     const rect = element.getBoundingClientRect()
     const target = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)

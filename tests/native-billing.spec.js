@@ -19,7 +19,7 @@ async function harness(native, signedIn = false, withOffer = false) {
         if (path.endsWith('/stripe')) return { contents: 'window.stripeLoaded = true; export const stripePromise = Promise.resolve({redirectToCheckout: async () => {window.stripeRedirected = true; return {}}})' }
         if (path.endsWith('/analytics')) return { contents: 'export const trackEvent = () => {}; export const Events = {}' }
         return { contents: `
-          export const supabase = { auth: { getSession: async () => ({data:{session:${signedIn ? JSON.stringify({user:{id:'11111111-1111-4111-8111-111111111111',email:'fixture@example.test'}}) : 'null'}}}), onAuthStateChange: () => ({data:{subscription:{unsubscribe(){}}}}) } }
+          export const supabase = { auth: { initialize: async () => ({error:null}), getSession: async () => ({data:{session:${signedIn ? JSON.stringify({user:{id:'11111111-1111-4111-8111-111111111111',email:'fixture@example.test'}}) : 'null'}}}), onAuthStateChange: () => ({data:{subscription:{unsubscribe(){}}}}) } }
           export const checkSubscription = async () => {window.accessChecks = (window.accessChecks || 0) + 1; return false}
           export const ensureProfile = async () => {}
           export const signOutUser = async () => {}

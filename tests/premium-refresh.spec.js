@@ -42,6 +42,7 @@ async function setup(page, { account = 'A', delayedInitial = false } = {}) {
     window.requests = []
     window.authFixture = {
       auth: {
+        initialize: async () => ({ error: null }),
         getSession() {
           reads++
           if (reads === 1 && delayedInitial) return new Promise(resolve => { window.resolveInitial = id => resolve({ data: { session: session(id) } }) })
