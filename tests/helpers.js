@@ -133,7 +133,7 @@ export async function fakeAudio(page, seconds = 0.5, { fallbackCatalog = true } 
       ? { status: 406, json: { code: 'PGRST116', message: 'Local fixture: use fallback' } }
       : { json: [] }
   ))
-  await page.route('**/fake-audio.wav', route => route.fulfill({ status: 200, contentType: 'audio/wav', body: silentWav(seconds) }))
+  await page.route('**/fake-audio.wav', route => route.fulfill({ status: 200, headers: { 'Accept-Ranges': 'bytes' }, contentType: 'audio/wav', body: silentWav(seconds) }))
   await page.route('**/api/get-audio-url', route => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ url: '/fake-audio.wav' }),
   }))
