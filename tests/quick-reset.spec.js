@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures.js'
+import { reviewedSession } from '../src/content/reviewedCopy.js'
 
 import { reset, setup } from './reset-fixture'
 
@@ -8,7 +9,7 @@ for (const look of ['classic', 'night']) {
     await page.goto(`/?look=${look}`)
     await page.getByRole('button', { name: 'Open session', exact: true }).click()
     await expect(page).toHaveURL(/\/reset/)
-    await expect(page.getByRole('heading', { name: reset.title })).toBeVisible()
+    await expect(page.getByRole('heading', { name: reviewedSession(reset).title })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Pause', exact: true })).toHaveCount(0)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)

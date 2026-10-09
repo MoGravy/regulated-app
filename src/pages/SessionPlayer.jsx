@@ -22,6 +22,7 @@ const STEP = { PRE_MOOD: 'pre_mood', PLAYING: 'playing', COMPLETE: 'complete', C
 export default function SessionPlayer(props) {
   const { id } = useParams()
   const { practiceScope } = useApp()
+  if (!practiceScope) return null
   return <SessionAttempt key={`${props.resetSession?.id || id}:${practiceScope}`} id={props.resetSession?.id || id} {...props} />
 }
 
