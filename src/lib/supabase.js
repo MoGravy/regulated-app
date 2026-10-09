@@ -23,19 +23,6 @@ export const supabase = createClient(
 // Session helpers
 // ---------------------------------------------------------------------------
 
-export async function trackSessionCompletion(sessionId, userEmail, moodBefore, moodAfter) {
-  const payload = {
-    session_id: sessionId,
-    user_email: userEmail || null,
-    mood_before: moodBefore,
-    mood_after: moodAfter,
-    completed_at: new Date().toISOString(),
-  }
-
-  const { error } = await supabase.from('session_completions').insert(payload)
-  if (error) console.error('[Supabase] trackSessionCompletion error:', error)
-}
-
 // Safe column list for client reads — audio_url deliberately excluded.
 // Premium audio is served via /api/get-audio-url (subscription-checked,
 // 2h signed URL). has_audio is a generated column standing in for the old

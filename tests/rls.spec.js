@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../src/config/credentials.js'
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './helpers.js'
 
 // Code handoff item 3. Straight to the database with the public key, the
 // same way the browser reaches it: the library is readable, orders are not.

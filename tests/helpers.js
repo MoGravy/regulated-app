@@ -1,5 +1,10 @@
 import { expect } from '@playwright/test'
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../src/config/credentials.js'
+import { loadEnv } from 'vite'
+
+// Browser credentials use import.meta.env; Node tests use Vite's same public env.
+const env = loadEnv('production', process.cwd(), 'VITE_')
+export const SUPABASE_URL = env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+export const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
 
 export const HAS_API = !!process.env.BASE_URL && !process.env.BASE_URL.includes('localhost')
 
@@ -125,6 +130,12 @@ export function silentWav(seconds = 0.5) {
 
 // Points the player at the silent WAV instead of /api/get-audio-url.
 export async function fakeAudio(page, seconds = 0.5) {
+  // Fake playback uses the reviewed fallback catalogue, never a live session read.
+  await page.route('**/rest/v1/sessions*', route => route.fulfill(
+    route.request().headers().accept?.includes('object')
+      ? { status: 406, json: { code: 'PGRST116', message: 'Local fixture: use fallback' } }
+      : { json: [] }
+  ))
   await page.route('**/fake-audio.wav', route => route.fulfill({ status: 200, contentType: 'audio/wav', body: silentWav(seconds) }))
   await page.route('**/api/get-audio-url', route => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ url: '/fake-audio.wav' }),

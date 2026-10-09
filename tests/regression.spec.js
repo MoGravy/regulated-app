@@ -281,7 +281,8 @@ test('a session played to the end is marked complete and leaves Continue listeni
   await skipOnboarding(page)
 
   await page.goto(`/sessions/${FREE_ID}/play`)
-  await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
+  await page.getByRole('button', { name: '2 out of 10' }).click({ timeout: 20_000 })
+  await page.getByRole('button', { name: 'Continue', exact: true }).click()
 
   // The silent WAV is half a second, so the end arrives on its own.
   await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toBeVisible({ timeout: 20_000 })
@@ -292,9 +293,9 @@ test('a session played to the end is marked complete and leaves Continue listeni
   expect(JSON.parse(after.regulated_completed)).toContain(FREE_ID)
   expect(JSON.parse(after.regulated_progress || '{}')).not.toHaveProperty(FREE_ID)
 
-  // The completion insert is real code on a real path; it must have been the
-  // only write attempted, and the stub is what stopped it reaching production.
-  expect(writes.join(',')).toContain('session_completions')
+  expect(JSON.parse(after.regulated_practice_days)).toHaveLength(1)
+  // Completing a listen records local progress without uploading mood or email.
+  expect(writes).toEqual([])
 })
 
 test('a stalled audio file does not finish the session', async ({ page }) => {
@@ -303,6 +304,7 @@ test('a stalled audio file does not finish the session', async ({ page }) => {
   await skipOnboarding(page)
   await page.addInitScript(() => {
     HTMLMediaElement.prototype.play = function () {
+      Object.defineProperty(this, 'paused', { value: false, configurable: true })
       this.dispatchEvent(new Event('play'))
       return Promise.resolve()
     }
@@ -327,10 +329,7 @@ test('a part-played session shows up in Continue listening', async ({ page }) =>
 
   // Move through the control the user would press. Wait for the real duration,
   // or the 15 seconds lands under the resume threshold.
-  await page.waitForFunction(() => {
-    const a = document.querySelector('audio')
-    return a && Number.isFinite(a.duration) && a.duration > 50
-  }, null, { timeout: 20_000 })
+  await expect(page.getByText('1:00', { exact: true })).toBeVisible({ timeout: 20_000 })
   await page.getByRole('button', { name: 'Forward 15 seconds' }).click()
   await page.getByRole('button', { name: 'Close player' }).click()
   await page.goto('/')

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
-import { supabase, trackSessionCompletion, SESSION_COLUMNS, getCachedSession, authHeaders } from '../lib/supabase'
+import { supabase, SESSION_COLUMNS, getCachedSession, authHeaders } from '../lib/supabase'
 import { trackEvent, Events } from '../lib/analytics'
 import { HARDCODED_SESSIONS_BY_ID } from '../lib/hardcodedSessions'
 import { categoryOf } from '../lib/categories'
@@ -32,7 +32,6 @@ function SessionAttempt({ id }) {
   const [audioError, setAudioError] = useState(null)  // session fine, audio would not resolve
   const [retry, setRetry] = useState(0)
   const [step, setStep] = useState(STEP.PRE_MOOD)
-  const [moodBefore, setMoodBefore] = useState(null)
   const [showCustomPrompt, setShowCustomPrompt] = useState(false)
 
   const wakeLockRef = useRef(null)
@@ -149,18 +148,13 @@ function SessionAttempt({ id }) {
   }, [isPlaying])
 
   function handlePreMood(mood) {
-    setMoodBefore(mood)
     setStep(STEP.PLAYING)
     trackEvent(Events.MOOD_TRACKED, { type: 'before', value: mood, session_title: session?.title })
   }
 
-  // Code handoff item 7: one tap, preference language, and the answer travels
-  // as an anonymous event only. The completion row keeps its shape; mood_after
-  // is simply null from here on.
   function handleCheckOut(answer) {
     haptic()
     markSessionComplete(session?.id)
-    trackSessionCompletion(null, userEmail, moodBefore, null)
     trackEvent(Events.SESSION_CHECKOUT, { answer, session_title: session?.title })
     setStep(STEP.DONE)
     setTimeout(() => setShowCustomPrompt(true), 800)
