@@ -1,3 +1,4 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
@@ -86,7 +87,7 @@ export default function Home() {
     <div className="page">
       <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
-      <div className="page-content" style={{ paddingTop: 8, position: 'relative' }}>
+      <div className="page-content home-content" style={{ paddingTop: 8, position: 'relative' }}>
         <Texture ink="#24344D" variant="page" drift />
         <div className="t-caption">{whenLabel()}</div>
         <h1 style={{ margin: '4px 0 20px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em' }}>
@@ -144,7 +145,7 @@ export default function Home() {
         {!programMode && !!families.length && (
           <>
             <div className="t-section" style={{ margin: '26px 0 10px' }}>Where you are today</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="category-grid">
               {families.map(([name, count]) => (
                 <CategoryTile
                   key={name}
@@ -159,7 +160,7 @@ export default function Home() {
 
         {!programMode && newest && (
           <>
-            <div className="t-section" style={{ margin: '26px 0 10px' }}>New this month</div>
+            <div className="t-section" style={{ margin: '26px 0 10px' }}>{ui.latest_sessions}</div>
             <SessionRow session={newest} />
           </>
         )}

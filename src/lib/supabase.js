@@ -1,6 +1,10 @@
+import { reviewedSession } from '../content/reviewedCopy.js'
 import { createClient } from '@supabase/supabase-js'
 import { HARDCODED_SESSIONS } from './hardcodedSessions'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/credentials'
+import { apiUrl } from './apiUrl'
+import { Capacitor } from '@capacitor/core'
+import { NATIVE_AUTH_REDIRECT } from './nativeAuthUrl'
 import { emailReturnUrl } from './signInFlow'
 
 export const supabase = createClient(
@@ -10,6 +14,7 @@ export const supabase = createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+      flowType: Capacitor.isNativePlatform() ? 'pkce' : 'implicit',
     },
   }
 )
@@ -17,21 +22,6 @@ export const supabase = createClient(
 // ---------------------------------------------------------------------------
 // Session helpers
 // ---------------------------------------------------------------------------
-
-export async function trackSessionCompletion(sessionId, userEmail, moodBefore, moodAfter) {
-  const payload = {
-    session_id: sessionId,
-    user_email: userEmail || null,
-    mood_before: moodBefore,
-    mood_after: moodAfter,
-    completed_at: new Date().toISOString(),
-  }
-
-  const { error } = await supabase.from('session_completions').insert(payload)
-  if (error) console.error('[Supabase] trackSessionCompletion error:', error)
-  // The increment_completed_sessions call that stood here was a database
-  // no-op. Migration 007 takes the public role's access to it away.
-}
 
 // Safe column list for client reads — audio_url deliberately excluded.
 // Premium audio is served via /api/get-audio-url (subscription-checked,
@@ -60,8 +50,8 @@ export async function getAllSessions({ fallback = true } = {}) {
     return fallback ? HARDCODED_SESSIONS : []
   }
   console.log('[Sessions] ✓', data.length, 'sessions from Supabase')
-  allSessionsCache = data
-  return data
+  allSessionsCache = data.map(reviewedSession)
+  return allSessionsCache
 }
 
 export async function getSessions() {
@@ -121,23 +111,23 @@ export async function authHeaders() {
   return data.session ? { Authorization: `Bearer ${data.session.access_token}` } : {}
 }
 
-export async function checkSubscription(email) {
-  if (!email) return false
-  // Signed out, there is nothing to check: the server only trusts a session
-  // token, so a typed email alone can never be premium.
-  const headers = await authHeaders()
-  if (!headers.Authorization) return false
+export async function checkSubscription(expectedAccountId) {
+  const { data, error } = await supabase.auth.getSession()
+  if (error) throw error
+  const session = data?.session
+  if (!expectedAccountId || session?.user?.id !== expectedAccountId || !session.access_token) {
+    throw new Error('Subscription account does not match the signed-in session')
+  }
 
-  // Server-side: the subscriptions table is RLS-locked, so the public key
-  // used here always saw zero rows and every subscriber looked unpaid.
-  const res = await fetch('/api/check-subscription', {
+  const res = await fetch(apiUrl('/api/check-subscription'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify({ email }),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+    body: JSON.stringify({ email: session.user.email }),
   })
   if (!res.ok) throw new Error(`check-subscription responded ${res.status}`)
-  const { active } = await res.json()
-  return !!active
+  const result = await res.json()
+  if (typeof result?.active !== 'boolean') throw new Error('Invalid subscription response')
+  return result.active
 }
 
 // ---------------------------------------------------------------------------
@@ -169,7 +159,7 @@ export async function getAudioSignedUrl(path) {
 export async function sendMagicLink(email, next = '') {
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: emailReturnUrl(window.location.origin, next) },
+    options: { emailRedirectTo: Capacitor.isNativePlatform() ? NATIVE_AUTH_REDIRECT : emailReturnUrl(window.location.origin, next) },
   })
   if (error) throw error
 }
@@ -190,7 +180,7 @@ export async function signUpWithPassword(email, password, next = '') {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: emailReturnUrl(window.location.origin, next) },
+    options: { emailRedirectTo: Capacitor.isNativePlatform() ? NATIVE_AUTH_REDIRECT : emailReturnUrl(window.location.origin, next) },
   })
   if (error) throw error
   // A null session means the project is set to confirm the address first.

@@ -3,216 +3,77 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
 import { CUSTOM_AUDIO_PRICE } from '../config/pricing'
+import { apiUrl } from '../lib/apiUrl'
+import { ui } from '../content/reviewedCopy.js'
 
 export default function Success() {
-  const navigate = useNavigate()
   const [params] = useSearchParams()
-  const { setIsPremium } = useApp()
-
-  const type = params.get('type') // 'subscription' | 'custom_audio'
-  const plan = params.get('plan') // 'annual' | 'monthly' | null, display hint only
   const sessionId = params.get('session_id')
+  return <Receipt key={sessionId || ''} sessionId={sessionId} />
+}
 
-  // Verify the payment server-side before revealing anything sensitive (the
-  // ANNUALFREE code). URL params are untrusted, the code only renders once the
-  // backend confirms a real PAID subscription whose Stripe metadata says annual.
-  const [verifyState, setVerifyState] = useState('pending') // 'pending' | 'confirmed' | 'failed'
-  const [verified, setVerified] = useState(null) // { status, type, plan } from backend
+function Receipt({ sessionId }) {
+  const navigate = useNavigate()
+  const { refreshPremium, isPremium } = useApp()
+  const [receipt, setReceipt] = useState({ status: sessionId ? 'pending' : 'failed' })
 
   useEffect(() => {
-    if (!sessionId) {
-      setVerifyState('failed')
-      return
-    }
+    if (!sessionId) return
     let cancelled = false
     async function verify() {
       try {
-        const res = await fetch(`/api/verify-session?session_id=${sessionId}`)
-        if (!res.ok) throw new Error(`verify-session responded ${res.status}`)
+        const res = await fetch(apiUrl(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`))
+        if (!res.ok) throw new Error('Receipt request failed')
         const data = await res.json()
         if (cancelled) return
-        const paid = data.status === 'paid' ||
-          (data.type === 'custom_audio' && data.status === 'no_payment_required')
-        if (!paid) {
-          setVerifyState('failed')
+        const settled = data.status === 'paid' || (data.status === 'no_payment_required' && data.type === 'custom_audio')
+        if (!settled || !['subscription', 'custom_audio'].includes(data.type)) {
+          setReceipt({ status: 'failed' })
           return
         }
-        setVerified(data)
-        setVerifyState('confirmed')
+        setReceipt({ status: 'confirmed', data })
         if (data.type === 'subscription') {
-          setIsPremium(true)
+          refreshPremium().catch(() => console.error('[Success] subscription check failed'))
           trackEvent(Events.PREMIUM_UPGRADE_COMPLETED)
         } else {
           trackEvent(Events.CUSTOM_AUDIO_ORDER_COMPLETED)
         }
-      } catch (err) {
-        if (cancelled) return
-        console.error('[Success] verify-session failed:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
-        setVerifyState('failed')
-        // Network failure ≠ unpaid: Stripe only redirects here after payment,
-        // and the webhook is the server-side source of truth. Don't strand a
-        // paying customer without their premium flag, audio access is
-        // independently gated server-side, so this is safe to set.
-        if (type === 'subscription' && sessionId) setIsPremium(true)
+      } catch {
+        if (!cancelled) setReceipt({ status: 'failed' })
       }
     }
-    verify()
+    void verify()
     return () => { cancelled = true }
-  }, [sessionId])
+  }, [sessionId, refreshPremium])
 
-  // Gate the reward code strictly on the verified backend result, never on the
-  // URL's plan param.
-  const showAnnualCode =
-    verifyState === 'confirmed' &&
-    verified?.type === 'subscription' &&
-    verified?.plan === 'annual'
+  const confirmed = receipt.status === 'confirmed'
+  const custom = confirmed && receipt.data.type === 'custom_audio'
+  const showAnnualCode = confirmed && receipt.data.type === 'subscription' && receipt.data.plan === 'annual'
+  const title = !confirmed ? ui[`payment_${receipt.status}_title`]
+    : custom ? ui.payment_confirmed_title.replace('Payment', 'Purchase') : ui.payment_confirmed_title
+  const body = !confirmed ? ui[`payment_${receipt.status}_body`]
+    : custom ? ui.payment_confirmed_body.split('.')[0].replace(' as paid', '') + '.' : ui.payment_confirmed_body
 
-  // Render immediately, no loading gate. Payment already confirmed by Stripe
-  // redirecting here with a session_id.
-
-  if (type === 'custom_audio') {
-    return (
-      <div style={{
-        flex: 1,
-        minHeight: 0,
-        overflowY: 'auto',
-        background: 'var(--bg)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 28px',
-        textAlign: 'center',
-      }}>
-        <div style={{ fontSize: 72, marginBottom: 20 }}>🎯</div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--ink)', marginBottom: 12, lineHeight: 1.2 }}>
-          Order confirmed.
-        </h1>
-        <p style={{ fontSize: 16, color: 'var(--ink-muted)', lineHeight: 1.7, marginBottom: 8, maxWidth: 340 }}>
-          Matthew will create your personalized audio and deliver it to your email within 7 days.
-        </p>
-        <p style={{ fontSize: 14, color: 'var(--ink-faint)', marginBottom: 36, maxWidth: 320 }}>
-          Check your inbox for a confirmation email. If you don't see it, check your spam folder.
-        </p>
-
-        <div style={{ width: '100%', maxWidth: 380 }}>
-          <div className="card" style={{ marginBottom: 20, textAlign: 'left' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)', marginBottom: 10 }}>
-              What happens next
-            </div>
-            {[
-              ['📧', 'Check your email', 'Confirmation sent immediately'],
-              ['🎙️', 'Matthew records', 'Your custom session in the next 3–5 days'],
-              ['📬', 'Audio delivered', 'To your inbox within 7 days'],
-              ['♾️', 'Replay forever', 'Yours to keep and use whenever you need it'],
-            ].map(([icon, step, detail]) => (
-              <div key={step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 10 }}>
-                <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{step}</div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-faint)' }}>{detail}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button className="btn-primary" onClick={() => navigate('/')}>
-            Back to Sessions
-          </button>
-          <button className="btn-ghost" style={{ width: '100%', marginTop: 10 }} onClick={() => navigate('/premium')}>
-            Upgrade to Premium
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // Premium success
   return (
-    <div style={{
-      flex: 1,
-      minHeight: 0,
-      overflowY: 'auto',
-      background: 'var(--bg)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 28px',
-      textAlign: 'center',
-    }}>
-      <div style={{ fontSize: 72, marginBottom: 20 }}>✦</div>
-      <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--ink)', marginBottom: 12, lineHeight: 1.2 }}>
-        Welcome to Regulated Premium.
-      </h1>
-      <p style={{ fontSize: 16, color: 'var(--ink-muted)', lineHeight: 1.7, marginBottom: plan === 'annual' ? 20 : 36, maxWidth: 340 }}>
-        You now have access to every session in the library, with new sessions added monthly. Everything Matthew creates goes straight to your library.
-      </p>
-
-      {/* While verifying an annual purchase, show a loading state, never the code */}
-      {plan === 'annual' && verifyState === 'pending' && (
-        <div style={{
-          width: '100%',
-          maxWidth: 380,
-          background: 'var(--accent-soft)',
-          border: '1px solid var(--line-strong)',
-          borderRadius: 14,
-          padding: '16px 20px',
-          marginBottom: 24,
-          textAlign: 'center',
-          fontSize: 14,
-          color: 'var(--ink-faint)',
-        }}>
-          Confirming your subscription…
-        </div>
-      )}
-
-      {/* Code renders only after the backend confirms a paid annual subscription */}
+    <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 28px', textAlign: 'center' }}>
+      <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--ink)', marginBottom: 12, lineHeight: 1.2 }}>{title}</h1>
+      <p role="status" style={{ fontSize: 16, color: 'var(--ink-muted)', lineHeight: 1.7, marginBottom: 24, maxWidth: 440 }}>{body}</p>
+      {confirmed && !custom && isPremium && <p>{ui.purchase_active}</p>}
+      {custom && <p style={{ maxWidth: 440 }}>{ui.custom_delivery_help}</p>}
       {showAnnualCode && (
-        <div style={{
-          width: '100%',
-          maxWidth: 380,
-          background: 'var(--accent-soft)',
-          border: '1px solid var(--line-strong)',
-          borderRadius: 14,
-          padding: '16px 20px',
-          marginBottom: 24,
-          textAlign: 'left',
-        }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', marginBottom: 6 }}>
-            YOUR FREE CUSTOM AUDIO
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, marginBottom: 10 }}>
-            Use this code at checkout when ordering your custom audio session (normally A${CUSTOM_AUDIO_PRICE}, free for annual members):
-          </div>
-          <div style={{
-            fontFamily: 'monospace',
-            fontSize: 20,
-            fontWeight: 800,
-            color: 'var(--ink)',
-            letterSpacing: '0.12em',
-            background: 'rgba(0,0,0,0.2)',
-            borderRadius: 8,
-            padding: '8px 14px',
-            display: 'inline-block',
-          }}>
-            ANNUALFREE
-          </div>
+        <div className="card" style={{ width: '100%', maxWidth: 440, marginBottom: 24, textAlign: 'left' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', marginBottom: 6 }}>YOUR FREE CUSTOM AUDIO</div>
+          <p>{ui.annual_custom_help}</p>
+          <p>Custom audio normally A${CUSTOM_AUDIO_PRICE}</p>
+          <div style={{ fontFamily: 'monospace', fontSize: 20, fontWeight: 800, letterSpacing: '0.12em' }}>ANNUALFREE</div>
         </div>
       )}
-
       <div style={{ width: '100%', maxWidth: 380, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <button className="btn-primary" onClick={() => navigate('/sessions')}>
-          Explore the Library
-        </button>
-        <button className="btn-ghost" style={{ width: '100%' }} onClick={() => navigate('/')}>
-          Go Home
-        </button>
+        {confirmed && !custom && !isPremium && <button className="btn-primary" onClick={() => navigate('/signin')}>Sign in</button>}
+        <button className="btn-primary" onClick={() => navigate('/sessions')}>Explore the Library</button>
+        <button className="btn-ghost" onClick={() => navigate('/')}>Go Home</button>
       </div>
-
-      <p style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 28, lineHeight: 1.6, maxWidth: 300 }}>
-        Questions? hello@regulatedapp.co
-      </p>
+      <p style={{ fontSize: 12, color: 'var(--ink-faint)', marginTop: 28, lineHeight: 1.6, maxWidth: 340 }}>Questions? info@matthewtweediehypnosis.com.au</p>
     </div>
   )
 }

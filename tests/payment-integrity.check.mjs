@@ -98,6 +98,12 @@ if (process.argv[2] !== 'coupon') {
     assert.equal((await context.check({ headers: { authorization: 'Bearer fixture' } })).error, 'ANNUALFREE has already been used on this account', `Paid padded-email order consumes ANNUALFREE in ${status} state`)
   }
   assert.equal((await activeSubscriptions(supabase, 'j_ne@example.test')).length, 0)
+  await db.exec('create table store_entitlements(id text,account_id text,environment text,provider text,status text,expires_at timestamptz)')
+  const accessSource = (await source('../api/_access.js')).replace(/^import .*$/gm, '').replaceAll('export ', '')
+  const accessContext = vm.createContext({ normalEmail, sameEmail, syncRevenueCatSnapshot: async () => ({ enabled: false, fresh: false }) })
+  vm.runInContext(accessSource + '\nglobalThis.access = hasPremiumAccess', accessContext)
+  assert.equal(await accessContext.access(supabase, { id: 'fixture', email: 'jane@example.test' }), true)
+  assert.equal(await accessContext.access(supabase, { id: 'fixture', email: 'j_ne@example.test' }), false)
   for (const space of ['\t', '\n', '\u00a0', '\ufeff', '\u2003']) {
     await db.query('update subscriptions set user_email=$1', [space + 'Jane@Example.Test' + space])
     assert.equal((await activeSubscriptions(supabase, 'jane@example.test')).length, 1)

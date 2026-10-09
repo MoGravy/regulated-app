@@ -1,8 +1,10 @@
+import { Capacitor } from '@capacitor/core'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AppProvider, useApp } from './hooks/useApp'
 import { emailConfirmation, signInDestination } from './lib/signInFlow'
 import Navigation from './components/Navigation'
 import Toast from './components/Toast'
+import NativeAppearance from './components/NativeAppearance'
 import Home from './pages/Home'
 import Sessions from './pages/Sessions'
 import SessionDetail from './pages/SessionDetail'
@@ -17,6 +19,7 @@ import Care from './pages/Care'
 import CareNotificationRouter from './components/CareNotificationRouter'
 import DapPurchase from './pages/DapPurchase'
 import SignIn from './pages/SignIn'
+import AccountDeletion from './pages/AccountDeletion'
 import QuickReset from './pages/QuickReset'
 
 export default function App() {
@@ -24,6 +27,7 @@ export default function App() {
     <AppProvider>
       <BrowserRouter>
         <CareNotificationRouter />
+        <NativeAppearance />
         <AppShell />
       </BrowserRouter>
     </AppProvider>
@@ -44,25 +48,26 @@ function AppShell() {
     || pathname.startsWith('/courses/')
   const isPlayer = pathname === '/reset' || pathname.startsWith('/sessions/') && pathname.endsWith('/play')
   return (
-    <div className={`app-shell${showNavigation ? ' app-shell-with-nav' : ''}${isPlayer ? ' app-shell-player' : ''}`}>
+    <div className={`app-shell${showNavigation ? ' app-shell-with-nav' : ''}${isPlayer ? ' app-shell-player' : ''}${Capacitor.isNativePlatform() ? ' app-shell-native' : ''}`}>
       <Toast />
       <div className="screen" key={pathname}>
       <Routes>
         <Route path="/welcome" element={<Onboarding />} />
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/delete-account" element={<AccountDeletion />} />
         <Route path="/" element={<Home />} />
         <Route path="/reset" element={<QuickReset />} />
         <Route path="/program" element={<Program />} />
         <Route path="/courses" element={<Courses />} />
         <Route path="/courses/:courseId" element={<Course />} />
-        <Route path="/dap" element={<DapPurchase />} />
+        <Route path="/dap" element={Capacitor.isNativePlatform() ? <Navigate to="/premium" replace /> : <DapPurchase />} />
         <Route path="/care" element={<Care />} />
         <Route path="/sessions" element={<Sessions />} />
         <Route path="/sessions/:id" element={<SessionDetail />} />
         <Route path="/sessions/:id/play" element={<SessionPlayer />} />
-        <Route path="/custom" element={<CustomAudio />} />
+        <Route path="/custom" element={Capacitor.isNativePlatform() ? <Navigate to="/premium" replace /> : <CustomAudio />} />
         <Route path="/premium" element={<Premium />} />
-        <Route path="/success" element={<Success />} />
+        <Route path="/success" element={Capacitor.isNativePlatform() ? <Navigate to="/premium" replace /> : <Success />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </div>

@@ -1,5 +1,7 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useState } from 'react'
 import { useApp } from '../hooks/useApp'
+import { apiUrl } from '../lib/apiUrl'
 
 // "Notify me when this session is ready", for a session with no audio yet.
 // Sits where the Start button would be. The row is written server-side.
@@ -12,7 +14,7 @@ export default function Waitlist({ session }) {
     e.preventDefault()
     setState('busy')
     try {
-      const res = await fetch('/api/waitlist', {
+      const res = await fetch(apiUrl('/api/waitlist'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: session.id, email: email.trim() }),
@@ -28,14 +30,14 @@ export default function Waitlist({ session }) {
   if (state === 'done') {
     return (
       <div role="status" style={{ font: '400 15px/22px var(--font-ui)', color: 'var(--ink)', textAlign: 'center' }}>
-        You are on the list. One email when it is ready.
+        You are on the list.
       </div>
     )
   }
 
   return (
     <form onSubmit={submit}>
-      <label className="form-label" htmlFor="waitlist-email">Notify me when this session is ready</label>
+      <label className="form-label" htmlFor="waitlist-email">{ui.waitlist_help}</label>
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           id="waitlist-email"
@@ -50,7 +52,7 @@ export default function Waitlist({ session }) {
           style={{ flex: 1, minWidth: 0 }}
         />
         <button className="btn-primary" type="submit" disabled={state === 'busy'} style={{ flex: 'none', width: 'auto', padding: '0 18px' }}>
-          Notify me
+          Register interest
         </button>
       </div>
       {state === 'error' && (

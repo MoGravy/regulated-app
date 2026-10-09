@@ -1,0 +1,14 @@
+{
+  "unavailable": "Subscriptions are not available right now.",
+  "signIn": "Sign in to subscribe",
+  "verifying": "Checking your access…",
+  "verificationPending": "Your purchase is still being confirmed. Please don't buy again. Try Restore a purchase later.",
+  "paymentPending": "Your payment is still pending. You don't have access yet.",
+  "purchaseError": "Your payment may have gone through. Please don't buy again. Use Restore a purchase to check your access.",
+  "restoreError": "We couldn't confirm your subscription access. Please try again later.",
+  "subscribe": "Subscribe",
+  "manage": "Manage subscription",
+  "recurring": "Your subscription renews automatically until you cancel it in your device's app store.",
+  "privacy": "Privacy policy",
+  "terms": "Terms of use"
+}

@@ -1,10 +1,12 @@
 // Runnable check for api/_identity.js: `node tests/identity.check.mjs`.
 // Not a Playwright spec on purpose; it needs no browser and no network.
 import assert from 'node:assert/strict'
-import { callerEmail, sameEmail, activeSubscriptions } from '../api/_identity.js'
+import { callerEmail, callerUser, sameEmail, activeSubscriptions } from '../api/_identity.js'
 
 const stub = users => ({ auth: { getUser: async t => users[t] ? { data: { user: users[t] } } : { data: {}, error: new Error('bad') } } })
-const sb = stub({ good: { id: 'fixture-user', email: ' Kat@Example.com ' } })
+const sb = stub({ good: { id: 'account-a', email: ' Kat@Example.com ' } })
+
+assert.equal((await callerUser({ headers: { authorization: 'Bearer good' } }, sb)).id, 'account-a')
 
 // Token wins over the body, and is normalised.
 assert.equal(await callerEmail({ headers: { authorization: 'Bearer good' }, body: { email: 'other@example.com' } }, sb), 'kat@example.com')

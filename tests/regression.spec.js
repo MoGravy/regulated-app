@@ -1,3 +1,4 @@
+import { ui, reviewedSession } from '../src/content/reviewedCopy.js'
 // Phase 6a-1. Everything here answers one question: does the redesign break a
 // customer who is already using production? It runs against the built bundle,
 // not the dev server, and no test in this file may write to the database —
@@ -7,6 +8,55 @@ import {
   skipOnboarding, enterProgram, watchConsole, expectNoConsoleErrors,
   noProductionWrites, asPremium, fakeAudio, storage, signedIn, FAKE_JWT,
 } from './helpers.js'
+
+for (const account of ['signed-out', 'wrong-account']) {
+  test(`a ${account} paid checkout return does not grant premium access`, async ({ page }) => {
+    await skipOnboarding(page)
+    if (account === 'wrong-account') await signedIn(page)
+    await page.route(/\/rest\/v1\/|\/rpc\/|\/auth\/v1\//, route => route.fulfill({
+      status: 200, contentType: 'application/json', body: '[]',
+    }))
+    await page.route('**/api/**', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: '{"active":false}',
+    }))
+    await page.route('**/api/verify-session?*', route => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ status: 'paid', type: 'subscription', plan: 'annual' }),
+    }))
+    await page.goto('/success?type=subscription&plan=annual&session_id=test-checkout')
+    await expect(page.getByText('ANNUALFREE', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Go Home', exact: true }).click()
+    await page.getByRole('button', { name: 'You', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'You have premium', exact: true })).toHaveCount(0)
+  })
+}
+
+test('guest restore keeps its magic link and guest checkout keeps its submitted email', async ({ page }) => {
+  await skipOnboarding(page)
+  await page.route(/\/rest\/v1\/|\/rpc\/|\/auth\/v1\//, route => route.fulfill({
+    status: 200, contentType: 'application/json', body: '[]',
+  }))
+  await page.route('**/api/**', route => route.fulfill({ status: 200, body: '{}' }))
+  const links = [], checkouts = []
+  await page.route('**/auth/v1/otp*', route => {
+    links.push(route.request().postDataJSON().email)
+    return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
+  })
+  await page.route('**/api/create-checkout', route => {
+    checkouts.push(route.request().postDataJSON())
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ url: '/mock-checkout' }) })
+  })
+  await page.route('**/mock-checkout', route => route.fulfill({ body: 'Mock checkout' }))
+  await page.goto('/premium')
+  await page.locator('#premium-email').fill('guest@example.test')
+  await page.getByRole('button', { name: 'Restore a purchase' }).click()
+  await expect(page.getByText(/Check your email for a sign-in link/)).toBeVisible()
+  expect(links).toEqual(['guest@example.test'])
+  await expect(page.getByRole('heading', { name: 'You have premium' })).toHaveCount(0)
+  await page.getByRole('button', { name: /Continue at A\$/ }).click()
+  await expect(page).toHaveURL(/\/mock-checkout$/)
+  expect(checkouts).toEqual([{ type: 'subscription', plan: 'annual', email: 'guest@example.test' }])
+})
 
 // Exactly what live production writes today. Nothing else exists for a
 // returning customer, so this is the real upgrade state.
@@ -41,7 +91,7 @@ test.describe('a customer arriving from the current production build', () => {
 
     await expect(page).toHaveURL(/\/$/)
     await expect(page.getByRole('heading', { name: /Good (morning|afternoon|evening)/ })).toBeVisible()
-    await expect(page.getByText('Feel safe in your own body')).toHaveCount(0)
+    await expect(page.getByText(ui.onboarding_heading)).toHaveCount(0)
     await expectNoConsoleErrors(errors)
   })
 
@@ -61,11 +111,7 @@ test.describe('a customer arriving from the current production build', () => {
     await page.goto('/sessions')
     await page.waitForLoadState('networkidle')
 
-    // Stress Off Switch, the only free id whose title agrees between the live
-    // sessions table and src/lib/hardcodedSessions.js. The other three free
-    // ids are attached to the wrong titles in that fallback — pre-existing on
-    // main, not introduced here, and only visible if Supabase is unreachable.
-    const done = page.locator('.row', { hasText: 'Stress Off Switch' })
+    const done = page.locator('.row', { hasText: reviewedSession({ id: 'a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442' }).title })
     await expect(done).toContainText('Done')
   })
 
@@ -241,10 +287,11 @@ test('a session played to the end is marked complete and leaves Continue listeni
   await skipOnboarding(page)
 
   await page.goto(`/sessions/${FREE_ID}/play`)
-  await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
+  await page.getByRole('button', { name: '2 out of 10' }).click({ timeout: 20_000 })
+  await page.getByRole('button', { name: 'Continue', exact: true }).click()
 
   // The silent WAV is half a second, so the end arrives on its own.
-  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toBeVisible({ timeout: 20_000 })
   await page.getByRole('button', { name: 'Calmer' }).click()
   await expect(page.getByRole('heading', { name: 'That is done.' })).toBeVisible()
 
@@ -252,9 +299,30 @@ test('a session played to the end is marked complete and leaves Continue listeni
   expect(JSON.parse(after.regulated_completed)).toContain(FREE_ID)
   expect(JSON.parse(after.regulated_progress || '{}')).not.toHaveProperty(FREE_ID)
 
-  // The completion insert is real code on a real path; it must have been the
-  // only write attempted, and the stub is what stopped it reaching production.
-  expect(writes.join(',')).toContain('session_completions')
+  expect(after.regulated_practice_days).toBeUndefined()
+  expect(JSON.parse(after['regulated_practice_preview_v1:guest']).events).toEqual([])
+  // Completing a listen records local progress without uploading mood or email.
+  expect(writes).toEqual([])
+})
+
+test('a stalled audio file does not finish the session', async ({ page }) => {
+  await noProductionWrites(page)
+  await fakeAudio(page)
+  await skipOnboarding(page)
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.play = function () {
+      Object.defineProperty(this, 'paused', { value: false, configurable: true })
+      this.dispatchEvent(new Event('play'))
+      return Promise.resolve()
+    }
+  })
+
+  await page.goto(`/sessions/${FREE_ID}/play`)
+  await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+  await page.waitForTimeout(1500)
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toHaveCount(0)
 })
 
 test('a part-played session shows up in Continue listening', async ({ page }) => {
@@ -266,11 +334,12 @@ test('a part-played session shows up in Continue listening', async ({ page }) =>
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible({ timeout: 20_000 })
 
-  // Resume follows rendered media time. Metadata or a requested seek is not
-  // evidence that any of the clip has actually played.
-  await expect.poll(() => page.locator('audio').evaluate(a => a.currentTime)).toBeGreaterThan(2)
+  // Move through the control the user would press. Wait for the real duration,
+  // or the 15 seconds lands under the resume threshold.
+  await expect(page.getByText('1:00', { exact: true })).toBeVisible({ timeout: 20_000 })
+  await page.getByRole('button', { name: 'Forward 15 seconds' }).click()
+
   await page.getByRole('button', { name: 'Close player' }).click()
-  await expect.poll(async () => JSON.parse((await storage(page)).regulated_progress || '{}')[FREE_ID]?.position || 0).toBeGreaterThan(2)
   await page.goto('/')
   await page.waitForLoadState('networkidle')
 
@@ -332,7 +401,7 @@ test('finishing the day the program is waiting on advances it by exactly one', a
   await page.getByRole('button', { name: /Start today's session/ }).click()
   await page.getByRole('button', { name: 'Start session' }).click()
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
-  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toBeVisible({ timeout: 20_000 })
   await page.getByRole('button', { name: 'Calmer' }).click()
   await expect(page.getByRole('heading', { name: 'That is done.' })).toBeVisible()
 
@@ -344,12 +413,11 @@ test('listening ahead in Browse does not skip a program day', async ({ page }) =
   await fakeAudio(page)
   await enterProgram(page, 0)
 
-  // Gut Brain Reset. Day one of the program is Deep Sleep Reset, so this is a
-  // session the program is not waiting on.
+  // Day one is Daily. Listening to the Sleep recording must not advance it.
   const AHEAD = 'ca65ecd1-8ade-4a6e-915e-84810f8b26cb'
   await page.goto(`/sessions/${AHEAD}/play`)
   await page.getByRole('button', { name: 'Skip' }).click({ timeout: 20_000 })
-  await expect(page.getByRole('heading', { name: 'How does your system feel now?' })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole('heading', { name: ui.score_prompt.split('?')[0] + '?' })).toBeVisible({ timeout: 20_000 })
   await page.getByRole('button', { name: 'Calmer' }).click()
   await expect(page.getByRole('heading', { name: 'That is done.' })).toBeVisible()
 

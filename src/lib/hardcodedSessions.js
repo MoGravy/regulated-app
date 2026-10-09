@@ -1,109 +1,106 @@
-// Emergency fallback metadata only — used when Supabase is unreachable.
-// No audio URLs live here: all playback resolves through /api/get-audio-url.
+import { reviewedSession } from '../content/reviewedCopy.js'
 
 export const HARDCODED_SESSIONS = [
   {
-    id: '7a875d14-f77e-47e9-8ff3-16d5db08d2e6',
-    title: 'Deep Sleep Reset',
-    duration: 20,
-    category: 'Sleep',
-    free: true,
-    description: 'Nervous system reset for deep, restorative sleep. Wake up refreshed.',
-    has_audio: true, // audio resolved via /api/get-audio-url at play time — never bake tokens
+    "id": "7a875d14-f77e-47e9-8ff3-16d5db08d2e6",
+    "category": "Daily",
+    "duration": 11,
+    "free": true,
+    "has_audio": true
   },
   {
-    id: 'a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442',
-    title: 'Stress Off Switch',
-    duration: 16,
-    category: 'Stress',
-    free: true,
-    description: 'Immediate downregulation for daily overwhelm. Fast-acting nervous system reset.',
-    has_audio: true, // audio resolved via /api/get-audio-url at play time — never bake tokens
+    "id": "ca65ecd1-8ade-4a6e-915e-84810f8b26cb",
+    "category": "Sleep",
+    "duration": 22,
+    "free": true,
+    "has_audio": true
   },
   {
-    id: 'ca65ecd1-8ade-4a6e-915e-84810f8b26cb',
-    title: 'Gut Brain Reset',
-    duration: 18,
-    category: 'Gut Health',
-    free: true,
-    description: 'Direct nervous system communication with your digestive system. Calm your gut naturally.',
-    has_audio: true, // audio resolved via /api/get-audio-url at play time — never bake tokens
+    "id": "e184e81c-8163-46eb-8a00-9ef74f727ab4",
+    "category": "Gut Health",
+    "duration": 29,
+    "free": true,
+    "has_audio": true
   },
   {
-    id: 'e184e81c-8163-46eb-8a00-9ef74f727ab4',
-    title: 'Daily Nervous System Reset',
-    duration: 5,
-    category: 'Daily',
-    free: true,
-    description: 'Your daily anchor. Free every morning. Refreshes daily.',
-    has_audio: true, // audio resolved via /api/get-audio-url at play time — never bake tokens
-  },
-  // Premium sessions — audio files need mastering by Matthew first
-  {
-    id: 'p001-anxiety-release',
-    title: 'Anxiety Release',
-    duration: 20,
-    category: 'Anxiety',
-    free: false,
-    description: 'Dissolve the root patterns driving chronic anxiety and hypervigilance.',
-    audio_url: null,
+    "id": "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442",
+    "category": "Stress",
+    "duration": 18,
+    "free": true,
+    "has_audio": true
   },
   {
-    id: 'p002-deep-focus',
-    title: 'Deep Focus',
-    duration: 15,
-    category: 'Focus',
-    free: false,
-    description: 'Neurological priming for peak mental performance and sustained focus.',
-    audio_url: null,
+    "id": "0d099a17-84cc-44f9-8034-2e87d408592f",
+    "category": "Motivation",
+    "duration": 48,
+    "free": false,
+    "has_audio": true
   },
   {
-    id: 'p003-confidence',
-    title: 'Unshakeable Confidence',
-    duration: 24,
-    category: 'Confidence',
-    free: false,
-    description: 'Reprogram limiting beliefs around your worth, capability, and identity.',
-    audio_url: null,
+    "id": "fa09cacb-e58a-4520-aa10-73f010f864d2",
+    "category": "Stress",
+    "duration": 18,
+    "free": false,
+    "has_audio": true
   },
   {
-    id: 'p004-grief',
-    title: 'Grief Processing',
-    duration: 28,
-    category: 'Grief',
-    free: false,
-    description: 'A safe, guided space to process loss and begin moving through grief.',
-    audio_url: null,
+    "id": "9a49ad21-2649-4785-bac1-280d912b6bbd",
+    "category": "Habits",
+    "duration": 26,
+    "free": false,
+    "has_audio": true
   },
   {
-    id: 'p005-panic',
-    title: 'Panic Attack Protocol',
-    duration: 10,
-    category: 'Anxiety',
-    free: false,
-    description: 'Rapid response for acute panic. Brings you back to baseline fast.',
-    audio_url: null,
+    "id": "98e92ec4-792b-4f87-a86b-4201e128f6ae",
+    "category": "Anxiety",
+    "duration": 37,
+    "free": false,
+    "has_audio": true
   },
   {
-    id: 'p006-morning',
-    title: 'Morning Activation',
-    duration: 14,
-    category: 'Reset',
-    free: false,
-    description: 'Start each day from a place of groundedness and regulated energy.',
-    audio_url: null,
+    "id": "c2dfc5fe-8a2c-444f-8c9c-f8ae0e3f2a84",
+    "category": "Relief",
+    "duration": 24,
+    "free": false,
+    "has_audio": true
   },
   {
-    id: 'p007-relationship',
-    title: 'Relationship Patterns',
-    duration: 26,
-    category: 'Confidence',
-    free: false,
-    description: 'Identify and dissolve the nervous system patterns driving relationship struggles.',
-    audio_url: null,
+    "id": "9b728124-eb92-4236-9968-ebd923773367",
+    "category": "Motivation",
+    "duration": 39,
+    "free": false,
+    "has_audio": true
   },
-]
+  {
+    "id": "9feeb917-cdf7-4e02-b26a-467c8bfc8145",
+    "category": "Gut Health",
+    "duration": 35,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "4475ddc0-202f-4775-872b-366e39681932",
+    "category": "Daily",
+    "duration": 21,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "7d7d2194-9f93-4829-9b81-5b12eb31ed13",
+    "category": "Confidence",
+    "duration": 39,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "8c7cf64a-0f92-4e97-96ef-3b74f468e1bc",
+    "category": "Sleep",
+    "duration": 36,
+    "free": false,
+    "has_audio": true
+  }
+].map(reviewedSession)
 
 export const HARDCODED_SESSIONS_BY_ID = Object.fromEntries(
-  HARDCODED_SESSIONS.map(s => [s.id, s])
+  HARDCODED_SESSIONS.map(session => [session.id, session])
 )

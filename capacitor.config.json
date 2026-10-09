@@ -1,0 +1,11 @@
+{
+  "appId": "co.regulatedapp.app",
+  "appName": "Regulated",
+  "webDir": "dist",
+  "loggingBehavior": "none",
+  "plugins": {
+    "SystemBars": {
+      "style": "LIGHT"
+    }
+  }
+}

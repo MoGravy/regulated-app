@@ -1,0 +1,7 @@
+{
+  "source": "/Users/matthew/AgentWorkspace/regulated-device-check/store-assets/regulated-icon-draft.png",
+  "target": "/Users/matthew/AgentWorkspace/regulated-store-release/ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png",
+  "backup": "/Users/matthew/AgentWorkspace/regulated-store-release/.audit/backups/apple-icon-20260927-222618/AppIcon-512@2x.png",
+  "original_sha256": "29e4777e319de3ee5a52c3a8004ec19d0568414004257e36d7c94a077d71c93b",
+  "new_sha256": "e3581115fe84f25fa2ade11383dfcc4c376d88740eb68e6dc51ea599b5124f86"
+}

@@ -1,9 +1,10 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useState } from 'react'
 
 // Rendered inside the player, so it is styled on the dark surface. The design
 // file has no mood board; this follows the player's own type and colour rules.
 const EMOJIS = [
-  { val: 1, emoji: '😰', label: 'Very dysregulated' },
+  { val: 1, emoji: '😰', label: ui.score_low },
   { val: 2, emoji: '😟', label: '' },
   { val: 3, emoji: '😕', label: '' },
   { val: 4, emoji: '😐', label: '' },
@@ -12,26 +13,26 @@ const EMOJIS = [
   { val: 7, emoji: '😊', label: '' },
   { val: 8, emoji: '😎', label: '' },
   { val: 9, emoji: '🌟', label: '' },
-  { val: 10, emoji: '✨', label: 'Fully regulated' },
+  { val: 10, emoji: '✨', label: ui.score_high },
 ]
 
 function band(value) {
-  if (value <= 3) return 'Dysregulated'
-  if (value <= 5) return 'Somewhat regulated'
-  if (value <= 7) return 'Moderately regulated'
-  return 'Well regulated'
+  if (value <= 3) return ui.score_bands[0]
+  if (value <= 5) return ui.score_bands[1]
+  if (value <= 7) return ui.score_bands[2]
+  return ui.score_bands[3]
 }
 
 export default function MoodTracker({ label, onSubmit, optional = false }) {
   const [value, setValue] = useState(null)
 
   return (
-    <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
+    <div className="player-content" style={{ position: 'relative', flex: 'var(--player-flex, 1)', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 32px' }}>
       <h1 style={{ font: '300 32px/38px var(--font-display)', color: 'var(--player-title)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
         {label}
       </h1>
       <p style={{ margin: '12px 0 32px', font: '400 15px/24px var(--font-ui)', color: 'var(--player-muted)' }}>
-        Tap to rate your nervous system state, 1 to 10.
+        {ui.score_prompt}
       </p>
 
       <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between', marginBottom: 24 }}>

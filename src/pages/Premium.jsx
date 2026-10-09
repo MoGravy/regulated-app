@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react'
+import { ui } from '../content/reviewedCopy.js'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { useApp } from '../hooks/useApp'
 import { trackEvent, Events } from '../lib/analytics'
-import { upsertUser, checkSubscription, sendMagicLink, getAllSessions } from '../lib/supabase'
-import { stripePromise } from '../lib/stripe'
-import { PROGRAM_APPROVED } from '../config/program'
+import { upsertUser, sendMagicLink, getAllSessions } from '../lib/supabase'
+import { Capacitor } from '@capacitor/core'
 import { haptic } from '../lib/haptic'
 import { ANNUAL_FOUNDING_PRICE, ANNUAL_FULL_PRICE, LIBRARY_TARGET, MONTHLY_PRICE, CUSTOM_AUDIO_PRICE } from '../config/pricing'
+import { billingAvailable, loadPackages, purchase, restore } from '../lib/nativeBilling'
+import billingCopy from '../content/billing.json'
+import { apiUrl } from '../lib/apiUrl'
 
 // Three price points, annual first. The design marks the preferred card by
 // border weight only, no badge, no countdown, no struck-through price.
@@ -17,7 +20,6 @@ const PLANS = [
     label: 'Annual, founding rate',
     price: ANNUAL_FOUNDING_PRICE,
     headline: 'Includes a custom session built for you',
-    guarantee: 'Complete the 6-week program. If you do not feel a difference, full refund.',
     note: `A$${(ANNUAL_FOUNDING_PRICE / 12).toFixed(2)} a month, billed once a year. The founding rate stays at A$${ANNUAL_FOUNDING_PRICE} for as long as you keep the subscription.`,
   },
   {
@@ -29,8 +31,12 @@ const PLANS = [
 ]
 
 export default function Premium() {
+  return Capacitor.isNativePlatform() ? <NativePremium /> : <WebPremium />
+}
+
+function WebPremium() {
   const navigate = useNavigate()
-  const { isPremium, userEmail, setUserEmail, addToast, setIsPremium, authUser } = useApp()
+  const { isPremium, userEmail, setUserEmail, addToast, refreshPremium, authUser } = useApp()
   const [selectedPlan, setSelectedPlan] = useState('annual')
   // Live count of sessions with audio, for the counter. Null until it lands,
   // and the line simply waits rather than showing a wrong number.
@@ -48,6 +54,7 @@ export default function Premium() {
   const selected = PLANS.find(p => p.id === selectedPlan) || PLANS[0]
 
   async function handleSubscribe() {
+    if (Capacitor.isNativePlatform()) return
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setEmailError('Enter the email you want the subscription on.')
       return
@@ -61,7 +68,7 @@ export default function Premium() {
       setUserEmail(email)
       await upsertUser(email)
 
-      const res = await fetch('/api/create-checkout', {
+      const res = await fetch(apiUrl('/api/create-checkout'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'subscription', plan: selectedPlan, email }),
@@ -76,6 +83,7 @@ export default function Premium() {
       if (url) {
         window.location.href = url
       } else {
+        const { stripePromise } = await import('../lib/stripe')
         const stripe = await stripePromise
         const { error } = await stripe.redirectToCheckout({ sessionId })
         if (error) throw error
@@ -105,11 +113,10 @@ export default function Premium() {
         addToast('Check your email for a sign-in link. Tap it to restore your purchase.', 'success', 7000)
         return
       }
-      const active = await checkSubscription(target)
+      const active = await refreshPremium()
+      if (active === null) return
       if (active) {
-        setUserEmail(target)
-        setIsPremium(true)
-        addToast('Restored. Everything is unlocked.', 'success')
+        addToast(ui.restore_active, 'success')
       } else {
         addToast('No active subscription on that email.', 'info')
       }
@@ -123,14 +130,14 @@ export default function Premium() {
 
   if (isPremium) {
     return (
-      <div className="page">
+      <div className="page readable-page">
         <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
         <div className="page-content-wide" style={{ paddingTop: 8 }}>
           <h1 style={{ margin: '0 0 10px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em' }}>
             You have premium
           </h1>
           <p style={{ margin: '0 0 24px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-            Every session is unlocked, including everything added from here.
+            {ui.premium_available}
           </p>
           <button className="btn-primary btn-lg" onClick={() => navigate('/sessions')}>
             Go to the library
@@ -145,10 +152,10 @@ export default function Premium() {
   }
 
   return (
-    <div className="page">
+    <div className="page readable-page">
       <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
-      <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 480, margin: '0 auto' }}>
+      <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 'var(--content-width, 480px)', margin: '0 auto' }}>
         <button className="btn-icon" onClick={() => goBack(navigate)} aria-label="Close">
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
             <path d="M2 2l10 10M12 2L2 12" stroke="var(--ink-muted)" strokeWidth="1.4" strokeLinecap="round" />
@@ -161,8 +168,7 @@ export default function Premium() {
           Premium
         </h1>
         <p style={{ margin: '0 0 18px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-          Every session{PROGRAM_APPROVED ? ' and the six-week program' : ''}. New sessions are added
-          monthly. Cancel any time.
+          {ui.premium_intro}
         </p>
         {withAudio !== null && (
           <p className="t-caption" style={{ margin: '0 0 18px' }} data-testid="library-counter">
@@ -170,7 +176,7 @@ export default function Premium() {
           </p>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="premium-options">
           {PLANS.map(plan => (
             <button
               key={plan.id}
@@ -194,9 +200,7 @@ export default function Premium() {
               <div style={{ marginTop: 6, font: '400 13px/19px var(--font-ui)', color: 'var(--ink-muted)' }}>
                 {plan.note}
               </div>
-              {plan.guarantee && (
-                <div style={{ marginTop: 8, font: '400 13px/19px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>{plan.guarantee}</div>
-              )}
+
             </button>
           ))}
 
@@ -229,12 +233,12 @@ export default function Premium() {
         <AccountBlock />
 
         <div style={{ font: '400 14px/22px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-          All sessions are written and recorded by Matthew Tweedie, clinical hypnotherapist, Adelaide.
+          {ui.wellbeing_note}
         </div>
         <div style={{ height: 24 }} />
       </div>
 
-      <div className="footer-cta" style={{ maxWidth: 480, margin: '0 auto', width: '100%', background: 'transparent', borderTop: 'none', padding: '0 24px 24px' }}>
+      <div className="footer-cta" style={{ maxWidth: 'var(--content-width, 480px)', margin: '0 auto', width: '100%', background: 'transparent', borderTop: 'none', padding: '0 var(--footer-inline, 24px) 24px' }}>
         <button className="btn-primary btn-lg" onClick={handleSubscribe} disabled={loading}>
           {loading ? 'Opening checkout…' : `Continue at A$${selected.price} ${selected.id === 'annual' ? 'a year' : 'a month'}`}
         </button>
@@ -246,9 +250,6 @@ export default function Premium() {
   )
 }
 
-// Signing in is optional everywhere. Nothing on this screen, or any other,
-// requires it, a signed-out visitor keeps the email-and-restore flow that
-// shipped before phase 3.
 function AccountBlock() {
   const navigate = useNavigate()
   const { authUser, signOut, addToast } = useApp()
@@ -257,7 +258,7 @@ function AccountBlock() {
     return (
       <div style={{ margin: '4px 0 18px' }}>
         <button className="btn-ghost" onClick={() => navigate('/signin')}>
-          Sign in to keep this across devices
+          {ui.account_signin}
         </button>
       </div>
     )
@@ -277,6 +278,9 @@ function AccountBlock() {
       >
         Sign out
       </button>
+      <button className="btn-ghost" onClick={() => navigate('/delete-account')}>
+        Request account deletion
+      </button>
     </div>
   )
 }
@@ -292,5 +296,86 @@ function CustomAudioCard({ onClick }) {
         One session written and recorded for your situation. Bought separately, no subscription needed.
       </div>
     </button>
+  )
+}
+
+function NativePremium() {
+  const { authUser, isPremium, refreshPremium } = useApp()
+  const navigate = useNavigate()
+  const viewRevision = useRef(0)
+  const [options, setOptions] = useState([])
+  const [selected, setSelected] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  useEffect(() => {
+    let live = true
+    viewRevision.current++
+    setBusy(false)
+    setOptions([])
+    setSelected('')
+    setMessage('')
+    if (authUser?.id) {
+      loadPackages(authUser.id).then(result => {
+        if (!live || result.status !== 'ready') return
+        setOptions(result.packages)
+        setSelected(result.packages[0].id)
+      }).catch(() => { if (live) setMessage(billingCopy.unavailable) })
+    }
+    return () => { live = false; viewRevision.current++ }
+  }, [authUser?.id])
+
+  useEffect(() => {
+    let live = true
+    let listener
+    import('@capacitor/app').then(({ App }) => App.addListener('appStateChange', ({ isActive }) => {
+      if (live && isActive) void refreshPremium().catch(() => {})
+    })).then(handle => { if (live) listener = handle; else void handle.remove() })
+    return () => { live = false; void listener?.remove() }
+  }, [refreshPremium])
+
+  async function complete(restoring) {
+    if (busy || !authUser?.id) return
+    const captured = viewRevision.current
+    const current = () => captured === viewRevision.current
+    setBusy(true)
+    setMessage(billingCopy.verifying)
+    try {
+      const result = restoring ? await restore(authUser.id) : await purchase(authUser.id, selected)
+      if (!current()) return
+      if (result.status === 'stale' || result.status === 'canceled') { setMessage(''); return }
+      if (result.status === 'pending') { setMessage(billingCopy.paymentPending); return }
+      const active = await refreshPremium()
+      if (!current()) return
+      if (active === null) { setMessage(''); return }
+      setMessage(active ? (restoring ? ui.restore_active : ui.purchase_active) : billingCopy.verificationPending)
+    } catch {
+      if (!current()) return
+      setMessage(restoring ? billingCopy.restoreError : billingCopy.purchaseError)
+    } finally { if (current()) setBusy(false) }
+  }
+
+  return (
+    <div className="page readable-page">
+      <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
+      <div className="page-content-wide">
+        <h1>{isPremium ? 'You have premium' : 'Premium'}</h1>
+        {!authUser ? <button className="btn-primary btn-lg" onClick={() => navigate('/signin')}>{billingCopy.signIn}</button> : <>
+          {!isPremium && <>
+            <div className="premium-options">{options.map(option => (
+              <button key={option.id} className={`card ${selected === option.id ? 'card-current' : ''}`} disabled={busy} aria-pressed={selected === option.id} onClick={() => setSelected(option.id)}>
+                <span>{option.title}</span> <span>{option.price} {option.period === 'P1M' ? 'a month' : 'a year'}</span>
+              </button>
+            ))}</div>
+            <button className="btn-primary btn-lg" disabled={busy || !options.length} onClick={() => complete(false)}>{billingCopy.subscribe}</button>
+            {options.length > 0 && <p>{billingCopy.recurring}</p>}
+          </>}
+          {isPremium && <button className="btn-primary btn-lg" onClick={() => navigate('/sessions')}>Go to the library</button>}
+          <button className="btn-ghost" disabled={busy || !billingAvailable()} onClick={() => complete(true)}>Restore a purchase</button>
+          <a className="btn-ghost" href={Capacitor.getPlatform() === 'ios' ? 'https://apps.apple.com/account/subscriptions' : 'https://play.google.com/store/account/subscriptions'}>{billingCopy.manage}</a>
+        </>}
+        <p role="status">{message}</p>
+        <AccountBlock />
+      </div>
+    </div>
   )
 }

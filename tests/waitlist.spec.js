@@ -1,4 +1,6 @@
+import { ui } from '../src/content/reviewedCopy.js'
 import { test, expect } from './fixtures.js'
+
 import { skipOnboarding, noProductionWrites, HAS_API } from './helpers.js'
 import { CATALOG } from './fixtures.js'
 
@@ -15,6 +17,7 @@ test('a session without audio takes an email for the waitlist', async ({ page })
     const strip = x => Array.isArray(x) ? x.map(strip) : x && typeof x === 'object' ? { ...x, has_audio: false } : x
     await route.fulfill({ response: res, json: strip(await res.json()) })
   })
+
   const calls = []
   await page.route('**/api/waitlist', route => {
     calls.push(route.request().postDataJSON())
@@ -25,10 +28,10 @@ test('a session without audio takes an email for the waitlist', async ({ page })
   await page.locator('.row').first().click()
   await expect(page).toHaveURL(/\/sessions\/[^/]+$/)
 
-  await page.getByLabel('Notify me when this session is ready').fill('test@example.com')
+  await page.getByLabel(ui.waitlist_help).fill('test@example.com')
   await page.waitForTimeout(500)
   await page.screenshot({ path: 'shots/after/waitlist.png' })
-  await page.getByRole('button', { name: 'Notify me' }).click()
+  await page.getByRole('button', { name: 'Register interest' }).click()
   await expect(page.getByRole('status')).toContainText('on the list')
   expect(calls).toHaveLength(1)
   expect(calls[0].email).toBe('test@example.com')

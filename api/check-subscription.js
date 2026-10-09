@@ -1,23 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
-import { callerEmail, activeSubscriptions } from './_identity.js'
+import { callerUser } from './_identity.js'
+import { hasPremiumAccess } from './_access.js'
+import { setNativeCors } from './_native-cors.js'
 
-// The subscriptions table is RLS-locked, so the browser's public key can never
-// see a row. This answers the one question the app asks, with the same key the
-// webhook wrote the row with. Same query as get-audio-url's premium gate.
+// The browser cannot read purchase rows. This uses the same server access
+// check as the premium audio gate.
 const supabase = createClient(
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
 export default async function handler(req, res) {
+  setNativeCors(req, res)
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const email = await callerEmail(req, supabase)
-    if (!email) return res.status(400).json({ error: 'email required' })
-    const subs = await activeSubscriptions(supabase, email)
-    return res.status(200).json({ active: subs.length > 0 })
+    const user = await callerUser(req, supabase)
+    if (!user) return res.status(401).json({ error: 'Sign in required' })
+    return res.status(200).json({ active: await hasPremiumAccess(supabase, user) })
   } catch (err) {
     console.error('[check-subscription] error:', JSON.stringify(err, Object.getOwnPropertyNames(err)))
     return res.status(500).json({ error: 'Internal error' })

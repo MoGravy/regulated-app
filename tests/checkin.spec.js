@@ -1,4 +1,6 @@
+import { HARDCODED_SESSIONS } from '../src/lib/hardcodedSessions.js'
 import { test, expect } from './fixtures.js'
+
 import { skipOnboarding, noProductionWrites, storage } from './helpers.js'
 
 test.use({ viewport: { width: 380, height: 820 } })
@@ -8,6 +10,7 @@ test.use({ viewport: { width: 380, height: 820 } })
 test('check-in surfaces a matched session and stores nothing', async ({ page }) => {
   await skipOnboarding(page)
   await noProductionWrites(page)
+  await page.route(/\/rest\/v1\/|\/rpc\/|\/auth\/v1\//, route => route.fulfill({ status: 200, json: HARDCODED_SESSIONS }))
   await page.goto('/')
 
   await expect(page.getByRole('heading', { name: /what does your system need/i })).toBeVisible()
@@ -15,12 +18,13 @@ test('check-in surfaces a matched session and stores nothing', async ({ page }) 
 
   await page.getByRole('button', { name: 'Wired' }).click()
   await expect(page.getByText("For a system that won't switch off")).toBeVisible()
-  await expect(page.locator('.row', { hasText: 'Stress Off Switch' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Check-in' }).locator('.row', { hasText: HARDCODED_SESSIONS.find(row => row.id === 'a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442').title })).toBeVisible()
 
   await page.getByRole('button', { name: 'Just checking in' }).click()
   await expect(page.getByText('Your daily reset')).toBeVisible()
-  await expect(page.getByLabel('Check-in').locator('.row', { hasText: 'Daily Nervous System Reset' })).toBeVisible()
+  await expect(page.getByLabel('Check-in').locator('.row', { hasText: HARDCODED_SESSIONS.find(row => row.category === 'Daily').title })).toBeVisible()
   await expect(page.getByLabel('Check-in').locator('.row', { hasText: 'Stress Off Switch' })).toHaveCount(0)
+
 
   // Tapping the pressed pill clears it; the library was there the whole time.
   await page.getByRole('button', { name: 'Just checking in' }).click()
