@@ -44,8 +44,9 @@ public class SessionAudioTest {
         fail("Playback never reached " + status + ", got " + state(token).optString("status"));
         return null;
     }
-    private String fixture(Context context) throws Exception {
-        int samples = 16000 * 4;
+    private String fixture(Context context) throws Exception { return fixture(context, 4); }
+    private String fixture(Context context, int seconds) throws Exception {
+        int samples = 16000 * seconds;
         ByteBuffer data = ByteBuffer.allocate(44 + samples * 2).order(ByteOrder.LITTLE_ENDIAN);
         data.put(new byte[]{'R','I','F','F'}).putInt(36 + samples * 2).put(new byte[]{'W','A','V','E','f','m','t',' '});
         data.putInt(16).putShort((short) 1).putShort((short) 1).putInt(16000).putInt(32000).putShort((short) 2).putShort((short) 16);
@@ -54,6 +55,54 @@ public class SessionAudioTest {
         File file = new File(context.getCacheDir(), "session-audio-test.wav");
         try (FileOutputStream output = new FileOutputStream(file)) { output.write(data.array()); }
         return Uri.fromFile(file).toString();
+    }
+
+    @Test public void genuineBackgroundRenderingRetainsQualificationWithoutWebViewCallbacks() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        try (ActivityScenario<MainActivity> screen = ActivityScenario.launch(MainActivity.class)) {
+            CountDownLatch connected = new CountDownLatch(1);
+            ServiceConnection connection = new ServiceConnection() {
+                @Override public void onServiceConnected(ComponentName name, IBinder binder) {
+                    owner = ((SessionAudioService.LocalBinder) binder).service(); connected.countDown();
+                }
+                @Override public void onServiceDisconnected(ComponentName name) {}
+            };
+            Intent bind = new Intent(context, SessionAudioService.class).setAction(SessionAudioService.LOCAL_BIND);
+            assertTrue(context.bindService(bind, connection, Context.BIND_AUTO_CREATE));
+            assertTrue(connected.await(5, TimeUnit.SECONDS));
+            try {
+                String url = fixture(context, 100);
+                main(() -> owner.open("background-credit", "fixture", "Test audio", url));
+                main(() -> owner.command("background-credit", "play", 0));
+                waitFor("background-credit", "playing");
+                screen.onActivity(activity -> activity.moveTaskToBack(true));
+                long start = android.os.SystemClock.elapsedRealtime();
+                JSObject qualified = null;
+                while (android.os.SystemClock.elapsedRealtime() - start < 90000) {
+                    JSObject snapshot = state("background-credit");
+                    if (!snapshot.isNull("qualifiedAtMs")) { qualified = snapshot; break; }
+                    Thread.sleep(500);
+                }
+                assertNotNull("real background rendering must reach the 80-second threshold", qualified);
+                assertEquals("native-rendered", qualified.getString("evidenceSource"));
+                assertTrue(qualified.getDouble("eligibleSeconds") >= 80);
+                assertTrue(qualified.getDouble("eligibleSeconds") <= (android.os.SystemClock.elapsedRealtime() - start) / 1000.0 + 1);
+                double qualifiedAt = qualified.getDouble("qualifiedAtMs");
+                main(() -> owner.command("background-credit", "pause", 0));
+                double heard = state("background-credit").getDouble("eligibleSeconds");
+                Thread.sleep(500);
+                assertEquals(heard, state("background-credit").getDouble("eligibleSeconds"), 0.01);
+                main(() -> owner.command("background-credit", "seek", 100));
+                Thread.sleep(300);
+                JSObject finalState = state("background-credit");
+                assertEquals(qualifiedAt, finalState.getDouble("qualifiedAtMs"), 0);
+                assertEquals(heard, finalState.getDouble("eligibleSeconds"), 0.01);
+                assertTrue(finalState.isNull("outcome"));
+            } finally {
+                main(() -> owner.close("background-credit"));
+                context.unbindService(connection);
+            }
+        }
     }
 
     @Test public void nativeOwnerRetainsOnlyNaturalEndAndRejectsStaleOwners() throws Exception {
