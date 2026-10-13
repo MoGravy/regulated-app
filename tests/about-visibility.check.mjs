@@ -31,6 +31,8 @@ try {
     await entry.focus()
     assert.equal(await entry.evaluate(el => document.activeElement === el), true)
     assert.notEqual(await entry.evaluate(el => getComputedStyle(el).boxShadow), 'none')
+    assert.equal(await entry.evaluate(el => el.style.background), 'var(--control)')
+    assert.equal(await entry.evaluate(el => el.style.color), 'var(--on-control)')
     const ratios = await entry.evaluate(el => {
       const rgb = value => value.match(/[\d.]+/g).slice(0, 3).map(Number)
       const luminance = values => values.map(v => v / 255).map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0)
