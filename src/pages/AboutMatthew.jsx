@@ -20,7 +20,7 @@ export default function AboutMatthew({ profile }) {
           <p>{profile.programmes}</p>
           {enquiry && <a className="btn-primary btn-lg" href={enquiry}
             style={{ height: 'auto', minHeight: 52, padding: '12px 16px', textAlign: 'center', textDecoration: 'none' }}>Email Matthew about working together</a>}
-          {enquiry && <p style={{ marginBottom: 0 }}><a href={`mailto:${profile.email}`} style={{ color: 'var(--ink)' }}>{profile.email}</a></p>}
+          {enquiry && <p style={{ marginBottom: 0 }}><a href={enquiry.split('?')[0]} style={{ color: 'var(--ink)' }}>{profile.email}</a></p>}
         </section>
         <section aria-labelledby="matthew-qualifications-title">
           <h2 id="matthew-qualifications-title" style={{ font: '400 24px/30px var(--font-display)' }}>Qualifications and training</h2>

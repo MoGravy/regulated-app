@@ -31,6 +31,19 @@ assert.match(markup, /min-height:52px/)
 assert.doesNotMatch(markup, /PACFA|psychologist|guaranteed/i)
 const missingEmail = renderToStaticMarkup(createElement(RouterProvider, { router: routerFor({ ...profile, email: '' }) }))
 assert.doesNotMatch(missingEmail, /mailto:/)
+for (const recipient of ['x?bcc=other@example.com', 'x#tag@example.com', 'x%3Fcc%3Dother@example.com']) {
+  const recipientRouter = routerFor({ ...profile, email: recipient })
+  const rendered = renderToStaticMarkup(createElement(RouterProvider, { router: recipientRouter }))
+  const hrefs = [...rendered.matchAll(/href="(mailto:[^"]+)"/g)].map(match => match[1])
+  assert.equal(hrefs.length, 2)
+  for (const href of hrefs) {
+    const parsed = new URL(href)
+    assert.equal(decodeURIComponent(parsed.pathname), recipient)
+    assert.ok([...parsed.searchParams.keys()].every(key => key === 'subject'))
+    assert.equal(parsed.hash, '')
+  }
+  recipientRouter.dispose()
+}
 await router.navigate(-1)
 assert.equal(router.state.location.pathname, '/premium')
 await router.navigate('/about')
