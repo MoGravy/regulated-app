@@ -14,7 +14,7 @@ for (const icon of ['today', 'browse', 'courses', 'support', 'you']) {
   const svg = await readFile(`src/theme/tab-${icon}.svg`, 'utf8')
   css = css.replaceAll(`url('./tab-${icon}.svg')`, `url("data:image/svg+xml,${encodeURIComponent(svg)}")`)
 }
-const markup = renderToStaticMarkup(createElement(AboutMatthew, { profile }))
+const markup = renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: ['/about'] }, createElement(AboutMatthew, { profile })))
 const nav = renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: ['/about'] }, createElement(Navigation)))
 const youNav = renderToStaticMarkup(createElement(MemoryRouter, { initialEntries: ['/premium'] }, createElement(Navigation)))
 assert.match(youNav, /href="\/about"/)

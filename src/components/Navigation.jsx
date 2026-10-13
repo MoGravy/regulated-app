@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { courseCopy } from '../config/courseCopy'
 import { careCopy } from '../config/careCopy'
 
@@ -18,8 +18,8 @@ export default function Navigation() {
   return (
     <>
     {location.pathname === '/premium' && (
-      <a href="/about" className="btn-ghost" style={{ flex: 'none', maxWidth: 480, margin: '0 auto',
-        background: 'var(--surface)', color: 'var(--ink)', borderTop: '1px solid var(--line)' }}>About Matthew</a>
+      <Link to="/about" className="btn-ghost" style={{ flex: 'none', maxWidth: 480, margin: '0 auto',
+        background: 'var(--surface)', color: 'var(--ink)', borderTop: '1px solid var(--line)' }}>About Matthew</Link>
     )}
     <nav
       aria-label="Primary"

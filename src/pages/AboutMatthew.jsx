@@ -1,4 +1,5 @@
 import { matthewEnquiryHref } from '../lib/matthewEnquiry'
+import { Link } from 'react-router-dom'
 
 // Profile copy and email are supplied only after source/model verification.
 export default function AboutMatthew({ profile }) {
@@ -6,8 +7,8 @@ export default function AboutMatthew({ profile }) {
   return (
     <div className="page">
       <div className="status-bar">
-        <a href="/premium" className="btn-ghost">Back</a>
-        <a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a>
+        <Link to="/premium" className="btn-ghost">Back</Link>
+        <Link to="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</Link>
       </div>
       <main className="page-content-wide" aria-labelledby="about-matthew-title"
         style={{ paddingTop: 8, paddingBottom: 24, overflowWrap: 'anywhere' }}>
