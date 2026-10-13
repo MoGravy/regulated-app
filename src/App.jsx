@@ -18,6 +18,8 @@ import CareNotificationRouter from './components/CareNotificationRouter'
 import DapPurchase from './pages/DapPurchase'
 import SignIn from './pages/SignIn'
 import QuickReset from './pages/QuickReset'
+import AboutMatthew from './pages/AboutMatthew'
+import { aboutMatthewProfile } from './config/aboutMatthew'
 
 export default function App() {
   return (
@@ -40,7 +42,7 @@ function AppShell() {
   if (authReady && !authUser && authError && pathname !== '/signin') {
     return <Navigate to={`/signin?next=${encodeURIComponent(signInDestination(pathname))}`} replace />
   }
-  const showNavigation = ['/', '/program', '/courses', '/care', '/sessions', '/premium'].includes(pathname)
+  const showNavigation = ['/', '/program', '/courses', '/care', '/sessions', '/premium', '/about'].includes(pathname)
     || pathname.startsWith('/courses/')
   const isPlayer = pathname === '/reset' || pathname.startsWith('/sessions/') && pathname.endsWith('/play')
   return (
@@ -62,6 +64,7 @@ function AppShell() {
         <Route path="/sessions/:id/play" element={<SessionPlayer />} />
         <Route path="/custom" element={<CustomAudio />} />
         <Route path="/premium" element={<Premium />} />
+        <Route path="/about" element={<AboutMatthew profile={aboutMatthewProfile} />} />
         <Route path="/success" element={<Success />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

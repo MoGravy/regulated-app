@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { courseCopy } from '../config/courseCopy'
 import { careCopy } from '../config/careCopy'
 
@@ -16,6 +16,11 @@ export default function Navigation() {
   const navigate = useNavigate()
 
   return (
+    <>
+    {location.pathname === '/premium' && (
+      <Link to="/about" className="btn-ghost" style={{ flex: 'none', maxWidth: 480, margin: '0 auto',
+        background: 'var(--surface)', color: 'var(--ink)', borderTop: '1px solid var(--line)' }}>About Matthew</Link>
+    )}
     <nav
       aria-label="Primary"
       style={{
@@ -36,6 +41,7 @@ export default function Navigation() {
       {TABS.map(tab => {
         const active = location.pathname === tab.path
           || (tab.path === '/courses' && location.pathname.startsWith('/courses/'))
+          || (tab.path === '/premium' && location.pathname === '/about')
         return (
           <button
             key={tab.path}
@@ -64,5 +70,6 @@ export default function Navigation() {
         )
       })}
     </nav>
+    </>
   )
 }
