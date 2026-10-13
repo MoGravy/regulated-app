@@ -1,9 +1,10 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { authHeaders, supabase } from '../lib/supabase'
 import { courseCopy, dapGuide, dapGuideSteps } from '../config/courseCopy'
 import { carePushCopy } from '../config/carePushCopy'
+import { dapPurchaseCopy } from '../config/dapPurchaseCopy'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -93,8 +94,16 @@ export default function Courses() {
 
   const status = !authReady ? 'loading' : !authUser ? 'sign_in'
     : result.userId === authUser.id ? result.status : 'loading'
+  const native = !!window.Capacitor?.isNativePlatform?.()
 
   return <CourseFrame title={courseCopy.pageTitle} backTo="/">
+    {!native && !result.rows.some(course => course.id === '0a02caf8-5050-571c-9a70-e2bcda2253a3') && (
+      <Link className="card" to="/dap" aria-label={dapPurchaseCopy.title}
+        style={{ display: 'block', color: 'var(--ink)', textDecoration: 'none', marginBottom: 20 }}>
+        <span style={{ display: 'block', font: '400 21px/28px var(--font-display)' }}>{dapPurchaseCopy.title}</span>
+        <span style={{ display: 'block', marginTop: 8, color: 'var(--ink-muted)' }}>{dapPurchaseCopy.price}</span>
+      </Link>
+    )}
     {status === 'loading' && <p role="status">{courseCopy.loading}</p>}
     {status === 'sign_in' && <SignInPrompt />}
     {status === 'error' && <>
