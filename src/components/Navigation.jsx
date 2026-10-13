@@ -18,8 +18,17 @@ export default function Navigation() {
   return (
     <>
     {location.pathname === '/premium' && (
-      <Link to="/about" className="btn-ghost" style={{ flex: 'none', maxWidth: 480, margin: '0 auto',
-        background: 'var(--surface)', color: 'var(--ink)', borderTop: '1px solid var(--line)' }}>About Matthew</Link>
+      <div style={{ flex: 'none', width: '100%', maxWidth: 480, margin: '0 auto', padding: '12px 24px', background: 'var(--surface)' }}>
+        <Link to="/about" aria-label="About Matthew" className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 18px', border: '1px solid var(--ink)', color: 'var(--ink)', textDecoration: 'none' }}>
+          <span>
+            <span style={{ display: 'block', font: '500 22px/28px var(--font-ui)' }}>About Matthew</span>
+            <span style={{ display: 'block', marginTop: 4, font: '400 15px/21px var(--font-ui)', color: 'var(--ink-muted)' }}>One-to-one programmes</span>
+          </span>
+          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ flex: 'none' }}>
+            <path d="m9 5 7 7-7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+      </div>
     )}
     <nav
       aria-label="Primary"
