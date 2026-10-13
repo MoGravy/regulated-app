@@ -1,9 +1,9 @@
-// Verified website facts only. Requested DeepSeek V4.1 Flash draft is pending.
+// Biography/programme copy authored by verified direct DeepSeek V4.1 Flash; qualifications from the public source.
 export const aboutMatthewProfile = {
   email: 'info@matthewtweediehypnosis.com.au',
   role: 'Clinical hypnotherapist and NLP Master Practitioner',
-  paragraphs: [],
-  programmes: 'Private one-to-one sessions with Matthew, in Evandale or online.',
+  paragraphs: ["I am Matthew Tweedie, a clinical hypnotherapist and NLP Master Practitioner. I am a current member of the Australian Association of Clinical Hypnotherapy & Psychotherapy (AACHP) and am completing a Master of Counselling at the University of Canberra. My interest in human behaviour and my own personal-development journey led me to NLP and hypnosis, and I now help people change thinking and behaviour.", "I work with people one-to-one, personally, in Evandale or online. My approach is practical and focused on your goals. If you would like to know whether a one-to-one programme is right for you, email me to discuss suitability and next steps. Your enquiry comes directly to me."],
+  programmes: "One-to-one programmes with Matthew are tailored to your goals. If you are seeking to change thinking and behaviour, we can explore how hypnotherapy and NLP might help. To enquire privately about suitability and next steps, email me to discuss your goals.",
   qualifications: [
     'Masters Degree of Hypno-Psychotherapy, ICHP (Ireland/Australia)',
     'Associates Degree of Hypno-Psychotherapy, ICHP (Ireland/Australia)',

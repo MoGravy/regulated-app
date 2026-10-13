@@ -12,8 +12,8 @@ export default function AboutMatthew({ profile }) {
       <main className="page-content-wide" aria-labelledby="about-matthew-title"
         style={{ paddingTop: 8, paddingBottom: 24, overflowWrap: 'anywhere' }}>
         <h1 id="about-matthew-title" style={{ margin: '0 0 16px', font: '300 32px/38px var(--font-display)' }}>About Matthew</h1>
-        <p style={{ color: 'var(--ink-muted)' }}>{profile.role}</p>
-        {profile.paragraphs.map((text, index) => <p key={index}>{text}</p>)}
+        {profile.paragraphs.length === 0 && <p style={{ color: 'var(--ink-muted)' }}>{profile.role}</p>}
+        {profile.paragraphs.map((text, index) => <p key={index} style={{ marginBottom: 16 }}>{text}</p>)}
         <section className="card" aria-labelledby="matthew-programmes-title" style={{ padding: 20, margin: '24px 0' }}>
           <h2 id="matthew-programmes-title" style={{ marginTop: 0, font: '400 24px/30px var(--font-display)' }}>One-to-one programmes</h2>
           <p>{profile.programmes}</p>
