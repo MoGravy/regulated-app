@@ -97,7 +97,7 @@ export default function Courses() {
   const native = !!window.Capacitor?.isNativePlatform?.()
 
   return <CourseFrame title={courseCopy.pageTitle} backTo="/">
-    {!native && !result.rows.some(course => course.id === '0a02caf8-5050-571c-9a70-e2bcda2253a3') && (
+    {!native && authReady && (!authUser || (status === 'ready' && !result.rows.some(course => course.id === '0a02caf8-5050-571c-9a70-e2bcda2253a3'))) && (
       <Link className="card" to="/dap" aria-label={dapPurchaseCopy.title}
         style={{ display: 'block', color: 'var(--ink)', textDecoration: 'none', marginBottom: 20 }}>
         <span style={{ display: 'block', font: '400 21px/28px var(--font-display)' }}>{dapPurchaseCopy.title}</span>
