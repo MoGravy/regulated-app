@@ -70,9 +70,12 @@ export async function applyAction(client, action) {
     await existingUser(client, action.userId)
     const course = await one(client.from('courses').select('id').eq('slug', action.courseSlug))
     if (!course) throw new Error('Course not found')
-    const existing = await one(client.from('course_grants').select('revoked_at')
+    const existing = await one(client.from('course_grants').select('revoked_at,source,source_ref')
       .eq('user_id', action.userId).eq('course_id', course.id))
     if (existing?.revoked_at) throw new Error('Grant was revoked; review before reactivating')
+    if (existing && (existing.source !== action.source || existing.source_ref !== action.sourceRef)) {
+      throw new Error('Existing access uses a different source or source reference; review before recording this entitlement')
+    }
     if (existing) return 'Grant already active. Nothing changed.'
     await insert(client, 'course_grants', { user_id: action.userId, course_id: course.id,
       source: action.source, source_ref: action.sourceRef })

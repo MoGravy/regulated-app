@@ -5,7 +5,7 @@ const clientId = '30000000-0000-4000-8000-000000000001'
 const practitionerId = '30000000-0000-4000-8000-000000000002'
 const courseId = '10000000-0000-4000-8000-000000000001'
 
-function fake({ missingUser = false, revoked = false, existing = false } = {}) {
+function fake({ missingUser = false, revoked = false, existing = false, source = 'program', sourceRef = 'verified-program-record' } = {}) {
   const writes = []
   const client = {
     auth: { admin: { getUserById: async id => ({ data: { user: missingUser ? null : { id } } }) } },
@@ -14,7 +14,7 @@ function fake({ missingUser = false, revoked = false, existing = false } = {}) {
         select() { return query }, eq() { return query },
         async maybeSingle() {
           return { data: table === 'courses' ? { id: courseId }
-            : existing ? table === 'course_grants' ? { revoked_at: revoked ? '2026-01-01' : null }
+            : existing ? table === 'course_grants' ? { revoked_at: revoked ? '2026-01-01' : null, source, source_ref: sourceRef }
               : { active: !revoked } : null, error: null }
         },
         async insert(row) { writes.push({ table, row }); return { error: null } },
@@ -40,6 +40,19 @@ assert.equal(missing.writes.length, 0)
 const revokedGrant = fake({ existing: true, revoked: true })
 await assert.rejects(applyAction(revokedGrant.client, validGrant), /review before reactivating/)
 assert.equal(revokedGrant.writes.length, 0)
+
+const repeated = fake({ existing: true })
+assert.equal(await applyAction(repeated.client, validGrant), 'Grant already active. Nothing changed.')
+assert.equal(repeated.writes.length, 0)
+for (const state of [
+  { source: 'purchase', sourceRef: 'cs_fixture' },
+  { source: 'manual', sourceRef: 'owner-grant' },
+  { source: 'program', sourceRef: 'another-programme' },
+]) {
+  const conflict = fake({ existing: true, ...state })
+  await assert.rejects(applyAction(conflict.client, validGrant), /different source or source reference/)
+  assert.equal(conflict.writes.length, 0)
+}
 
 const link = parseAction(['link', '--client', clientId, '--practitioner', practitionerId,
   '--client-label', 'Test client', '--practitioner-label', 'Test practitioner', '--apply'])
