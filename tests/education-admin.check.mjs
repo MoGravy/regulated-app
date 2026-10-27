@@ -5,15 +5,15 @@ const clientId = '30000000-0000-4000-8000-000000000001'
 const practitionerId = '30000000-0000-4000-8000-000000000002'
 const courseId = '10000000-0000-4000-8000-000000000001'
 
-function fake({ missingUser = false, revoked = false, existing = false, source = 'program', sourceRef = 'verified-program-record' } = {}) {
+function fake({ missingUser = false, verified = true, published = true, revoked = false, existing = false, source = 'program', sourceRef = 'verified-program-record' } = {}) {
   const writes = []
   const client = {
-    auth: { admin: { getUserById: async id => ({ data: { user: missingUser ? null : { id } } }) } },
+    auth: { admin: { getUserById: async id => ({ data: { user: missingUser ? null : { id, email_confirmed_at: verified ? '2026-01-01T00:00:00Z' : null } } }) } },
     from(table) {
       const query = {
         select() { return query }, eq() { return query },
         async maybeSingle() {
-          return { data: table === 'courses' ? { id: courseId }
+          return { data: table === 'courses' ? { id: courseId, published }
             : existing ? table === 'course_grants' ? { revoked_at: revoked ? '2026-01-01' : null, source, source_ref: sourceRef }
               : { active: !revoked } : null, error: null }
         },
@@ -37,6 +37,12 @@ assert.deepEqual(allowed.writes[0], { table: 'course_grants', row: {
 const missing = fake({ missingUser: true })
 await assert.rejects(applyAction(missing.client, validGrant), /Account not found/)
 assert.equal(missing.writes.length, 0)
+const unverified = fake({ verified: false })
+await assert.rejects(applyAction(unverified.client, validGrant), /verified email/)
+assert.equal(unverified.writes.length, 0)
+const unpublished = fake({ published: false })
+await assert.rejects(applyAction(unpublished.client, validGrant), /Course is not published/)
+assert.equal(unpublished.writes.length, 0)
 const revokedGrant = fake({ existing: true, revoked: true })
 await assert.rejects(applyAction(revokedGrant.client, validGrant), /review before reactivating/)
 assert.equal(revokedGrant.writes.length, 0)

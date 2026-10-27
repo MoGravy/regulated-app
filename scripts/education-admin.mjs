@@ -50,6 +50,7 @@ function validLabel(value) {
 async function existingUser(client, id) {
   const { data, error } = await client.auth.admin.getUserById(id)
   if (error || data?.user?.id !== id) throw new Error('Account not found')
+  return data.user
 }
 
 async function one(query) {
@@ -67,9 +68,11 @@ export async function applyAction(client, action) {
   if (!action.apply) return 'Preview only. No account or database was checked or changed.'
 
   if (action.kind === 'grant') {
-    await existingUser(client, action.userId)
-    const course = await one(client.from('courses').select('id').eq('slug', action.courseSlug))
+    const user = await existingUser(client, action.userId)
+    if (!user.email_confirmed_at) throw new Error('Grant needs an account with a verified email')
+    const course = await one(client.from('courses').select('id,published').eq('slug', action.courseSlug))
     if (!course) throw new Error('Course not found')
+    if (course.published !== true) throw new Error('Course is not published')
     const existing = await one(client.from('course_grants').select('revoked_at,source,source_ref')
       .eq('user_id', action.userId).eq('course_id', course.id))
     if (existing?.revoked_at) throw new Error('Grant was revoked; review before reactivating')
