@@ -17,7 +17,7 @@ function validEvent(e) {
     && validDate(e.localDate) && Number.isFinite(Date.parse(e.qualifiedAt))
     && Number.isInteger(e.offsetMinutes) && Math.abs(e.offsetMinutes) <= 840
     && new Date(Date.parse(e.qualifiedAt) + e.offsetMinutes * 60000).toISOString().slice(0, 10) === e.localDate
-    && e.source === 'web-played'
+    && ['web-played', 'native-rendered'].includes(e.source)
 }
 
 function validAttempt(a, mediaId) {

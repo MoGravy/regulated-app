@@ -18,7 +18,7 @@ export default function Navigation() {
   return (
     <>
     {location.pathname === '/premium' && (
-      <div style={{ flex: 'none', width: '100%', maxWidth: 480, margin: '0 auto', padding: '12px 24px', background: 'var(--surface)' }}>
+      <div style={{ flex: 'none', width: '100%', maxWidth: 'var(--content-width,480px)', margin: '0 auto', padding: '12px 24px', background: 'var(--surface)' }}>
         <Link to="/about" aria-label="About Matthew" className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 18px', border: '1px solid var(--control)', background: 'var(--control)', color: 'var(--on-control)', textDecoration: 'none' }}>
           <span>
             <span style={{ display: 'block', font: '500 22px/28px var(--font-ui)' }}>About Matthew</span>
@@ -37,10 +37,13 @@ export default function Navigation() {
         flex: 'none',
         width: '100%',
         margin: '0 auto',
-        maxWidth: 480,
+        maxWidth: 'var(--content-width, 480px)',
         display: 'flex',
+        flexWrap: 'wrap',
+        rowGap: 8,
         alignItems: 'stretch',
-        height: 'calc(var(--nav-height) + var(--safe-bottom))',
+        minHeight: 'calc(var(--nav-height) + var(--safe-bottom))',
+        paddingTop: 8,
         paddingBottom: 'calc(12px + var(--safe-bottom))',
         borderTop: '1px solid var(--line)',
         background: 'var(--surface)',
@@ -57,7 +60,11 @@ export default function Navigation() {
             onClick={() => navigate(tab.path)}
             aria-current={active ? 'page' : undefined}
             style={{
-              flex: 1,
+              flex: '1 1 20%',
+              minWidth: 'min-content',
+              minHeight: 44,
+              padding: '2px 4px',
+              whiteSpace: 'normal',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -71,7 +78,7 @@ export default function Navigation() {
               transition: 'color var(--t-enter)',
             }}
           >
-            <span>{tab.label}</span>
+            <span style={{ maxWidth: '100%' }}>{tab.label}</span>
             {active && (
               <span style={{ width: 16, height: 2, background: 'var(--accent)', borderRadius: 'var(--r-pill)' }} />
             )}

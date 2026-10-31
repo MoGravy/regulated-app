@@ -1,3 +1,4 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
@@ -36,21 +37,20 @@ export default function Onboarding() {
 
       <div className="status-bar" style={{ position: 'relative' }}><span /><span /></div>
 
-      <div style={{ position: 'relative', flex: 1, padding: '40px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+      <div className="entry-content" style={{ position: 'relative', flex: 'var(--entry-flex, 1)', padding: '40px 24px 0', display: 'flex', flexDirection: 'column', maxWidth: 'var(--form-width, 480px)', margin: '0 auto', width: '100%' }}>
         <div style={{ font: '500 13px/18px var(--font-ui)', color: 'var(--ink-muted)' }}>Regulated</div>
 
         {step === 0 && <div className="night-arch" aria-hidden="true" />}
         {step === 0 && (
           <>
             <h1 style={{ margin: '12px 0 0', font: '300 38px/44px var(--font-display)', letterSpacing: '-0.015em', textWrap: 'pretty' }}>
-              Feel safe in your own body
+              {ui.onboarding_heading}
             </h1>
             <p style={{ margin: '18px 0 0', font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              Hypnotherapy audio for sleep, stress, anxiety and gut symptoms, recorded by a clinical
-              hypnotherapist. Four sessions are free.
+              {ui.onboarding_intro}
             </p>
 
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" htmlFor="onboard-email">Email</label>
                 <input
@@ -84,7 +84,7 @@ export default function Onboarding() {
               What brought you here?
             </h1>
             <p style={{ margin: '18px 0 0', font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              It points you at the right session first. You can change it later.
+              {ui.onboarding_reason_help}
             </p>
 
             <div style={{ marginTop: 32, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -101,7 +101,7 @@ export default function Onboarding() {
               ))}
             </div>
 
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <button className="btn-primary btn-lg" onClick={() => setStep(2)} disabled={!reason}>Continue</button>
               <button className="btn-ghost" onClick={() => setStep(2)}>Skip</button>
             </div>
@@ -114,10 +114,10 @@ export default function Onboarding() {
               Start with the library
             </h1>
             <p style={{ margin: '18px 0 0', font: '400 17px/27px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-              Four sessions are free, no card needed. The six-week program opens once it is ready.
+              {ui.onboarding_library}
             </p>
 
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="entry-actions" style={{ marginTop: 'var(--entry-action-gap, auto)', display: 'flex', flexDirection: 'column', gap: 14 }}>
               <button className="btn-primary btn-lg" onClick={finish}>Go to the library</button>
             </div>
           </>

@@ -1,10 +1,10 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { useLocalStorage } from './useLocalStorage'
 import { supabase, checkSubscription, ensureProfile, signOutUser } from '../lib/supabase'
+import { setBillingAccount } from '../lib/nativeBilling'
 import { programAt } from '../config/program'
 import { disableCarePush } from '../lib/carePush'
 import { signInError } from '../lib/signInFlow'
-import { recordPracticeDay } from '../lib/streak'
 import { usePractice } from './usePractice'
 
 const AppContext = createContext(null)
@@ -32,16 +32,42 @@ export function AppProvider({ children }) {
   const [authError, setAuthError] = useState('')
   const practice = usePractice(authReady ? authUser?.id || 'guest' : null)
 
-  // Auth is additive. Signed out, everything below behaves exactly as it did
-  // before phase 3: the localStorage email still drives the premium check.
-  // Signed in, the verified address takes over as that email.
+  const accountId = useRef(null)
+  const premiumRevision = useRef(0)
+  const authRevision = useRef(0)
+  const providerLive = useRef(false)
+
+  const refreshPremium = useCallback(async () => {
+    const expectedAccountId = accountId.current
+    const revision = ++premiumRevision.current
+    const current = () => providerLive.current &&
+      revision === premiumRevision.current && accountId.current === expectedAccountId
+    try {
+      const active = expectedAccountId ? await checkSubscription(expectedAccountId) : false
+      if (!current()) return null
+      setIsPremium(active)
+      return active
+    } catch (error) {
+      if (!current()) return null
+      setIsPremium(false)
+      throw error
+    }
+  }, [])
+
   useEffect(() => {
     let live = true
+    const initialRevision = authRevision.current
+    providerLive.current = true
 
     function adopt(session) {
       if (!live) return
       const user = session?.user ?? null
-      setAuthUser(user)
+      premiumRevision.current++
+      authRevision.current++
+      if (accountId.current !== (user?.id ?? null)) setIsPremium(false)
+      accountId.current = user?.id ?? null
+      void setBillingAccount(accountId.current).catch(() => {})
+      setAuthUser(user ? { ...user } : null)
       setAuthReady(true)
       if (user) setAuthError('')
       if (user?.email) {
@@ -53,10 +79,12 @@ export function AppProvider({ children }) {
     supabase.auth.initialize()
       .then(async ({ error }) => {
         const { data } = await supabase.auth.getSession()
+        if (initialRevision !== authRevision.current) return
         adopt(data.session)
         if (live && !data.session && error) setAuthError(signInError(error, true))
       })
       .catch(() => {
+        if (initialRevision !== authRevision.current) return
         adopt(null)
         if (live) setAuthError(signInError(null, true))
       })
@@ -64,37 +92,35 @@ export function AppProvider({ children }) {
 
     return () => {
       live = false
+      providerLive.current = false
+      void setBillingAccount(null).catch(() => {})
+      premiumRevision.current++
       sub.subscription.unsubscribe()
     }
-    // setUserEmail is a fresh closure every render; re-running this would tear
-    // down the auth listener on every state change.
+    // setUserEmail changes each render; the auth listener must stay mounted.
   }, [])
 
   useEffect(() => {
-    if (userEmail) {
-      // A failed check leaves the flag alone: a flaky network must not demote
-      // a paying customer on reload.
-      checkSubscription(userEmail).then(setIsPremium).catch(err =>
-        console.error('[useApp] subscription check failed:', err))
-    }
-  }, [userEmail])
+    refreshPremium().catch(() => console.error('[useApp] subscription check failed'))
+  }, [authUser, refreshPremium])
 
-  // Signing out drops the local email too, otherwise premium would survive a
-  // sign-out. "Restore a purchase" on the You tab gets it back.
   async function signOut() {
-    // Remove this device's alerts before ending its authenticated session.
-    await disableCarePush().catch(() => {})
-    await signOutUser()
+    authRevision.current++
+    premiumRevision.current++
+    accountId.current = null
+    void setBillingAccount(null).catch(() => {})
     setAuthUser(null)
     setUserEmail(null)
     setIsPremium(false)
+    await disableCarePush().catch(() => {})
+    await signOutUser()
   }
 
   function markSessionComplete(sessionId) {
     if (!completedSessions.includes(sessionId)) {
       setCompletedSessions([...completedSessions, sessionId])
     }
-    recordPracticeDay()
+    // Listening qualification owns practice credit; completion owns progress only.
     // The program only moves when the session just finished is the one it was
     // waiting on, so listening ahead in Browse never skips a day.
     const { today } = programAt(programDay)
@@ -144,7 +170,7 @@ export function AppProvider({ children }) {
       userEmail, setUserEmail,
       completedSessions, markSessionComplete,
       progress, saveProgress, lastInProgress,
-      isPremium, setIsPremium,
+      isPremium, refreshPremium,
       authUser, authReady, authError, signOut,
       onboardingDone, setOnboardingDone,
       mode, setMode,

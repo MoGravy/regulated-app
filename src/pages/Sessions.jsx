@@ -71,7 +71,7 @@ export default function Sessions() {
     <div className="page">
       <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
-      <div style={{ padding: '8px 20px 12px', maxWidth: 480, margin: '0 auto' }}>
+      <div className="page-content library-header" style={{ paddingTop: 8, paddingBottom: 12 }}>
         <h1 style={{ margin: '0 0 14px', font: '300 30px/36px var(--font-display)' }}>Library</h1>
         <div className="chip-row">
           <button
@@ -108,7 +108,7 @@ export default function Sessions() {
             <button className="btn-ghost" style={{ height: 40, justifyContent: 'flex-start' }} onClick={() => { setOffline(false); setLoading(true); loadSessions() }}>Try again</button>
           </div>
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <div className="session-list">
           {unlocked.map(s => <SessionRow key={s.id} session={s} />)}
           {locked.map(s => <SessionRow key={s.id} session={s} />)}
         </div>

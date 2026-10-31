@@ -1,4 +1,5 @@
 import { test, expect } from './fixtures.js'
+import { reviewedSession } from '../src/content/reviewedCopy.js'
 
 import { reset, setup } from './reset-fixture'
 
@@ -8,9 +9,9 @@ for (const look of ['classic', 'night']) {
     await page.goto(`/?look=${look}`)
     await page.getByRole('button', { name: 'Open session', exact: true }).click()
     await expect(page).toHaveURL(/\/reset/)
-    await expect(page.getByRole('heading', { name: reset.title })).toBeVisible()
+    await expect(page.getByRole('heading', { name: reviewedSession(reset).title })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible()
-    expect(await page.locator('audio').evaluate(a => a.paused)).toBe(true)
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toHaveCount(0)
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.getByRole('button', { name: 'Play', exact: true }).click()
     await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible()
@@ -43,13 +44,12 @@ test('failed free media recovers to another free track and never requests premiu
 })
 
 test('real audio playback earns one unique local day and survives reload', async ({ page }) => {
-  test.setTimeout(90000)
+  test.setTimeout(120000)
   await setup(page)
   await page.goto('/reset')
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible()
-  await page.locator('audio').evaluate(a => { a.playbackRate = 4 })
   await page.getByRole('button', { name: 'Play', exact: true }).click()
-  await expect(page.getByRole('status')).toHaveText('A practice day was recorded on this device.', { timeout: 35000 })
+  await expect(page.getByRole('status')).toHaveText('A practice day was recorded on this device.', { timeout: 95000 })
   await page.getByRole('button', { name: 'Pause', exact: true }).click()
   const event = await page.evaluate(() => JSON.parse(localStorage.getItem('regulated_practice_preview_v1:guest')).events[0])
   expect(event.heardSeconds).toBeGreaterThanOrEqual(80)
@@ -69,7 +69,7 @@ test('broken decoded audio automatically recovers to another free session', asyn
   await page.route('**/api/get-audio-url', r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ url: r.request().postDataJSON().sessionId === reset.id ? '/bad-audio.wav' : '/fake-audio.wav' }) }))
   await page.goto('/reset')
   await expect(page.getByRole('heading', { name: other.title })).toBeVisible()
-  expect(await page.locator('audio').evaluate(a => a.paused)).toBe(true)
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible()
 })
 
 for (const look of ['classic', 'night']) {

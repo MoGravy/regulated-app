@@ -1,0 +1,14 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { closeOpenDapCheckout } from '../api/_dap-checkout-resolution.js'
+const user='30000000-0000-4000-8000-000000000001',purchase={id:'40000000-0000-4000-8000-000000000001',user_id:user,course_id:'0a02caf8-5050-571c-9a70-e2bcda2253a3',checkout_session_id:'cs_fixture',status:'pending'}
+const session={id:'cs_fixture',client_reference_id:user,metadata:{type:'dap',purchase_id:purchase.id,user_id:user},mode:'payment',livemode:true,currency:'aud',amount_subtotal:24700,amount_total:24700,total_details:{amount_discount:0},status:'open',payment_status:'unpaid',payment_intent:null}
+function setup({initial=session,after={...session,status:'expired'},expireError=false,writeData={id:purchase.id},writeError=null}={}){
+ const calls=[],stripe={checkout:{sessions:{async retrieve(id){calls.push(['retrieve',id]);return calls.filter(c=>c[0]==='retrieve').length===1?initial:after},async expire(id){calls.push(['expire',id]);if(expireError)throw Error('fixture')}}}}
+ const query={update(v){calls.push(['update',v]);return this},eq(k,v){calls.push(['eq',k,v]);return this},select(){return this},async maybeSingle(){return {data:writeData,error:writeError}}}
+ return {stripe,db:{from(table){calls.push(['table',table]);return query}},calls}
+}
+test('confirmed expired and unpaid Stripe session permits scoped local expiry',async()=>{const x=setup();assert.equal(await closeOpenDapCheckout({account:user,purchase,stripe:x.stripe,db:x.db}),'expired');assert.equal(x.calls.filter(c=>c[0]==='expire').length,1);assert.equal(x.calls.filter(c=>c[0]==='retrieve').length,2);assert.ok(x.calls.some(c=>c[0]==='eq'&&c[1]==='user_id'&&c[2]===user))})
+test('wrong account, mismatched metadata and already completed session do not expire or write',async()=>{for(const overrides of [{account:'other'}, {initial:{...session,metadata:{...session.metadata,user_id:'other'}}},{initial:{...session,status:'complete',payment_status:'paid'}}]){const x=setup(overrides);assert.equal(await closeOpenDapCheckout({account:overrides.account||user,purchase,stripe:x.stripe,db:x.db}),'review');assert.equal(x.calls.some(c=>c[0]==='expire'||c[0]==='update'),false)}})
+test('uncertain expiry or post-expiry paid evidence never clears reservation',async()=>{for(const opts of [{expireError:true},{after:{...session,status:'complete',payment_status:'paid'}},{after:{...session,status:'expired',payment_intent:'pi_fixture'}},{after:{...session,status:'expired',payment_status:'paid'}}]){const x=setup(opts);assert.equal(await closeOpenDapCheckout({account:user,purchase,stripe:x.stripe,db:x.db}),'review');assert.equal(x.calls.some(c=>c[0]==='update'),false)}})
+test('concurrent or failed local update returns review',async()=>{for(const opts of [{writeData:null},{writeError:{message:'fixture'}}]){const x=setup(opts);assert.equal(await closeOpenDapCheckout({account:user,purchase,stripe:x.stripe,db:x.db}),'review')}})

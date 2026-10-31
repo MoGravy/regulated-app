@@ -6,6 +6,48 @@ const COURSE_ID = '10000000-0000-4000-8000-000000000001'
 const LESSON_ID = '20000000-0000-4000-8000-000000000001'
 const MEDIA_ID = '40000000-0000-4000-8000-000000000001'
 const DAP_GUIDE_ID = '3a7b109c-4760-5697-aa3f-019ecffd7cc9'
+const pdfHandout = await readFile(new URL('./fixtures/nonclinical-handout.pdf', import.meta.url))
+
+test('signed-out lesson links retain the existing course sign-in destination', async ({ page }) => {
+  await skipOnboarding(page)
+  const destination = `/courses/${COURSE_ID}?lesson=${LESSON_ID}&look=night`
+  await page.goto(destination)
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+  await expect(page).toHaveURL(/\/signin\?next=/)
+  expect(new URL(page.url()).searchParams.get('next')).toBe(`/courses/${COURSE_ID}`)
+})
+
+test('lesson links survive reload and browser history without opening media', async ({ page }) => {
+  await skipOnboarding(page)
+  await signedIn(page)
+  const secondId = '20000000-0000-4000-8000-000000000002'
+  await page.route('**/rest/v1/courses*', route => route.fulfill({ status: 200,
+    json: { id: COURSE_ID, title: 'Course A' } }))
+  await page.route('**/rest/v1/course_lessons*', route => route.fulfill({ status: 200, json: [
+    { id: LESSON_ID, title: 'Lesson A', body_text: 'First lesson.', position: 1 },
+    { id: secondId, title: 'Lesson B', body_text: 'Linked lesson.', position: 2 },
+  ] }))
+  let mediaRequests = 0
+  await page.route('**/api/get-course-media-url', route => {
+    mediaRequests += 1
+    return route.fulfill({ status: 404, json: {} })
+  })
+  await page.goto(`/courses/${COURSE_ID}?lesson=${secondId}&look=admiralty`)
+  await expect(page.getByRole('heading', { name: 'Lesson B', exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Lesson B', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Lesson A', exact: true }).click()
+  expect(new URL(page.url()).searchParams.get('lesson')).toBe(LESSON_ID)
+  expect(new URL(page.url()).searchParams.get('look')).toBe('admiralty')
+  await expect(page.getByRole('heading', { name: 'Lesson A', exact: true })).toBeVisible()
+  await page.goBack()
+  await expect(page.getByRole('heading', { name: 'Lesson B', exact: true })).toBeVisible()
+  await page.goForward()
+  await expect(page.getByRole('heading', { name: 'Lesson A', exact: true })).toBeVisible()
+  await page.goto(`/courses/${COURSE_ID}?lesson=unknown`)
+  await expect(page.getByRole('heading', { name: 'Lesson A', exact: true })).toBeVisible()
+  expect(mediaRequests).toBe(0)
+})
 
 test('signed-out visitors see a sign-in prompt without fetching courses', async ({ page }) => {
   await skipOnboarding(page)
@@ -204,12 +246,12 @@ test('course PDFs appear in the lesson and remain downloadable', async ({ page }
     }) })
   })
   await page.route('**/view-*.pdf', route => route.fulfill({
-    status: 200, contentType: 'application/pdf', body: '%PDF-1.4\n%%EOF',
+    status: 200, contentType: 'application/pdf', body: pdfHandout,
   }))
   await page.route('**/save-sheet.pdf', route => route.fulfill({
     status: 200, contentType: 'application/pdf',
     headers: { 'Content-Disposition': 'attachment; filename=zapper-sheet.pdf' },
-    body: '%PDF-1.4\n%%EOF',
+    body: pdfHandout,
   }))
 
   await page.goto(`/courses/${COURSE_ID}`)
@@ -218,7 +260,9 @@ test('course PDFs appear in the lesson and remain downloadable', async ({ page }
   expect(requests).toEqual(expect.arrayContaining([{ mediaId: MEDIA_ID }, { mediaId: secondId }]))
   const downloadEvent = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Download file: Anxiety Zapper sheet' }).click()
-  expect((await downloadEvent).suggestedFilename()).toBe('zapper-sheet.pdf')
+  const downloaded = await downloadEvent
+  expect(downloaded.suggestedFilename()).toBe('zapper-sheet.pdf')
+  expect((await readFile(await downloaded.path())).equals(pdfHandout)).toBe(true)
   expect(requests).toContainEqual({ mediaId: MEDIA_ID, download: true })
 })
 
@@ -264,7 +308,7 @@ test('DAP shows a short guide and a clear video action', async ({ page }, testIn
   await page.getByRole('button', { name: 'Why DAP?', exact: true }).click()
   await expect(watch).toBeVisible()
   await watch.click()
-  await expect(page.getByLabel('Why DAP?', { exact: true })).toBeVisible()
+  await expect(page.locator('video[aria-label="Why DAP?"]')).toBeVisible()
 })
 
 test('Refresh recovers a failed course-list request', async ({ page }) => {

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Regulated</string>
+    <string name="title_activity_main">Regulated</string>
+    <string name="package_name">co.regulatedapp.app</string>
+    <string name="custom_url_scheme">co.regulatedapp.app</string>
+</resources>

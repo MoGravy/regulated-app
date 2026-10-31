@@ -47,6 +47,17 @@ export default function SignIn() {
     }
   }, [authError])
 
+  useEffect(() => {
+    function showLinkError() {
+      sessionStorage.removeItem('regulated_auth_error')
+      setError(signInError(null, true))
+      setSent(false)
+    }
+    if (sessionStorage.getItem('regulated_auth_error')) showLinkError()
+    window.addEventListener('regulated-auth-link-error', showLinkError)
+    return () => window.removeEventListener('regulated-auth-link-error', showLinkError)
+  }, [])
+
   if (authUser && !confirmation) {
     return (
       <div className="page-plain" style={{ padding: '80px 24px' }}>

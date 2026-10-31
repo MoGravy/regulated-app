@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 import { callerUser, normalEmail } from './_identity.js'
+import requestDeletion from './_request-account-deletion.js'
+import deletionAlert from './_deletion-alert.js'
+import deletionDispatch from './_deletion-dispatch.js'
 
 export const canManageCare = (user, email) => !!(email && user?.email_confirmed_at && normalEmail(user.email) === normalEmail(email))
 
 export default async function handler(req, res) {
+  // ponytail: share this entry point to stay within the twelve-function plan.
+  if (req.query?.operation === 'deletion-request') return requestDeletion(req, res)
+  if (req.query?.operation === 'deletion-alert') return deletionAlert(req, res)
+  if (req.query?.operation === 'deletion-dispatch') return deletionDispatch(req, res)
   res.setHeader('Cache-Control', 'no-store')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (!['GET', 'POST'].includes(req.method)) return res.status(405).end()

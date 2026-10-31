@@ -34,6 +34,7 @@ function SupportSpace({ link, userId, alertTarget }) {
   const [reactions, setReactions] = useState([])
   const [reactionsReady, setReactionsReady] = useState(false)
   const [status, setStatus] = useState('loading')
+  const [refreshVersion, setRefreshVersion] = useState(0)
   const [error, setError] = useState(false)
   const [saving, setSaving] = useState(false)
   const [taskTitle, setTaskTitle] = useState('')
@@ -43,53 +44,77 @@ function SupportSpace({ link, userId, alertTarget }) {
   const [highlighted, setHighlighted] = useState(null)
   const shownAlert = useRef(null)
   const highlightTimer = useRef(null)
+  const taskRequest = useRef(0)
+  const messageRequest = useRef(0)
 
   const loadTasks = useCallback(async () => {
+    const request = ++taskRequest.current
     const { data: taskRows, error: taskError } = await supabase.from('care_tasks')
       .select('id,title,instructions,created_at')
       .eq('client_id', link.client_id).eq('practitioner_id', link.practitioner_id)
       .order('created_at', { ascending: false })
+    if (request !== taskRequest.current) return false
     if (taskError) throw taskError
     const ids = (taskRows || []).map(row => row.id)
     const result = ids.length
       ? await supabase.from('care_task_entries').select('id,task_id,entry_type,body,created_at')
           .in('task_id', ids).order('created_at')
       : { data: [], error: null }
+    if (request !== taskRequest.current) return false
     if (result.error) throw result.error
     setTasks(taskRows || [])
     setEntries(result.data || [])
+    return true
   }, [link.client_id, link.practitioner_id])
 
   const loadMessages = useCallback(async () => {
+    const request = ++messageRequest.current
     // ponytail: load the full thread for now; paginate when conversations grow.
     const { data, error: readError } = await supabase.from('care_messages')
       .select('id,sender_id,body,created_at')
       .eq('client_id', link.client_id).eq('practitioner_id', link.practitioner_id)
       .order('created_at')
+    if (request !== messageRequest.current) return false
     if (readError) throw readError
     setMessages(data || [])
     const ids = (data || []).map(message => message.id)
     const result = ids.length
       ? await supabase.from('care_message_reactions').select('message_id,user_id,emoji').in('message_id', ids)
       : { data: [], error: null }
+    if (request !== messageRequest.current) return false
     // Existing conversations remain usable during schema rollout or reaction outages.
     setReactionsReady(!result.error)
     setReactions(result.error ? [] : result.data || [])
+    return true
   }, [link.client_id, link.practitioner_id])
+
+  const loadSection = useCallback(() => section === 'tasks' ? loadTasks() : loadMessages(),
+    [section, loadTasks, loadMessages])
 
   useEffect(() => {
     if (alertTarget.section) setSection(alertTarget.section)
-    Promise.all([loadTasks(), loadMessages()])
-      .then(() => setStatus('ready'))
-      .catch(() => setStatus('error'))
+  }, [alertTarget.key, alertTarget.section])
+
+  useEffect(() => {
+    let active = true
+    setStatus('loading')
+    setError(false)
+    loadSection()
+      .then(loaded => { if (active && loaded) setStatus('ready') })
+      .catch(() => { if (active) setStatus('error') })
     const poll = setInterval(() => {
-      Promise.all([loadTasks(), loadMessages()])
-        .then(() => { setStatus('ready'); setError(false) })
-        .catch(() => setError(true))
+      loadSection()
+        .then(loaded => { if (active && loaded) { setStatus('ready'); setError(false) } })
+        .catch(() => { if (active) setError(true) })
       carePushRequest('dispatch').catch(() => {})
     }, 15000)
-    return () => clearInterval(poll)
-  }, [loadTasks, loadMessages, alertTarget.key, alertTarget.section])
+    return () => {
+      active = false
+      taskRequest.current += 1
+      messageRequest.current += 1
+      clearInterval(poll)
+    }
+  }, [loadSection, alertTarget.key, refreshVersion])
 
   useEffect(() => {
     if (status !== 'ready' || !alertTarget.section || section !== alertTarget.section || shownAlert.current === alertTarget.key) return
@@ -183,11 +208,8 @@ function SupportSpace({ link, userId, alertTarget }) {
   return <>
     <p className={`care-role${isPractitioner ? ' care-role-practitioner' : ''}`} role="status">{isPractitioner ? careCopy.practitionerRole : careCopy.clientRole}</p>
     <h2 style={{ font: '400 22px/28px var(--font-display)' }}>{otherName}</h2>
-    <button className="btn-ghost" disabled={saving} onClick={() => {
-      setError(false)
-      Promise.all([loadTasks(), loadMessages()])
-        .then(() => setStatus('ready')).catch(() => setError(true))
-    }}>{carePushCopy.refresh}</button>
+    <button className="btn-ghost" disabled={saving}
+      onClick={() => setRefreshVersion(value => value + 1)}>{carePushCopy.refresh}</button>
     <div role="tablist" aria-label={careCopy.pageTitle} className="segmented" style={{ margin: '18px 0' }}>
       {['tasks', 'messages'].map(value => <button key={value} className="segmented-item" role="tab"
         id={`care-${value}-tab`} aria-controls={`care-${value}-panel`}
@@ -200,8 +222,9 @@ function SupportSpace({ link, userId, alertTarget }) {
     {error && <p role="alert">{careCopy.error}</p>}
     {status === 'ready' && section === 'tasks' && <div role="tabpanel" id="care-tasks-panel" aria-labelledby="care-tasks-tab">
       <p>{isPractitioner ? careCopy.practitionerHelp : careCopy.clientHelp}</p>
-      {isPractitioner && <form onSubmit={assignTask} className="card" style={{ marginBottom: 18 }}>
-        <h3>{careCopy.assignTitle}</h3>
+      {isPractitioner && <details className="card" style={{ marginBottom: 18 }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{careCopy.assignTitle}</summary>
+        <form onSubmit={assignTask}>
         <label htmlFor="care-task-title">{careCopy.taskTitleLabel}</label>
         <input className="form-input" id="care-task-title" value={taskTitle} onChange={event => setTaskTitle(event.target.value)}
           maxLength={160} required style={{ display: 'block', width: '100%', margin: '8px 0 16px' }} />
@@ -210,7 +233,8 @@ function SupportSpace({ link, userId, alertTarget }) {
           onChange={event => setInstructions(event.target.value)} maxLength={4000}
           style={{ display: 'block', width: '100%', minHeight: 90, margin: '8px 0 16px' }} />
         <button className="btn-primary" type="submit" disabled={saving}>{careCopy.assignButton}</button>
-      </form>}
+        </form>
+      </details>}
       {tasks.length === 0 && <p>{careCopy.emptyTasks}</p>}
       {tasks.map(task => {
         const taskEntries = entries.filter(entry => entry.task_id === task.id)
@@ -276,6 +300,7 @@ export default function Care() {
   const { authUser, authReady } = useApp()
   const [result, setResult] = useState({ status: 'loading', rows: [], userId: null })
   const [selectedPair, setSelectedPair] = useState(null)
+  const [managerId, setManagerId] = useState(null)
   const [reloadVersion, setReloadVersion] = useState(0)
 
 
@@ -302,7 +327,9 @@ export default function Care() {
   const status = !authReady ? 'loading' : !authUser ? 'sign_in'
     : result.userId === authUser.id ? result.status : 'loading'
   const pairKey = link => `${link.client_id}:${link.practitioner_id}`
-  const selected = result.rows.find(link => pairKey(link) === (alertTarget.pair || selectedPair)) || result.rows[0]
+  const isPractitioner = managerId === authUser?.id || result.rows.some(link => link.practitioner_id === authUser?.id)
+  const selected = result.rows.find(link => pairKey(link) === (alertTarget.pair || selectedPair))
+    || (!isPractitioner ? result.rows[0] : null)
 
   return <SupportFrame>
     {status === 'loading' && <p role="status">{careCopy.loading}</p>}
@@ -315,16 +342,25 @@ export default function Care() {
       <button className="btn-primary" onClick={() => setReloadVersion(value => value + 1)}>{carePushCopy.refresh}</button>
     </>}
     {status === 'ready' && <CareAlerts key={authUser.id} userId={authUser.id} />}
-    {status === 'ready' && <CareConnect key={`connect-${authUser.id}`} userId={authUser.id}
-      onConnected={() => setReloadVersion(value => value + 1)} />}
-    {status === 'ready' && result.rows.length === 0 && <p>{carePushCopy.emptySpace}</p>}
-    {status === 'ready' && result.rows.length > 1 && <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>
+    {status === 'ready' && isPractitioner && !selected && <>
+      <h2 style={{ font: '400 22px/28px var(--font-display)' }}>Connected clients</h2>
+      {result.rows.length === 0 && <p>No connected clients yet.</p>}
+    </>}
+    {status === 'ready' && !isPractitioner && result.rows.length === 0 && <p>{carePushCopy.emptySpace}</p>}
+    {status === 'ready' && ((isPractitioner && !selected) || (!isPractitioner && result.rows.length > 1)) && <div
+      aria-label={isPractitioner ? 'Connected clients' : 'Connections'}
+      style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {result.rows.map(link => <button key={pairKey(link)} className="card care-client-link"
         aria-current={selected === link ? 'true' : undefined}
         onClick={() => { navigate('/care', { replace: true }); setSelectedPair(pairKey(link)) }}>
         {authUser.id === link.practitioner_id ? link.client_label : link.practitioner_label}
       </button>)}
     </div>}
+    {status === 'ready' && <CareConnect key={`connect-${authUser.id}`} userId={authUser.id} showForm={!selected}
+      onCanConnect={setManagerId} onConnected={() => setReloadVersion(value => value + 1)} />}
+    {status === 'ready' && isPractitioner && selected && <button className="btn-ghost" onClick={() => {
+      navigate('/care', { replace: true }); setSelectedPair(null)
+    }}>Connected clients</button>}
     {status === 'ready' && selected && <SupportSpace key={pairKey(selected)} link={selected} userId={authUser.id} alertTarget={alertTarget} />}
   </SupportFrame>
 }

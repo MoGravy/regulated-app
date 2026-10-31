@@ -11,6 +11,14 @@ assert.match(signInError({ code: 'otp_expired' }, true), /expired or was already
 assert.match(signInError({ details: { code: 'otp_expired' } }, true), /newest link once/)
 assert.equal(signInError({ code: 'over_email_send_rate_limit' }), 'We cannot send another email right now.')
 assert.equal(signInError({ status: 429 }), 'We cannot send another email right now.')
+for (const error of [
+  { code: 'weak_password', status: 422 },
+  { details: { code: 'weak_password' }, message: 'Private provider detail must not be displayed' },
+]) {
+  assert.equal(signInError(error), 'This password is too easy to guess. Choose a different password.')
+}
+assert.equal(signInError({ status: 422, code: 'unknown', message: 'Private provider detail' }),
+  'We could not complete your request. Please try again.')
 const untrusted = { message: 'Private token or provider detail', code: 'unknown' }
 assert.equal(signInError(untrusted, true), 'This sign-in link did not work. Please try signing in again.')
 assert.equal(signInError(untrusted), 'We could not complete your request. Please try again.')

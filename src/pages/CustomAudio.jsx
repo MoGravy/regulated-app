@@ -1,13 +1,15 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { goBack } from '../lib/back'
 import { trackEvent, Events } from '../lib/analytics'
 import { useApp } from '../hooks/useApp'
-import { stripePromise } from '../lib/stripe'
+import { Capacitor } from '@capacitor/core'
 import { authHeaders } from '../lib/supabase'
 import CouponField from '../components/CouponField'
 import Texture from '../components/Texture'
 import { CUSTOM_AUDIO_PRICE as PRICE } from '../config/pricing'
+import { apiUrl } from '../lib/apiUrl'
 
 export default function CustomAudio() {
   const navigate = useNavigate()
@@ -34,7 +36,6 @@ export default function CustomAudio() {
   }
   const finalPrice = getDiscountedPrice()
 
-  // Top-to-bottom order of the fields on the form, for jumping to an error.
   const FIELD_ORDER = ['email', 'pattern', 'trigger', 'desiredState']
 
   function validate() {
@@ -43,13 +44,13 @@ export default function CustomAudio() {
       e.email = 'Valid email required for delivery'
     }
     if (!form.pattern.trim() || form.pattern.trim().length < 20) {
-      e.pattern = 'Please describe your pattern in at least a sentence or two (20 characters or more). The more detail, the better the audio.'
+      e.pattern = 'Please describe your pattern.'
     }
     if (!form.trigger.trim()) {
-      e.trigger = 'Required, this anchors the whole session'
+      e.trigger = 'Required.'
     }
     if (!form.desiredState.trim()) {
-      e.desiredState = 'Required, this is where we guide you'
+      e.desiredState = 'Required.'
     }
     return e
   }
@@ -66,9 +67,6 @@ export default function CustomAudio() {
     const e2 = validate()
     if (Object.keys(e2).length) {
       setErrors(e2)
-      // The message sits beside the field, which may be a long way up the
-      // page from this button. Take the customer to the first one, cursor in
-      // the box, so the button never looks like it did nothing.
       const first = FIELD_ORDER.find(k => e2[k])
       const el = document.querySelector(`[name="${first}"]`)
       if (el) {
@@ -82,14 +80,12 @@ export default function CustomAudio() {
   }
 
   async function handleCheckout() {
+    if (Capacitor.isNativePlatform()) return
     setLoading(true)
     try {
       setUserEmail(form.email)
 
-      // Send all order details to the backend, no Supabase call needed here.
-      // The serverless function embeds the fields in Stripe metadata, and the
-      // webhook creates the confirmed order in the database after payment.
-      const res = await fetch('/api/create-checkout', {
+      const res = await fetch(apiUrl('/api/create-checkout'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
         body: JSON.stringify({
@@ -114,6 +110,7 @@ export default function CustomAudio() {
       if (url) {
         window.location.href = url
       } else {
+        const { stripePromise } = await import('../lib/stripe')
         const stripe = await stripePromise
         const { error } = await stripe.redirectToCheckout({ sessionId })
         if (error) throw error
@@ -128,7 +125,7 @@ export default function CustomAudio() {
   if (step === 'intro') return <CustomAudioIntro onStart={() => setStep('form')} onBack={() => goBack(navigate)} />
 
   return (
-    <div className="page animate-fade-in">
+    <div className="page animate-fade-in readable-page">
       <div className="page-content" style={{ paddingTop: 56 }}>
 
         {/* Header */}
@@ -137,7 +134,7 @@ export default function CustomAudio() {
             A session made for you
           </h1>
           <p style={{ font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-            Six questions, about ten minutes. Matthew writes and records from your answers.
+            {ui.custom_personalized}
           </p>
         </div>
 
@@ -147,10 +144,10 @@ export default function CustomAudio() {
             What's included
           </div>
           {[
-            ['🎯', 'Personalized to your exact nervous system pattern'],
+            ['🎯', ui.custom_personalized],
             ['🎧', '20–30 minute custom session, professionally recorded'],
-            ['📧', 'Delivered to your email within 7 days'],
-            ['♾️', 'Yours to keep and replay forever'],
+            ['📧', ui.custom_access],
+            ['🎧', ui.custom_use],
             ['💬', 'Optional affirmations you write, woven in'],
           ].map(([icon, text]) => (
             <div key={text} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 10 }}>
@@ -185,7 +182,6 @@ export default function CustomAudio() {
               </span>
             </div>
 
-            {/* Pattern, expanded with full instruction block */}
             <div className="form-group">
               <label className="form-label">Your Specific Pattern *</label>
 
@@ -216,7 +212,7 @@ export default function CustomAudio() {
                     EXAMPLE
                   </div>
                   <p style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.75, margin: 0, fontStyle: 'italic' }}>
-                    You get home from a long day. Your boss messages asking you to send an urgent email tonight. You feel the familiar surge of panic and that tight, exhausted tension. Then you catch yourself. You take a breath and choose calm, confidence, and quiet determination. You reply honestly: "I'm exhausted after a full day. I can't get to this tonight." Your boss pauses, then steps back and respects that.
+                    {ui.custom_trigger_example}
                   </p>
                 </div>
 
@@ -240,12 +236,12 @@ export default function CustomAudio() {
             <div className="form-group">
               <label className="form-label">Main Trigger *</label>
               <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: '0 0 10px' }}>
-                What's the specific moment, person, or feeling that sets the pattern off? Name it precisely, the more specific, the more targeted your audio will be.
+                What's the specific moment, person, or feeling that sets the pattern off? Name it precisely.
               </p>
               <input
                 type="text"
                 className="form-input"
-                placeholder="e.g. When my boss messages me after 6pm. When I feel a pain in my chest. When someone doesn't reply."
+                placeholder={ui.custom_trigger_example}
                 name="trigger"
                 value={form.trigger}
                 onChange={e => handleChange('trigger', e.target.value)}
@@ -257,7 +253,7 @@ export default function CustomAudio() {
             <div className="form-group">
               <label className="form-label">Desired State *</label>
               <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: '0 0 10px' }}>
-                How do you want to feel when that trigger arrives? Describe the emotional and physical state, calm, grounded, confident, free. This is the destination your audio guides you toward.
+                How do you want to feel when that trigger arrives? Describe the emotional and physical state. This is the destination your audio guides you toward.
               </p>
               <textarea
                 className="form-input form-textarea"
@@ -279,7 +275,7 @@ export default function CustomAudio() {
                 </span>
               </label>
               <p style={{ fontSize: 13, color: 'var(--ink-faint)', lineHeight: 1.6, margin: '0 0 10px' }}>
-                Any specific phrases, beliefs, or statements you want Matthew to weave into the audio. These become part of your session's language, phrases that feel true to you, not generic.
+                Any specific phrases, beliefs, or statements you want Matthew to weave into the audio. These become part of your session's language.
               </p>
               <textarea
                 className="form-input form-textarea"
@@ -368,28 +364,10 @@ export default function CustomAudio() {
             </div>
 
             <p style={{ fontSize: 12, color: 'var(--ink-faint)', textAlign: 'center', marginTop: 16, lineHeight: 1.6 }}>
-              Secure payment via Stripe. You'll receive an email confirmation immediately and your custom audio within 7 days.
+              {ui.custom_delivery_help}
             </p>
           </div>
         )}
-
-        {/* Social proof */}
-        <div style={{ marginTop: 36, marginBottom: 8 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-faint)', letterSpacing: '0.08em', marginBottom: 14 }}>
-            WHAT OTHERS SAY
-          </div>
-          {[
-            { quote: '"I\'d tried everything for my sleep anxiety. The custom audio Matthew made broke a pattern I\'d had for 6 years."', name: 'Sarah K.' },
-            { quote: '"The specificity is what makes it different. It addressed my exact situation, not a generic relaxation track."', name: 'James R.' },
-          ].map((t, i) => (
-            <div key={i} className="card" style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.7, marginBottom: 10, fontStyle: 'italic' }}>
-                {t.quote}
-              </div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-faint)' }}>{t.name}</div>
-            </div>
-          ))}
-        </div>
 
         <div style={{ height: 16 }} />
       </div>
@@ -397,19 +375,17 @@ export default function CustomAudio() {
   )
 }
 
-// The design's Custom audio board, three numbered steps in the sans, headings
-// in the serif, no icon tiles. Sits in front of the existing brief form.
 function CustomAudioIntro({ onStart, onBack }) {
   const STEPS = [
-    ['A short written brief', 'Six questions, about ten minutes. No call needed.'],
+    ['A short written brief', ui.custom_personalized],
     ['Written and recorded', 'Usually seven days. You will get an email when it is ready.'],
-    ['Yours to keep', 'It stays in your library whether or not you subscribe. One free revision.'],
+    ['Yours to keep', ui.custom_access],
   ]
   return (
     <div className="page-frame" style={{ background: 'var(--bg)' }}>
       <div className="status-bar"><span /><a href="/" style={{ color: 'inherit', padding: '12px 0' }} aria-label="Home">Regulated</a></div>
 
-      <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+      <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 12px', maxWidth: 'var(--content-width, 480px)', margin: '0 auto', width: '100%' }}>
         <button className="btn-icon" onClick={onBack} aria-label="Back">
           <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M10 3l-5 5 5 5" stroke="var(--ink-muted)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
@@ -417,13 +393,12 @@ function CustomAudioIntro({ onStart, onBack }) {
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px', maxWidth: 'var(--content-width, 480px)', margin: '0 auto', width: '100%' }}>
         <h1 style={{ margin: '0 0 12px', font: '300 32px/38px var(--font-display)', letterSpacing: '-0.01em', textWrap: 'pretty' }}>
           A session made for you
         </h1>
         <p style={{ margin: '0 0 24px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-          Tell Matthew what you are dealing with. He writes and records a session in your own language,
-          for your situation, and it arrives in your library.
+          {ui.custom_personalized}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

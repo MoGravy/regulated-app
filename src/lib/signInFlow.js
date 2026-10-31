@@ -20,6 +20,9 @@ export function signInError(error, callback = false) {
   if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || error?.status === 429) {
     return 'We cannot send another email right now.'
   }
+  if (code === 'weak_password') {
+    return 'This password is too easy to guess. Choose a different password.'
+  }
   if (code === 'otp_expired') {
     return 'This link has expired or was already used. Sign in again to get a new email, then use the newest link once.'
   }

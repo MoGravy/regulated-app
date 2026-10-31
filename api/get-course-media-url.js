@@ -47,7 +47,16 @@ export async function handleCourseMediaRequest(req, res, client) {
       .select('course_id').eq('course_id', course.id).eq('user_id', auth.user.id)
       .is('revoked_at', null).limit(1)
     if (grantError) throw grantError
-    if (!grants?.length) return res.status(404).json({ error: 'Media unavailable' })
+    if (!grants?.length) {
+      if (course.id !== '0a02caf8-5050-571c-9a70-e2bcda2253a3') {
+        return res.status(404).json({ error: 'Media unavailable' })
+      }
+      const { data: playReasons, error: playError } = await client.from('play_course_reasons')
+        .select('course_id').eq('course_id', course.id).eq('user_id', auth.user.id)
+        .eq('status', 'owned').limit(1)
+      if (playError) throw playError
+      if (!playReasons?.length) return res.status(404).json({ error: 'Media unavailable' })
+    }
 
     // A bad import must never sign an object belonging to a different lesson.
     const prefix = `${course.id}/${lesson.id}/${media.id}/`

@@ -56,11 +56,12 @@ for (const look of ['admiralty', 'night']) {
   })
   test(`native purchase restriction stays intact: ${look}`, async ({ page }) => {
     await skipOnboarding(page)
-    await page.addInitScript(() => { window.Capacitor = { isNativePlatform: () => true } })
+    await page.addInitScript(() => { window.androidBridge = {}; window.Capacitor = { isNativePlatform: () => true } })
     await page.goto(`/courses?look=${look}`)
     await expect(page.getByRole('link', { name: 'Dissolve Anxiety Program', exact: true })).toHaveCount(0)
     await page.goto(`/dap?look=${look}`)
-    await expect(page.getByText('This purchase page is available in a web browser.')).toBeVisible()
+    await expect(page).toHaveURL(/\/premium$/)
+    await expect(page.getByRole('button', { name: 'Sign in to subscribe', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Buy now' })).toHaveCount(0)
   })
 }
