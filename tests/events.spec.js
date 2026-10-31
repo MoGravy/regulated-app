@@ -3,9 +3,7 @@ import { skipOnboarding, noProductionWrites, HAS_API } from './helpers.js'
 
 test.use({ viewport: { width: 380, height: 820 } })
 
-// Code handoff item 6. A check-in tap sends one anonymous event and nothing
-// else; the route itself refuses names the app does not define.
-test('a check-in tap posts one anonymous event', async ({ page }) => {
+test('a check-in tap counts use without sending the answer', async ({ page }) => {
   await skipOnboarding(page)
   await noProductionWrites(page)
   const calls = []
@@ -16,7 +14,7 @@ test('a check-in tap posts one anonymous event', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Wired' }).click()
   await expect.poll(() => calls.length).toBe(1)
-  expect(calls[0]).toEqual({ name: 'checkin_tap', props: { state: 'wired' } })
+  expect(calls[0]).toEqual({ name: 'checkin_tap', props: {} })
   expect(JSON.stringify(calls[0])).not.toMatch(/@/)
 })
 

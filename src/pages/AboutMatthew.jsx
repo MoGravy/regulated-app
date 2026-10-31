@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom'
 // Profile copy and email are supplied only after source/model verification.
 export default function AboutMatthew({ profile }) {
   const enquiry = matthewEnquiryHref(profile.email)
+  // Store builds never link to the commercial website: its menu leads to digital purchases outside Play.
+  const native = typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.()
   return (
     <div className="page">
       <div className="status-bar">
@@ -27,7 +29,7 @@ export default function AboutMatthew({ profile }) {
           <ul style={{ paddingLeft: 24 }}>{profile.qualifications.map(item => <li key={item} style={{ marginBottom: 10 }}>{item}</li>)}</ul>
           <p>{profile.membership}</p>
           <p>{profile.currentStudy}</p>
-          <a href="https://www.matthewtweediehypnosis.com.au/about/" style={{ color: 'var(--ink)' }}>Matthew’s full practitioner profile</a>
+          {!native && <a href="https://www.matthewtweediehypnosis.com.au/about/" style={{ color: 'var(--ink)' }}>Matthew’s full practitioner profile</a>}
         </section>
       </main>
     </div>

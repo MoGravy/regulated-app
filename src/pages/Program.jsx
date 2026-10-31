@@ -1,3 +1,4 @@
+import { ui } from '../content/reviewedCopy.js'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../hooks/useApp'
 import { PROGRAM_MAP, programUnlocked, programAt, programWeeks } from '../config/program'
@@ -150,7 +151,7 @@ function ComingSoon({ onBack }) {
       <div className="page-content" style={{ paddingTop: 8 }}>
         <h1 style={{ margin: '0 0 6px', font: '300 30px/36px var(--font-display)' }}>{PROGRAM_MAP.program.title}</h1>
         <p style={{ margin: '0 0 20px', font: '400 16px/25px var(--font-ui)', color: 'var(--ink-muted)', textWrap: 'pretty' }}>
-          The six-week program is being finished. Every session in it is already in the library, so you can listen now and start the program when it opens.
+          {ui.program_pending}
         </p>
         <button className="btn-primary btn-lg" onClick={onBack}>Browse the library</button>
       </div>

@@ -14,7 +14,7 @@ async function request(fields) {
   return response.json()
 }
 
-export default function CareConnect({ userId, onConnected }) {
+export default function CareConnect({ userId, onConnected, onCanConnect, showForm = true }) {
   const [allowed, setAllowed] = useState(false)
   const [email, setEmail] = useState('')
   const [label, setLabel] = useState('')
@@ -22,10 +22,14 @@ export default function CareConnect({ userId, onConnected }) {
   const [status, setStatus] = useState('')
   useEffect(() => {
     let active = true
-    request().then(data => active && setAllowed(data.canConnect === true)).catch(() => {})
+    request().then(data => {
+      if (!active) return
+      setAllowed(data.canConnect === true)
+      onCanConnect?.(data.canConnect === true ? userId : null)
+    }).catch(() => {})
     return () => { active = false }
-  }, [userId])
-  if (!allowed) return null
+  }, [userId, onCanConnect])
+  if (!allowed || !showForm) return null
   async function connect(event) {
     event.preventDefault()
     if (saving) return

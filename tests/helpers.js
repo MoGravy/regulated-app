@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test'
 import { IS_LOCAL, SUPABASE_URL, SUPABASE_ANON_KEY } from './runtime.js'
+export { SUPABASE_URL, SUPABASE_ANON_KEY }
 
 export const HAS_API = !IS_LOCAL
 
@@ -125,8 +126,14 @@ export function silentWav(seconds = 0.5) {
 }
 
 // Points the player at the silent WAV instead of /api/get-audio-url.
-export async function fakeAudio(page, seconds = 0.5) {
-  await page.route('**/fake-audio.wav', route => route.fulfill({ status: 200, contentType: 'audio/wav', body: silentWav(seconds) }))
+export async function fakeAudio(page, seconds = 0.5, { fallbackCatalog = true } = {}) {
+  // Fake playback uses the reviewed fallback catalogue, never a live session read.
+  if (fallbackCatalog) await page.route('**/rest/v1/sessions*', route => route.fulfill(
+    route.request().headers().accept?.includes('object')
+      ? { status: 406, json: { code: 'PGRST116', message: 'Local fixture: use fallback' } }
+      : { json: [] }
+  ))
+  await page.route('**/fake-audio.wav', route => route.fulfill({ status: 200, headers: { 'Accept-Ranges': 'bytes' }, contentType: 'audio/wav', body: silentWav(seconds) }))
   await page.route('**/api/get-audio-url', route => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ url: '/fake-audio.wav' }),
   }))

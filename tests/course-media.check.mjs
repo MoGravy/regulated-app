@@ -4,20 +4,21 @@ process.env.SUPABASE_URL = 'https://example.supabase.co'
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'local-test-only'
 const { handleCourseMediaRequest } = await import('../api/get-course-media-url.js')
 
-const courseId = '10000000-0000-4000-8000-000000000001'
+const courseId = '0a02caf8-5050-571c-9a70-e2bcda2253a3'
 const lessonId = '20000000-0000-4000-8000-000000000001'
 const mediaId = '40000000-0000-4000-8000-000000000001'
 const userA = '30000000-0000-4000-8000-000000000001'
 const userB = '30000000-0000-4000-8000-000000000002'
 const path = `${courseId}/${lessonId}/${mediaId}/sample.mp3`
 
-function fakeClient({ userId = userA, granted = true, published = true, storagePath = path, kind = 'audio', grants, grantError = null } = {}) {
+function fakeClient({ userId = userA, granted = true, published = true, storagePath = path, kind = 'audio', grants, playGrants = [], grantError = null, playError = null } = {}) {
   const calls = { signed: 0, options: undefined }
   const rows = {
     course_media: { id: mediaId, lesson_id: lessonId, kind, storage_path: storagePath, published },
     course_lessons: { id: lessonId, course_id: courseId, published },
     courses: { id: courseId, published },
     course_grants: grants ?? (granted ? [{ course_id: courseId, user_id: userA, revoked_at: null }] : []),
+    play_course_reasons: playGrants,
   }
   const client = {
     auth: { getUser: async token => ({ data: { user: token === 'valid' ? { id: userId } : null } }) },
@@ -28,10 +29,10 @@ function fakeClient({ userId = userA, granted = true, published = true, storageP
         eq(key, value) { filters[key] = value; return query },
         is(key, value) { filters[key] = value; return query },
         async limit(count) {
-          assert.equal(table, 'course_grants')
+          assert.ok(['course_grants', 'play_course_reasons'].includes(table))
           assert.equal(count, 1)
           return { data: rows[table].filter(row => Object.entries(filters)
-            .every(([key, value]) => row[key] === value)).slice(0, count), error: grantError }
+            .every(([key, value]) => row[key] === value)).slice(0, count), error: table === 'course_grants' ? grantError : playError }
         },
         async maybeSingle() {
           const row = rows[table]
@@ -142,3 +143,16 @@ for (const invalid of ['true', 1, null, {}]) {
   assert.equal(bad.calls.signed, 0)
 }
 console.log('course media API checks passed, including audio downloads and access refusals')
+
+const playOnly = fakeClient({ granted: false, playGrants: [{ course_id: courseId, user_id: userA, status: 'owned' }] })
+assert.equal((await request(playOnly.client)).code, 200)
+assert.equal(playOnly.calls.signed, 1)
+const refundedPlay = fakeClient({ granted: false, playGrants: [{ course_id: courseId, user_id: userA, status: 'refunded' }] })
+assert.equal((await request(refundedPlay.client)).code, 404)
+assert.equal(refundedPlay.calls.signed, 0)
+const wrongPlay = fakeClient({ granted: false, playGrants: [{ course_id: courseId, user_id: userB, status: 'owned' }] })
+assert.equal((await request(wrongPlay.client)).code, 404)
+assert.equal(wrongPlay.calls.signed, 0)
+const failedPlay = fakeClient({ granted: false, playError: { message: 'synthetic failure' } })
+assert.equal((await request(failedPlay.client)).code, 500)
+assert.equal(failedPlay.calls.signed, 0)

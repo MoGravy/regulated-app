@@ -5,6 +5,7 @@ import { authHeaders, getAllSessions } from '../lib/supabase'
 import { resetCandidates, resetChoiceKey, resolveQuickReset } from '../lib/quickReset'
 import { resetCopy as copy } from '../config/resetCopy'
 import SessionPlayer from './SessionPlayer'
+import { apiUrl } from '../lib/apiUrl'
 
 export default function QuickReset() {
   const { practiceScope } = useApp()
@@ -30,7 +31,7 @@ function ResetSelection({ scope }) {
       try {
         const rows = (await getAllSessions({ fallback: false })).filter(s => !failedIds.includes(s.id))
         const selected = await resolveQuickReset(rows, preferred, async session => {
-          const r = await fetch('/api/get-audio-url', {
+          const r = await fetch(apiUrl('/api/get-audio-url'), {
             method: 'POST', headers: { 'Content-Type': 'application/json', ...await authHeaders() },
             body: JSON.stringify({ sessionId: session.id }),
           })

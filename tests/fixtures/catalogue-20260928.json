@@ -1,0 +1,100 @@
+[
+  {
+    "id": "7a875d14-f77e-47e9-8ff3-16d5db08d2e6",
+    "category": "Daily",
+    "duration": 11,
+    "free": true,
+    "has_audio": true
+  },
+  {
+    "id": "ca65ecd1-8ade-4a6e-915e-84810f8b26cb",
+    "category": "Sleep",
+    "duration": 22,
+    "free": true,
+    "has_audio": true
+  },
+  {
+    "id": "e184e81c-8163-46eb-8a00-9ef74f727ab4",
+    "category": "Gut Health",
+    "duration": 29,
+    "free": true,
+    "has_audio": true
+  },
+  {
+    "id": "a8e6ed56-e87c-4ef6-8b77-ee6ff25c4442",
+    "category": "Stress",
+    "duration": 18,
+    "free": true,
+    "has_audio": true
+  },
+  {
+    "id": "0d099a17-84cc-44f9-8034-2e87d408592f",
+    "category": "Motivation",
+    "duration": 48,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "fa09cacb-e58a-4520-aa10-73f010f864d2",
+    "category": "Stress",
+    "duration": 18,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "9a49ad21-2649-4785-bac1-280d912b6bbd",
+    "category": "Habits",
+    "duration": 26,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "98e92ec4-792b-4f87-a86b-4201e128f6ae",
+    "category": "Anxiety",
+    "duration": 37,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "c2dfc5fe-8a2c-444f-8c9c-f8ae0e3f2a84",
+    "category": "Relief",
+    "duration": 24,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "9b728124-eb92-4236-9968-ebd923773367",
+    "category": "Motivation",
+    "duration": 39,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "9feeb917-cdf7-4e02-b26a-467c8bfc8145",
+    "category": "Gut Health",
+    "duration": 35,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "4475ddc0-202f-4775-872b-366e39681932",
+    "category": "Daily",
+    "duration": 21,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "7d7d2194-9f93-4829-9b81-5b12eb31ed13",
+    "category": "Confidence",
+    "duration": 39,
+    "free": false,
+    "has_audio": true
+  },
+  {
+    "id": "8c7cf64a-0f92-4e97-96ef-3b74f468e1bc",
+    "category": "Sleep",
+    "duration": 36,
+    "free": false,
+    "has_audio": true
+  }
+]
